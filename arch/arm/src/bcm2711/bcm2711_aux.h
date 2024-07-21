@@ -23,17 +23,17 @@
 #ifndef __ARCH_ARM_SRC_BCM2711_BCM2711_AUX_H
 #define __ARCH_ARM_SRC_BCM2711_BCM2711_AUX_H
 
-/************************************************************************************
+/*****************************************************************************
  * Included Files
- ************************************************************************************/
+ ****************************************************************************/
 
 #include <nuttx/config.h>
 
-/************************************************************************************
+/*****************************************************************************
  * Pre-processor Definitions
- ************************************************************************************/
+ ****************************************************************************/
 
-/* BCM2711 auxiliary register offsets. */
+/* BCM2711 auxiliary register offsets. **************************************/
 
 #define BCM_AUX_BASE 0x7e215000
 
@@ -80,7 +80,7 @@
 #define BCM_AUX_SPI2_TXHOLD_REGc_OFFSET 0xf8 /* SPI 2 Extended Data */
 #define BCM_AUX_SPI2_TXHOLD_REGd_OFFSET 0xfc /* SPI 2 Extended Data */
 
-/* BCM2711 auxiliary registers. */
+/* BCM2711 auxiliary registers. *********************************************/
 
 #define BCM_AUX_REG(offset) (BCM_AUX_BASE + (offset))
 
@@ -126,5 +126,31 @@
 #define BCM_AUX_SPI2_TXHOLD_REGb BCM_AUX_REG(BCM_AUX_SPI2_TXHOLD_REGb_OFFSET)
 #define BCM_AUX_SPI2_TXHOLD_REGc BCM_AUX_REG(BCM_AUX_SPI2_TXHOLD_REGc_OFFSET)
 #define BCM_AUX_SPI2_TXHOLD_REGd BCM_AUX_REG(BCM_AUX_SPI2_TXHOLD_REGd_OFFSET)
+
+/* BCM2711 auxiliary register bit definitions. */
+
+#define BCM_AUX_IRQ_MU (1 << 0)   /* Mini UART interrupt pending */
+#define BCM_AUX_IRQ_SPI1 (1 << 1) /* SPI1 interrupt pending */
+#define BCM_AUX_IRQ_SPI2 (1 << 2) /* SPI2 interrupt pending */
+
+#define BCM_AUX_ENABLE_MU (1 << 0)   /* Mini UART enable */
+#define BCM_AUX_ENABLE_SPI1 (1 << 1) /* SPI1 enable */
+#define BCM_AUX_ENABLE_SPI2 (1 << 2) /* SPI2 enable */
+
+#define BCM_AUX_MU_IO_BAUDRATE (0xff) /* LS 8 bits of baudrate register */
+#define BCM_AUX_MU_IO_TXD (0xff)      /* If DLAB=0, write-only */
+#define BCM_AUX_MU_IO_RXD (0xff)      /* If DLAB=0, read-only */
+
+#define BCM_AUX_MU_IER_BAUDRATE (0xff) /* MS 8 bits of baudrate register */
+#define BCM_AUX_MU_IER_RXD (1 << 1)    /* Enable receive interrupt */
+#define BCM_AUX_MU_IER_TXD (1 << 0)    /* Enable transmit interrupt */
+
+#define BCM_AUX_MU_IIR_PENDING (1 << 0) /* Clear when interrupt pending */
+#define BCM_AUX_MU_IIR_MASK (0x03 << 1) /* Mask interrupt ID bits */
+#define BCM_AUX_MU_IIR_TXEMPTY (1 << 1) /* TX holding register empty (RO) */
+#define BCM_AUX_MU_IIR_RXBYTE (1 << 2)  /* RX holding valid byte (RO) */
+#define BCM_AUX_MU_IIR_NONE (0)         /* No interrupts (RO) */
+#define BCM_AUX_MU_IIR_RXCLEAR (1 << 1) /* Clear RX FIFO (WO) */
+#define BCM_AUX_MU_IIR_TXCLEAR (1 << 2) /* Clear TX FIFO (WO) */
 
 #endif // __ARCH_ARM_SRC_BCM2711_BCM2711_AUX_H
