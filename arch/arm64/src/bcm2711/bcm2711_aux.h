@@ -195,4 +195,22 @@
 
 #define BCM_AUX_MU_BAUD_MASK (0xffff) /* Baudrate counter */
 
+#define BCM_AUX_SPI_CNTL0_SPEED (0xfff << 20)  /* SPI clock speed */
+#define BCM_AUX_SPI_CNTL0_CS (0x7 << 17)       /* SPI clock speed */
+#define BCM_AUX_SPI_CNTL0_PIMODE (1 << 16)     /* Post input mode */
+#define BCM_AUX_SPI_CNTL0_VARCS (1 << 15)      /* Variable chip select */
+#define BCM_AUX_SPI_CNTL0_VARWIDTH (1 << 14)   /* Variable width */
+#define BCM_AUX_SPI_CNTL0_DOUTHOLD (0x3 << 12) /* DOUT hold time mask */
+#define BCM_AUX_SPI_CNTL0_DOUTNONE (0 << 12)   /* No hold */
+#define BCM_AUX_SPI_CNTL0_DOUT1 (1 << 12)      /* 1 system clock hold */
+#define BCM_AUX_SPI_CNTL0_DOUT4 (2 << 12)      /* 4 system clocks hold */
+#define BCM_AUX_SPI_CNTL0_DOUT7 (3 << 12)      /* 7 system clocks hold */
+#define BCM_AUX_SPI_CNTL0_EN (1 << 11)         /* Enable SPI interface */
+#define BCM_AUX_SPI_CNTL0_INRISE (1 << 10)     /* Data clock on rising */
+#define BCM_AUX_SPI_CNTL0_FIFOCLR (1 << 9)     /* Clear FIFOs */
+#define BCM_AUX_SPI_CNTL0_OUTRISE (1 << 8)     /* Data clock on rising */
+#define BCM_AUX_SPI_CNTL0_CLKINV (1 << 7)      /* Invert SPI clock */
+#define BCM_AUX_SPI_CNTL0_SHIFTMS (1 << 6)     /* Shift out MS bit */
+#define BCM_AUX_SPI_CNTL0_SHIFTLEN (0x2f)      /* Bit shift count */
+
 #endif // __ARCH_ARM_SRC_BCM2711_BCM2711_AUX_H
