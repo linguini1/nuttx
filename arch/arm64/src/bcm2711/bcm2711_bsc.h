@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm64/src/bcm2711/bcm2711_bcs.h
+ * arch/arm64/src/bcm2711/bcm2711_bsc.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
  *
@@ -20,8 +20,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM64_SRC_BCM2711_BCS_H
-#define __ARCH_ARM64_SRC_BCM2711_BCS_H
+#ifndef __ARCH_ARM64_SRC_BCM2711_BSC_H
+#define __ARCH_ARM64_SRC_BCM2711_BSC_H
 
 /****************************************************************************
  * Included Files
@@ -89,4 +89,4 @@
 
 #define BCM_BSC_CLKT_TOUT (0xffff) /* Clock stretch timeout value */
 
-#endif // __ARCH_ARM64_SRC_BCM2711_BCS_H
+#endif // __ARCH_ARM64_SRC_BCM2711_BSC_H
