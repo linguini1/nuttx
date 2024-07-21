@@ -228,4 +228,10 @@
 #define BCM_AUX_SPI_STAT_BUSY (1 << 6)     /* Module is busy */
 #define BCM_AUX_SPI_STAT_BITCOUNT (0x3f)   /* Bits to be processed */
 
+#define BMX_AUX_SPI_PEEK_DATA (0xffff) /* Data mask */
+
+#define BMX_AUX_SPI_IO_DATA (0xffff) /* Data mask */
+
+#define BMX_AUX_SPI_TXHOLD_DATA (0xffff) /* Data mask */
+
 #endif // __ARCH_ARM_SRC_BCM2711_BCM2711_AUX_H
