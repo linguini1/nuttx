@@ -36,6 +36,8 @@
 /.config-*
 /.config\ *
 /.cproject
+/.cache
+/.clang-format
 /.gdbinit
 /.project
 /.version
