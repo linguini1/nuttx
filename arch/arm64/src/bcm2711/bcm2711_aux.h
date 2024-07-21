@@ -20,8 +20,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_BCM2711_BCM2711_AUX_H
-#define __ARCH_ARM_SRC_BCM2711_BCM2711_AUX_H
+#ifndef __ARCH_ARM64_SRC_BCM2711_AUX_H
+#define __ARCH_ARM64_SRC_BCM2711_AUX_H
 
 /****************************************************************************
  * Included Files
@@ -234,4 +234,4 @@
 
 #define BMX_AUX_SPI_TXHOLD_DATA (0xffff) /* Data mask */
 
-#endif // __ARCH_ARM_SRC_BCM2711_BCM2711_AUX_H
+#endif // __ARCH_ARM64_SRC_BCM2711_AUX_H
