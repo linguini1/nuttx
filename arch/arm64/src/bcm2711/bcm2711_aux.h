@@ -148,8 +148,8 @@
 #define BCM_AUX_MU_IIR_PENDING (1 << 0) /* Clear when interrupt pending */
 #define BCM_AUX_MU_IIR_MASK (0x03 << 1) /* Mask interrupt ID bits */
 #define BCM_AUX_MU_IIR_TXEMPTY (1 << 1) /* TX holding register empty (RO) */
-#define BCM_AUX_MU_IIR_RXBYTE (1 << 2)  /* RX holding valid byte (RO) */
-#define BCM_AUX_MU_IIR_NONE (0)         /* No interrupts (RO) */
+#define BCM_AUX_MU_IIR_RXBYTE (2 << 1)  /* RX holding valid byte (RO) */
+#define BCM_AUX_MU_IIR_NONE (0 << 1)    /* No interrupts (RO) */
 #define BCM_AUX_MU_IIR_RXCLEAR (1 << 1) /* Clear RX FIFO (WO) */
 #define BCM_AUX_MU_IIR_TXCLEAR (1 << 2) /* Clear TX FIFO (WO) */
 
