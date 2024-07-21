@@ -219,4 +219,13 @@
 #define BCM_AUX_SPI_CNTL1_SHIFTMS (1 << 1)    /* Shift in MS bit first */
 #define BCM_AUX_SPI_CNTL1_KEEPIN (1 << 0)     /* Do not clear RX shift reg */
 
+#define BCM_AUX_SPI_STAT_TXLVL (0xf << 24) /* TX FIFO level mask */
+#define BCM_AUX_SPI_STAT_RXLVL (0xf << 16) /* RX FIFO level mask */
+#define BCM_AUX_SPI_STAT_TXFULL (1 << 10)  /* TX FIFO full */
+#define BCM_AUX_SPI_STAT_TXEMPTY (1 << 9)  /* TX FIFO empty */
+#define BCM_AUX_SPI_STAT_RXFULL (1 << 8)   /* RX FIFO empty */
+#define BCM_AUX_SPI_STAT_RXEMPTY (1 << 7)  /* RX FIFO empty */
+#define BCM_AUX_SPI_STAT_BUSY (1 << 6)     /* Module is busy */
+#define BCM_AUX_SPI_STAT_BITCOUNT (0x3f)   /* Bits to be processed */
+
 #endif // __ARCH_ARM_SRC_BCM2711_BCM2711_AUX_H
