@@ -180,4 +180,19 @@
 #define BCM_AUX_MU_CNTL_TXENABLE (1 << 1)     /* Enable transmitter */
 #define BCM_AUX_MU_CNTL_RXENABLE (1 << 0)     /* Enable receiver */
 
+#define BCM_AUX_MU_STAT_TXFIFOFILL (0xf << 24) /* How many symbols 0-8 */
+#define BCM_AUX_MU_STAT_RXFIFOFILL (0xf << 16) /* How many symbols 0-8 */
+#define BCM_AUX_MU_STAT_TXDONE (1 << 9)        /* TX idle and FIFO empty */
+#define BCM_AUX_MU_STAT_TXEMPTY (1 << 8)       /* TX FIFO is empty */
+#define BCM_AUX_MU_STAT_CTSLINE (1 << 7)       /* Status of CTS line */
+#define BCM_AUX_MU_STAT_RTSLINE (1 << 6)       /* Status of RTS line */
+#define BCM_AUX_MU_STAT_TXFULL (1 << 5)        /* TX FIFO full */
+#define BCM_AUX_MU_STAT_RXOVERRUN (1 << 4)     /* RX overrun */
+#define BCM_AUX_MU_STAT_TXIDLE (1 << 3)        /* TX idle */
+#define BCM_AUX_MU_STAT_RXIDLE (1 << 2)        /* RX idle */
+#define BCM_AUX_MU_STAT_SPACEAVAIL (1 << 1)    /* TX has space */
+#define BCM_AUX_MU_STAT_SYMAVAIL (1 << 0)      /* RX has symbol */
+
+#define BCM_AUX_MU_BAUD_MASK (0xffff) /* Baudrate counter */
+
 #endif // __ARCH_ARM_SRC_BCM2711_BCM2711_AUX_H
