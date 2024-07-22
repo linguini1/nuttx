@@ -107,4 +107,77 @@
 
 /* GPIO register bit definitions */
 
+#define BCM_GPIO_FS_IN 0x0   /* Pin is input */
+#define BCM_GPIO_FS_OUT 0x1  /* Pin is output */
+#define BCM_GPIO_FS_ALT0 0x4 /* Pin is alternate func 0 */
+#define BCM_GPIO_FS_ALT1 0x5 /* Pin is alternate func 1 */
+#define BCM_GPIO_FS_ALT2 0x6 /* Pin is alternate func 2 */
+#define BCM_GPIO_FS_ALT3 0x7 /* Pin is alternate func 3 */
+#define BCM_GPIO_FS_ALT4 0x3 /* Pin is alternate func 4 */
+#define BCM_GPIO_FS_ALT5 0x2 /* Pin is alternate func 5 */
+
+#define BCM_GPIO_GPFSEL0_FSEL9 (0x7 << 27)
+#define BCM_GPIO_GPFSEL0_FSEL8 (0x7 << 24)
+#define BCM_GPIO_GPFSEL0_FSEL7 (0x7 << 21)
+#define BCM_GPIO_GPFSEL0_FSEL6 (0x7 << 18)
+#define BCM_GPIO_GPFSEL0_FSEL5 (0x7 << 15)
+#define BCM_GPIO_GPFSEL0_FSEL4 (0x7 << 12)
+#define BCM_GPIO_GPFSEL0_FSEL3 (0x7 << 9)
+#define BCM_GPIO_GPFSEL0_FSEL2 (0x7 << 6)
+#define BCM_GPIO_GPFSEL0_FSEL1 (0x7 << 3)
+#define BCM_GPIO_GPFSEL0_FSEL0 (0x7 << 0)
+
+#define BCM_GPIO_GPFSEL1_FSEL19 (0x7 << 27)
+#define BCM_GPIO_GPFSEL1_FSEL18 (0x7 << 24)
+#define BCM_GPIO_GPFSEL1_FSEL17 (0x7 << 21)
+#define BCM_GPIO_GPFSEL1_FSEL16 (0x7 << 18)
+#define BCM_GPIO_GPFSEL1_FSEL15 (0x7 << 15)
+#define BCM_GPIO_GPFSEL1_FSEL14 (0x7 << 12)
+#define BCM_GPIO_GPFSEL1_FSEL13 (0x7 << 9)
+#define BCM_GPIO_GPFSEL1_FSEL12 (0x7 << 6)
+#define BCM_GPIO_GPFSEL1_FSEL11 (0x7 << 3)
+#define BCM_GPIO_GPFSEL1_FSEL10 (0x7 << 0)
+
+#define BCM_GPIO_GPFSEL2_FSEL29 (0x7 << 27)
+#define BCM_GPIO_GPFSEL2_FSEL28 (0x7 << 24)
+#define BCM_GPIO_GPFSEL2_FSEL27 (0x7 << 21)
+#define BCM_GPIO_GPFSEL2_FSEL26 (0x7 << 18)
+#define BCM_GPIO_GPFSEL2_FSEL25 (0x7 << 15)
+#define BCM_GPIO_GPFSEL2_FSEL24 (0x7 << 12)
+#define BCM_GPIO_GPFSEL2_FSEL23 (0x7 << 9)
+#define BCM_GPIO_GPFSEL2_FSEL22 (0x7 << 6)
+#define BCM_GPIO_GPFSEL2_FSEL21 (0x7 << 3)
+#define BCM_GPIO_GPFSEL2_FSEL20 (0x7 << 0)
+
+#define BCM_GPIO_GPFSEL3_FSEL39 (0x7 << 27)
+#define BCM_GPIO_GPFSEL3_FSEL38 (0x7 << 24)
+#define BCM_GPIO_GPFSEL3_FSEL37 (0x7 << 21)
+#define BCM_GPIO_GPFSEL3_FSEL36 (0x7 << 18)
+#define BCM_GPIO_GPFSEL3_FSEL35 (0x7 << 15)
+#define BCM_GPIO_GPFSEL3_FSEL34 (0x7 << 12)
+#define BCM_GPIO_GPFSEL3_FSEL33 (0x7 << 9)
+#define BCM_GPIO_GPFSEL3_FSEL32 (0x7 << 6)
+#define BCM_GPIO_GPFSEL3_FSEL31 (0x7 << 3)
+#define BCM_GPIO_GPFSEL3_FSEL30 (0x7 << 0)
+
+#define BCM_GPIO_GPFSEL4_FSEL49 (0x7 << 27)
+#define BCM_GPIO_GPFSEL4_FSEL48 (0x7 << 24)
+#define BCM_GPIO_GPFSEL4_FSEL47 (0x7 << 21)
+#define BCM_GPIO_GPFSEL4_FSEL46 (0x7 << 18)
+#define BCM_GPIO_GPFSEL4_FSEL45 (0x7 << 15)
+#define BCM_GPIO_GPFSEL4_FSEL44 (0x7 << 12)
+#define BCM_GPIO_GPFSEL4_FSEL43 (0x7 << 9)
+#define BCM_GPIO_GPFSEL4_FSEL42 (0x7 << 6)
+#define BCM_GPIO_GPFSEL4_FSEL41 (0x7 << 3)
+#define BCM_GPIO_GPFSEL4_FSEL40 (0x7 << 0)
+
+#define BCM_GPIO_GPFSEL5_FSEL57 (0x7 << 21)
+#define BCM_GPIO_GPFSEL5_FSEL56 (0x7 << 18)
+#define BCM_GPIO_GPFSEL5_FSEL55 (0x7 << 15)
+#define BCM_GPIO_GPFSEL5_FSEL54 (0x7 << 12)
+#define BCM_GPIO_GPFSEL5_FSEL53 (0x7 << 9)
+#define BCM_GPIO_GPFSEL5_FSEL52 (0x7 << 6)
+#define BCM_GPIO_GPFSEL5_FSEL51 (0x7 << 3)
+#define BCM_GPIO_GPFSEL5_FSEL50 (0x7 << 0)
+
 #endif // __ARCH_ARM64_SRC_BCM2711_GPIO_H
