@@ -180,4 +180,76 @@
 #define BCM_GPIO_GPFSEL5_FSEL51 (0x7 << 3)
 #define BCM_GPIO_GPFSEL5_FSEL50 (0x7 << 0)
 
+/* Any register that does not have specific bit masks listed here is omitted
+ * because the control is done via a single bit, which corresponds bit N to
+ * pin N. It is up to the programmer to read the data sheet to know whether to
+ * use register 0, 1, ..., n.
+ */
+
+#define BCM_GPIO_NORES 0x0    /* No resistor */
+#define BCM_GPIO_PULLUP 0x1   /* Pull-up resistor */
+#define BCM_GPIO_PULLDOWN 0x2 /* Pull-down resistor */
+
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL15 (0x3 << 30)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL14 (0x3 << 28)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL13 (0x3 << 26)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL12 (0x3 << 24)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL11 (0x3 << 22)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL10 (0x3 << 20)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL9 (0x3 << 18)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL8 (0x3 << 16)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL7 (0x3 << 14)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL6 (0x3 << 12)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL5 (0x3 << 10)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL4 (0x3 << 8)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL3 (0x3 << 6)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL2 (0x3 << 4)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL1 (0x3 << 2)
+#define BCM_GPIO_PUP_PDN_REG0_CNTRL0 (0x3 << 1)
+
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL31 (0x3 << 30)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL30 (0x3 << 28)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL29 (0x3 << 26)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL28 (0x3 << 24)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL27 (0x3 << 22)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL26 (0x3 << 20)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL25 (0x3 << 18)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL24 (0x3 << 16)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL23 (0x3 << 14)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL22 (0x3 << 12)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL21 (0x3 << 10)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL20 (0x3 << 8)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL19 (0x3 << 6)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL18 (0x3 << 4)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL17 (0x3 << 2)
+#define BCM_GPIO_PUP_PDN_REG1_CNTRL16 (0x3 << 1)
+
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL47 (0x3 << 30)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL46 (0x3 << 28)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL45 (0x3 << 26)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL44 (0x3 << 24)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL43 (0x3 << 22)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL42 (0x3 << 20)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL41 (0x3 << 18)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL40 (0x3 << 16)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL39 (0x3 << 14)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL38 (0x3 << 12)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL37 (0x3 << 10)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL36 (0x3 << 8)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL35 (0x3 << 6)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL34 (0x3 << 4)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL33 (0x3 << 2)
+#define BCM_GPIO_PUP_PDN_REG2_CNTRL32 (0x3 << 1)
+
+#define BCM_GPIO_PUP_PDN_REG3_CNTRL57 (0x3 << 18)
+#define BCM_GPIO_PUP_PDN_REG3_CNTRL56 (0x3 << 16)
+#define BCM_GPIO_PUP_PDN_REG3_CNTRL55 (0x3 << 14)
+#define BCM_GPIO_PUP_PDN_REG3_CNTRL54 (0x3 << 12)
+#define BCM_GPIO_PUP_PDN_REG3_CNTRL53 (0x3 << 10)
+#define BCM_GPIO_PUP_PDN_REG3_CNTRL52 (0x3 << 8)
+#define BCM_GPIO_PUP_PDN_REG3_CNTRL51 (0x3 << 6)
+#define BCM_GPIO_PUP_PDN_REG3_CNTRL50 (0x3 << 4)
+#define BCM_GPIO_PUP_PDN_REG3_CNTRL49 (0x3 << 2)
+#define BCM_GPIO_PUP_PDN_REG3_CNTRL48 (0x3 << 1)
+
 #endif // __ARCH_ARM64_SRC_BCM2711_GPIO_H
