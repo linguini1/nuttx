@@ -182,8 +182,8 @@
 
 /* Any register that does not have specific bit masks listed here is omitted
  * because the control is done via a single bit, which corresponds bit N to
- * pin N. It is up to the programmer to read the data sheet to know whether to
- * use register 0, 1, ..., n.
+ * pin N. It is up to the programmer to read the data sheet to know whether
+ * to use register 0, 1, ..., n.
  */
 
 #define BCM_GPIO_NORES 0x0    /* No resistor */
@@ -251,5 +251,7 @@
 #define BCM_GPIO_PUP_PDN_REG3_CNTRL50 (0x3 << 4)
 #define BCM_GPIO_PUP_PDN_REG3_CNTRL49 (0x3 << 2)
 #define BCM_GPIO_PUP_PDN_REG3_CNTRL48 (0x3 << 1)
+
+/* TODO: how to encode alternative function table to preproc definitions? */
 
 #endif // __ARCH_ARM64_SRC_BCM2711_GPIO_H
