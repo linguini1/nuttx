@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm64/src/bcm2711/bcm2711_bsc.h
+ * arch/arm64/src/bcm2711/hardware/bcm2711_bsc.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
  *
@@ -27,20 +27,11 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include "bcm2711_memmap.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-
-/* BSC interface addresses */
-
-#define BCM_BSC0 0x7e205000
-#define BCM_BSC1 0x7e804000
-#define BCM_BSC3 0x7e205600
-#define BCM_BSC4 0x7e205800
-#define BCM_BSC5 0x7e205a80
-#define BCM_BSC6 0x7e205c00
 
 /* BSC register offsets */
 

@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm64/src/bcm2711/bcm2711_mailbox.h
+ * arch/arm64/src/bcm2711/hardware/bcm2711_mailbox.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
  *
@@ -27,19 +27,11 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include "bcm2711_memmap.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-
-/* NOTE: ARM_LOCAL base address defined in IRQ file */
-
-#if defined(CONFIG_BCM2711_LOW_PERIPHERAL)
-#define BCM_ARMLOCAL_BASE_ADDR 0xff800000
-#else
-#define BCM_ARMLOCAL_BASE_ADDR 0x4c0000000
-#endif // defined(CONFIG_BCM2711_LOW_PERIPHERAL)
 
 /* Mailbox register offsets */
 
@@ -78,7 +70,7 @@
 
 /* Mailbox register addresses */
 
-#define _BCM_MBOX(offset) (BCM_ARMLOCAL_BASE_ADDR + (offset))
+#define _BCM_MBOX(offset) (BCM_ARMLOCAL_BASEADDR + (offset))
 
 #define BCM_MBOX_SET00 _BCM_MBOX(BCM_MBOX_SET00_OFFSET)
 #define BCM_MBOX_SET01 _BCM_MBOX(BCM_MBOX_SET01_OFFSET)

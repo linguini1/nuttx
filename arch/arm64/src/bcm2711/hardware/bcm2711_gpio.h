@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm64/src/bcm2711/bcm2711_gpio.h
+ * arch/arm64/src/bcm2711/hardware/bcm2711_gpio.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
  *
@@ -27,15 +27,13 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include "bcm2711_memmap.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
 /* GPIO register offset definitions */
-
-#define BCM_GPIO_BASE_ADDR 0x7e200000
 
 #define BCM_GPIO_GPFSEL0_OFFSET 0x00 /* GPIO function select 0 */
 #define BCM_GPIO_GPFSEL1_OFFSET 0x04 /* GPIO function select 1 */
@@ -72,7 +70,7 @@
 
 /* GPIO register address definitions */
 
-#define _BCM_GP_REG(reg) (BCM_GPIO_BASE_ADDR + (reg))
+#define _BCM_GP_REG(reg) (BCM_GPIO_BASEADDR + (reg))
 
 #define BCM_GPIO_GPFSEL0 _BCM_GP_REG(BCM_GPIO_GPFSEL0_OFFSET)
 #define BCM_GPIO_GPFSEL1 _BCM_GP_REG(BCM_GPIO_GPFSEL1_OFFSET)

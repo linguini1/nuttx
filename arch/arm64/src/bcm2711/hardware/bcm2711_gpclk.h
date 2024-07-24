@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm64/src/bcm2711/bcm2711_gpclk.h
+ * arch/arm64/src/bcm2711/hardware/bcm2711_gpclk.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
  *
@@ -27,15 +27,11 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include "bcm2711_memmap.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-
-/* General purpose clocks */
-
-#define BCM_GPCLK_BASE_ADDR 0x7e101000
 
 /* General purpose clock register offsets */
 
@@ -48,12 +44,12 @@
 
 /* General purpose clock registers */
 
-#define BCM_GPCLK_CM_GP0CTL (BCM_GPCLK_BASE_ADDR + BCM_GPCLK_CM_GP0CTL_OFFSET)
-#define BCM_GPCLK_CM_GP0DIV (BCM_GPCLK_BASE_ADDR + BCM_GPCLK_CM_GP0DIV_OFFSET)
-#define BCM_GPCLK_CM_GP1CTL (BCM_GPCLK_BASE_ADDR + BCM_GPCLK_CM_GP1CTL_OFFSET)
-#define BCM_GPCLK_CM_GP1DIV (BCM_GPCLK_BASE_ADDR + BCM_GPCLK_CM_GP1DIV_OFFSET)
-#define BCM_GPCLK_CM_GP2CTL (BCM_GPCLK_BASE_ADDR + BCM_GPCLK_CM_GP2CTL_OFFSET)
-#define BCM_GPCLK_CM_GP2DIV (BCM_GPCLK_BASE_ADDR + BCM_GPCLK_CM_GP2DIV_OFFSET)
+#define BCM_GPCLK_CM_GP0CTL (BCM_GPCLK_BASEADDR + BCM_GPCLK_CM_GP0CTL_OFFSET)
+#define BCM_GPCLK_CM_GP0DIV (BCM_GPCLK_BASEADDR + BCM_GPCLK_CM_GP0DIV_OFFSET)
+#define BCM_GPCLK_CM_GP1CTL (BCM_GPCLK_BASEADDR + BCM_GPCLK_CM_GP1CTL_OFFSET)
+#define BCM_GPCLK_CM_GP1DIV (BCM_GPCLK_BASEADDR + BCM_GPCLK_CM_GP1DIV_OFFSET)
+#define BCM_GPCLK_CM_GP2CTL (BCM_GPCLK_BASEADDR + BCM_GPCLK_CM_GP2CTL_OFFSET)
+#define BCM_GPCLK_CM_GP2DIV (BCM_GPCLK_BASEADDR + BCM_GPCLK_CM_GP2DIV_OFFSET)
 
 /* General purpose clock bit definitions */
 

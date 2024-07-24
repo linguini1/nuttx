@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm64/src/bcm2711/bcm2711_armtimer.h
+ * arch/arm64/src/bcm2711/hardware/bcm2711_armtimer.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
  *
@@ -27,15 +27,11 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include "bcm2711_memmap.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-
-/* Base address */
-
-#define BCM_ARMT_BASEADDR 0x7e00b000
 
 /* ARM timer register offsets */
 

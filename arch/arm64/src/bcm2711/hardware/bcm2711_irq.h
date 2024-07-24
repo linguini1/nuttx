@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm64/src/bcm2711/bcm2711_irq.h
+ * arch/arm64/src/bcm2711/hardware/bcm2711_irq.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
  *
@@ -27,7 +27,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include "bcm2711_memmap.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -135,22 +135,6 @@
 #define BCM_IRQ_ETH_GENET0_B 30
 #define BCM_IRQ_ETH_USB0_XHCI0 48
 
-/* TODO: config option for GIC400 interrupt controller or legacy one */
-
-/* TODO: config option for low peripheral mode */
-
-#if defined(CONFIG_BCM2711_LOW_PERIPHERAL)
-#define BCM_GIC400_BASE_ADDR 0xff840000
-#else
-#define BCM_GIC400_BASE_ADDR 0x4c0040000
-#endif // defined(CONFIG_BCM2711_LOW_PERIPHERAL)
-
-#if defined(CONFIG_BCM2711_LOW_PERIPHERAL)
-#define BCM_ARMLOCAL_BASE_ADDR 0xff800000
-#else
-#define BCM_ARMLOCAL_BASE_ADDR 0x4c0000000
-#endif // defined(CONFIG_BCM2711_LOW_PERIPHERAL)
-
 /* ARM_LOCAL interrupt register offsets */
 
 #define BCM_IRQ_ARMLOCAL_ARM_CONTROL_OFFSET 0x00
@@ -180,7 +164,7 @@
 
 /* ARM_LOCAL interrupt register addresses */
 
-#define _BCM_ARMLOCAL(offset) (BCM_ARMLOCAL_BASE_ADDR + offset)
+#define _BCM_ARMLOCAL(offset) (BCM_ARMLOCAL_BASEADDR + offset)
 
 #define BCM_IRQ_ARMLOCAL_ARM_CONTROL                                         \
   _BCM_ARMLOCAL(BCM_IRQ_ARMLOCAL_ARM_CONTROL_OFFSET)
@@ -313,7 +297,7 @@
 
 /* ARMC register offsets */
 
-#define BCM_IRQ_ARMC_BASE_ADDR 0x7e00b000
+#define BCM_IRQ_ARMC_BASEADDR 0x7e00b000
 
 #define BCM_IRQ_ARMC_IRQ0_PENDING0_OFFSET 0x200
 #define BCM_IRQ_ARMC_IRQ0_PENDING1_OFFSET 0x204
@@ -395,7 +379,7 @@
 
 /* ARMC register addresses */
 
-#define _BCM_ARMC(offset) (BCM_IRQ_ARMC_BASE_ADDR + (offset))
+#define _BCM_ARMC(offset) (BCM_IRQ_ARMC_BASEADDR + (offset))
 
 #define BCM_IRQ_ARMC_IRQ0_PENDING0                                           \
   _BCM_ARMC(BCM_IRQ_ARMC_IRQ0_PENDING0_OFFSET)

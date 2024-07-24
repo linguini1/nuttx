@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm64/src/bcm2711/bcm2711_pcm.h
+ * arch/arm64/src/bcm2711/hardware/bcm2711_pcm.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
  *
@@ -27,13 +27,11 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include "bcm2711_memmap.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-
-#define BCM_PCM_BASE_ADDR 0x7e203000
 
 /* PCM register offsets */
 
@@ -49,7 +47,7 @@
 
 /* PCM register addresses */
 
-#define _BCM_PCM(offset) (BCM_PCM_BASE_ADDR + offset)
+#define _BCM_PCM(offset) (BCM_PCM_BASEADDR + offset)
 
 #define BCM_PCM_CS_A _BCM_PCM(BCM_PCM_CS_A_OFFSET)     /* Control & status */
 #define BCM_PCM_FIFO_A _BCM_PCM(BCM_PCM_FIFO_A_OFFSET) /* FIFO data */

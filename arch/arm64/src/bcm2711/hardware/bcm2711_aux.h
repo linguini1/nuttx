@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm64/src/bcm2711/bcm2711_aux.h
+ * arch/arm64/src/bcm2711/hardware/bcm2711_aux.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
  *
@@ -27,15 +27,13 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include "bcm2711_memmap.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
 /* BCM2711 auxiliary register offsets. **************************************/
-
-#define BCM_AUX_BASE 0x7e215000
 
 /* BCM2711 mini UART register offsets. */
 
@@ -82,7 +80,7 @@
 
 /* BCM2711 auxiliary registers. *********************************************/
 
-#define BCM_AUX_REG(offset) (BCM_AUX_BASE + (offset))
+#define BCM_AUX_REG(offset) (BCM_AUX_BASEADDR + (offset))
 
 /* BCM2711 mini UART registers. */
 

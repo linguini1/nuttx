@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm64/src/bcm2711/bcm2711_uart.h
+ * arch/arm64/src/bcm2711/hardware/bcm2711_uart.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
  *
@@ -27,19 +27,11 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include "bcm2711_memmap.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-
-/* UART interface base addresses */
-
-#define BCM_UART0_BASEADDR 0x7e201000
-#define BCM_UART2_BASEADDR 0x7e201400
-#define BCM_UART3_BASEADDR 0x7e201600
-#define BCM_UART4_BASEADDR 0x7e201800
-#define BCM_UART5_BASEADDR 0x7e201a00
 
 /* UART register offsets */
 

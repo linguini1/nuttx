@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm64/src/bcm2711/bcm2711_pwm.h
+ * arch/arm64/src/bcm2711/hardware/bcm2711_pwm.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
  *

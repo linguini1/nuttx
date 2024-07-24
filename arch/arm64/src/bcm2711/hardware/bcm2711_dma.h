@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm64/src/bcm2711/bcm2711_dma.h
+ * arch/arm64/src/bcm2711/hardware/bcm2711_dma.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
  *
@@ -27,17 +27,12 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include "bcm2711_memmap.h"
 #include <stdint.h>
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-
-/* DMA channel base addresses */
-
-#define BCM_DMA0_BASE 0x7e007000
-#define BCM_DMA15_BASE 0x7ee05000
 
 /* DMA channel offsets */
 

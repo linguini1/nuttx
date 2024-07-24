@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm64/src/bcm2711/bcm2711_spi.h
+ * arch/arm64/src/bcm2711/hardware/bcm2711_spi.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
  *
@@ -27,19 +27,11 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include "bcm2711_memmap.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-
-/* SPI interface register base addresses */
-
-#define BCM_SPI0_BASEADDR 0x7e204000
-#define BCM_SPI3_BASEADDR 0x7e204600
-#define BCM_SPI4_BASEADDR 0x7e204800
-#define BCM_SPI5_BASEADDR 0x7e204a00
-#define BCM_SPI6_BASEADDR 0x7e204c00
 
 /* SPI register offsets */
 
