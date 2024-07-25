@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #include "bcm2711_memmap.h"
-#include <stdint.h>
+#include <arch/types.h>
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -78,42 +78,42 @@
 
 struct bcm2711_dma_cb_s
 {
-  uint32_t ti;        /* Transfer information */
-  uint32_t source_ad; /* Source address */
-  uint32_t dest_ad;   /* Destination address */
-  uint32_t txfr_len;  /* Transfer length */
-  uint32_t stride;    /* 2D mode stride */
-  uint32_t nextconbk; /* Next control block address */
-  uint32_t _reserved1;
-  uint32_t _reserved2;
+  _uint32_t ti;        /* Transfer information */
+  _uint32_t source_ad; /* Source address */
+  _uint32_t dest_ad;   /* Destination address */
+  _uint32_t txfr_len;  /* Transfer length */
+  _uint32_t stride;    /* 2D mode stride */
+  _uint32_t nextconbk; /* Next control block address */
+  _uint32_t _reserved1;
+  _uint32_t _reserved2;
 };
 
 /* DMA Lite control block definition */
 
 struct bcm2711_dmalite_cb_s
 {
-  uint32_t ti;        /* Transfer information */
-  uint32_t source_ad; /* Source address */
-  uint32_t dest_ad;   /* Destination address */
-  uint32_t txfr_len;  /* Transfer length */
-  uint32_t _reserved1;
-  uint32_t nextconbk; /* Next control block address */
-  uint32_t _reserved2;
-  uint32_t _reserved3;
+  _uint32_t ti;        /* Transfer information */
+  _uint32_t source_ad; /* Source address */
+  _uint32_t dest_ad;   /* Destination address */
+  _uint32_t txfr_len;  /* Transfer length */
+  _uint32_t _reserved1;
+  _uint32_t nextconbk; /* Next control block address */
+  _uint32_t _reserved2;
+  _uint32_t _reserved3;
 };
 
 /* DMA 4 control block definition */
 
 struct bcm2711_dma4_cb_s
 {
-  uint32_t ti;        /* Transfer information */
-  uint32_t src;       /* Source address */
-  uint32_t srci;      /* Source information */
-  uint32_t dest;      /* Destination address */
-  uint32_t desti;     /* Destination information */
-  uint32_t len;       /* Transfer length */
-  uint32_t nextconbk; /* Next control block address */
-  uint32_t _reserved;
+  _uint32_t ti;        /* Transfer information */
+  _uint32_t src;       /* Source address */
+  _uint32_t srci;      /* Source information */
+  _uint32_t dest;      /* Destination address */
+  _uint32_t desti;     /* Destination information */
+  _uint32_t len;       /* Transfer length */
+  _uint32_t nextconbk; /* Next control block address */
+  _uint32_t _reserved;
 };
 
 /* DMA registers offsets */
