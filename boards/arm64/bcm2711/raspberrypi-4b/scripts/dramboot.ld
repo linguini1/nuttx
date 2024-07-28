@@ -29,7 +29,6 @@ PHDRS
 
 SECTIONS
 {
-  . = 0x40080000;  /* U-Boot loads NuttX at this address (kernel_addr_r) */
   _start = .;
   .text : {
         _stext = .;            /* Text section */
