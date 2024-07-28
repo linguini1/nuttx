@@ -108,6 +108,7 @@ config ARCH_CHIP_BCM2711
 	select ARCH_HAVE_IRQTRIGGER
 	select ARCH_NEED_ADDRENV_MAPPING
 	select ARCH_HAVE_MULTICPU
+    select ARMV8A_HAVE_GICv2
 	---help---
 		Broadcom BCM2711 quad-core ARM Cortex A72
 
@@ -235,7 +236,6 @@ config ARCH_CORTEX_A72
 	select ARCH_HAVE_FPU
 	select ARCH_HAVE_TESTSET
 	select ARM64_HAVE_NEON
-    select ARMV8A_HAVE_GICv3
 
 config ARCH_CORTEX_R82
 	bool

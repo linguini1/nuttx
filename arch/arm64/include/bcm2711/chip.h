@@ -37,14 +37,13 @@
 #define MB(x) (KB(x) << 10)
 #define GB(x) (MB(UINT64_C(x)) << 10)
 
-/* TODO: What are these values for the BCM2711???? */
-
 /* TODO: config option for low peripheral mode */
 
 /* TODO: config option for GIC400 interrupt controller or legacy one */
 
-
-/* GIC-400 base address */
+/* GIC-400 base address.
+ * The GIC-400 uses GICv2 architecture.
+ */
 
 #if defined(CONFIG_BCM2711_LOW_PERIPHERAL)
 #define BCM_GIC400_BASEADDR 0xff840000
@@ -52,14 +51,15 @@
 #define BCM_GIC400_BASEADDR 0x4c0040000
 #endif // defined(CONFIG_BCM2711_LOW_PERIPHERAL)
 
-/* TODO: What are the GICD and GICR addresses? */
-
-/* The GIC version is 3 for the A72 */
+/* TODO: What is the GICR address? Confirm that I have this correct. */
 
 #define BCM_GIC400_DISTOFFSET 0x00001000
+#define BCM_GIC400_RDISTOFFSET 0x00002000
 #define CONFIG_GICD_BASE (BCM_GIC400_BASEADDR + BCM_GIC400_DISTOFFSET)
+#define CONFIG_GICR_BASE (BCM_GIC400_BASEADDR + BCM_GIC400_RDISTOFFSET)
+#define CONFIG_GICR_OFFSET 0x20000 /* TODO: verify this? */
 
-#define MPID_TO_CLUSTER_ID(mpid)  ((mpid) & ~0xff)
+#define MPID_TO_CLUSTER_ID(mpid) ((mpid) & ~0xff)
 
 /****************************************************************************
  * Assembly Macros
