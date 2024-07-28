@@ -27,12 +27,12 @@
 #include <assert.h>
 #include <debug.h>
 
-#include <arch/chip/chip.h>
 #include "arm64_arch.h"
 #include "arm64_internal.h"
 #include "arm64_mmu.h"
 #include "bcm2711_boot.h"
 #include "bcm2711_serial.h"
+#include <arch/chip/chip.h>
 
 #ifdef CONFIG_SMP
 #include "arm64_smp.h"
@@ -40,12 +40,21 @@
 
 #include <nuttx/cache.h>
 #ifdef CONFIG_LEGACY_PAGING
-#  include <nuttx/page.h>
+#include <nuttx/page.h>
 #endif
 
 /****************************************************************************
  * Private Data
  ****************************************************************************/
+
+static const struct arm_mmu_region g_mmu_regions[] = {
+    // TODO
+};
+
+const struct arm_mmu_config g_mmu_config = {
+    .num_regions = nitems(g_mmu_regions),
+    .mmu_regions = g_mmu_regions,
+};
 
 /****************************************************************************
  * Public Functions
