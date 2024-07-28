@@ -100,6 +100,16 @@ config ARCH_CHIP_IMX9
 	---help---
 		NXP i.MX9 (ARMv8.2a) applications processors
 
+config ARCH_CHIP_BCM2711
+	bool "Broadcom BCM2711"
+	select ARCH_CORTEX_A72
+	select ARCH_HAVE_ADDRENV
+	select ARCH_HAVE_RESET
+	select ARCH_HAVE_IRQTRIGGER
+	select ARCH_NEED_ADDRENV_MAPPING
+	---help---
+		Broadcom BCM2711 quad-core ARM Cortex A72
+
 config ARCH_CHIP_ARM64_CUSTOM
 	bool "Custom ARM64 chip"
 	select ARCH_CHIP_CUSTOM
