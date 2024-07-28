@@ -72,18 +72,6 @@
 #define BCM_DMA0_BASE 0x7e007000  /* DMA Channel 0 */
 #define BCM_DMA15_BASE 0x7ee05000 /* DMA Channel 15 */
 
-/* TODO: config option for GIC400 interrupt controller or legacy one */
-
-/* TODO: config option for low peripheral mode */
-
-/* GIC-400 base address */
-
-#if defined(CONFIG_BCM2711_LOW_PERIPHERAL)
-#define BCM_GIC400_BASEADDR 0xff840000
-#else
-#define BCM_GIC400_BASEADDR 0x4c0040000
-#endif // defined(CONFIG_BCM2711_LOW_PERIPHERAL)
-
 /* ARM_LOCAL base address */
 
 #if defined(CONFIG_BCM2711_LOW_PERIPHERAL)
