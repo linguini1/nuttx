@@ -31,32 +31,29 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-/* Number of bytes in x kibibytes/mebibytes/gibibytes */
+/* Number of bytes in x kilobytes/megabytes/gigabytes */
 
-#define KB(x)           ((x) << 10)
-#define MB(x)           (KB(x) << 10)
-#define GB(x)           (MB(UINT64_C(x)) << 10)
+#define KB(x) ((x) << 10)
+#define MB(x) (KB(x) << 10)
+#define GB(x) (MB(UINT64_C(x)) << 10)
 
-// TODO: What are these values for the BCM2711????
-/* BCM2711 Generic Interrupt Controller v2: Distributor and Redist */
+/* TODO: What are these values for the BCM2711???? */
 
-#define CONFIG_GICD_BASE          0x1C81000
-#define CONFIG_GICR_BASE          0x1C82000
+/* TODO: config option for low peripheral mode */
 
-/* BCM2711 Memory Map: RAM and Device I/O */
+/* TODO: config option for GIC400 interrupt controller or legacy one */
 
-#define CONFIG_RAMBANK1_ADDR      0x40000000
-#define CONFIG_RAMBANK1_SIZE      MB(128)
+/* TODO: What are the GICD and GICR addresses? */
 
-#define CONFIG_DEVICEIO_BASEADDR  0x00000000
-#define CONFIG_DEVICEIO_SIZE      MB(512)
+/* GIC-400 base address */
 
-/* U-Boot loads NuttX at this address (kernel_addr_r) */
+#if defined(CONFIG_BCM2711_LOW_PERIPHERAL)
+#define BCM_GIC400_BASEADDR 0xff840000
+#else
+#define BCM_GIC400_BASEADDR 0x4c0040000
+#endif // defined(CONFIG_BCM2711_LOW_PERIPHERAL)
 
-#define CONFIG_LOAD_BASE          0x40080000
-
-#define MPID_TO_CLUSTER_ID(mpid)  ((mpid) & ~0xff)
-#define CONFIG_GICR_OFFSET        0x20000
+/* The GIC version is 3 */
 
 /****************************************************************************
  * Assembly Macros
