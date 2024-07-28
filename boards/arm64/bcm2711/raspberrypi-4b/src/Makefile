@@ -20,6 +20,6 @@
 
 include $(TOPDIR)/Make.defs
 
-# TODO: CSRCS stuff goes here
+CSRCS += rpi4b_boardinitialize.c
 
 include $(TOPDIR)/boards/Board.mk
