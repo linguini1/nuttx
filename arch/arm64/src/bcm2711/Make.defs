@@ -22,4 +22,6 @@ include common/Make.defs
 
 # BCM2711 specific C source files
 
+CSRCS += bcm2711_serial.c
+
 # TODO

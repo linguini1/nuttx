@@ -24,9 +24,11 @@
 
 #include <nuttx/config.h>
 #include <nuttx/serial/serial.h>
+#include <stdbool.h>
+#include <stdint.h>
 
-#include "hardware/bcm2711_aux.h"
 #include "arm64_arch.h"
+#include "hardware/bcm2711_aux.h"
 
 /***************************************************************************
  * Pre-processor Definitions
@@ -36,15 +38,60 @@
  * Private Function Prototypes
  ***************************************************************************/
 static int bcm2711_uart_setup(struct uart_dev_s *dev);
+static bool bcm2711_uart_txready(struct uart_dev_s *dev);
+static bool bcm2711_uart_txempty(struct uart_dev_s *dev);
+static bool bcm2711_uart_rxavail(struct uart_dev_s *dev);
+static void bcm2711_uart_send(struct uart_dev_s *dev, char c);
+static int bcm2711_uart_receive(struct uart_dev_s *dev, unsigned int *status);
 
 /***************************************************************************
  * Private Functions
  ***************************************************************************/
 
-static int bcm2711_uart_setup(struct uart_dev_s *dev) {
+static int bcm2711_uart_setup(struct uart_dev_s *dev)
+{
 
-    // enable 8 bit
-    putreg32(getreg32(BCM_AUX_MU_LCR_REG) | BCM_AUX_MU_LCR_DATA8B, BCM_AUX_MU_LCR_REG);
+  /* Enable 8 bit */
+  putreg32(getreg32(BCM_AUX_MU_LCR_REG) | BCM_AUX_MU_LCR_DATA8B,
+           BCM_AUX_MU_LCR_REG);
 
-    return 0;
+  // TODO
+
+  return 0;
+}
+
+static bool bcm2711_uart_txready(struct uart_dev_s *dev)
+{
+  return getreg32(BCM_AUX_MU_STAT_REG) & BCM_AUX_MU_STAT_SPACEAVAIL;
+}
+
+static bool bcm2711_uart_txempty(struct uart_dev_s *dev)
+{
+  return getreg32(BCM_AUX_MU_STAT_REG) & BCM_AUX_MU_STAT_TXEMPTY;
+}
+
+static bool bcm2711_uart_rxavail(struct uart_dev_s *dev)
+{
+  return getreg32(BCM_AUX_MU_STAT_REG) & BCM_AUX_MU_STAT_SYMAVAIL;
+}
+
+static void bcm2711_uart_send(struct uart_dev_s *dev, char c)
+{
+
+  while (!bcm2711_uart_txready(dev))
+    {
+      /* Wait to send byte */
+    }
+  /* Write byte (do I need to mask to avoid writing to LS8 baud rate bits?) */
+  putreg32(c, BCM_AUX_MU_IO_REG);
+}
+
+static int bcm2711_uart_receive(struct uart_dev_s *dev, unsigned int *status)
+{
+  while (!bcm2711_uart_rxavail(dev))
+    {
+      /* Wait for symbol */
+    }
+  *status = 0;                               /* OK */
+  return getreg32(BCM_AUX_MU_IO_REG) & 0xff; /* Read byte */
 }
