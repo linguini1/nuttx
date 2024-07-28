@@ -28,6 +28,7 @@
 #include <stdint.h>
 
 #include "arm64_arch.h"
+#include "arm64_internal.h"
 #include "hardware/bcm2711_aux.h"
 
 /***************************************************************************
