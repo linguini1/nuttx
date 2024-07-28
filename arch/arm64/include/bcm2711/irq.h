@@ -27,6 +27,9 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+// TODO: Verify that this is correct
+#define NR_IRQS 98
+
 /* ARM_LOCAL interrupts */
 
 /* ARMC interrupts */
