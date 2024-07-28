@@ -62,10 +62,10 @@
 /* UART interface base addresses */
 
 #define BCM_UART0_BASEADDR 0x7e201000 /* UART interface 0 */
-#define BCM_UART2_BASEADDR 0x7e201400 /* UART interface 1 */
-#define BCM_UART3_BASEADDR 0x7e201600 /* UART interface 2 */
-#define BCM_UART4_BASEADDR 0x7e201800 /* UART interface 3 */
-#define BCM_UART5_BASEADDR 0x7e201a00 /* UART interface 4 */
+#define BCM_UART2_BASEADDR 0x7e201400 /* UART interface 2 */
+#define BCM_UART3_BASEADDR 0x7e201600 /* UART interface 3 */
+#define BCM_UART4_BASEADDR 0x7e201800 /* UART interface 4 */
+#define BCM_UART5_BASEADDR 0x7e201a00 /* UART interface 5 */
 
 /* DMA channel base addresses */
 
