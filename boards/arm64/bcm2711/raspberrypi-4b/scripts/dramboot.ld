@@ -29,6 +29,7 @@ PHDRS
 
 SECTIONS
 {
+  . = 0x80000; /* Kernel load address for aarch64 */
   _start = .;
   .text : {
         _stext = .;            /* Text section */
