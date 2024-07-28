@@ -43,7 +43,6 @@
 
 /* TODO: config option for GIC400 interrupt controller or legacy one */
 
-/* TODO: What are the GICD and GICR addresses? */
 
 /* GIC-400 base address */
 
@@ -53,7 +52,14 @@
 #define BCM_GIC400_BASEADDR 0x4c0040000
 #endif // defined(CONFIG_BCM2711_LOW_PERIPHERAL)
 
-/* The GIC version is 3 */
+/* TODO: What are the GICD and GICR addresses? */
+
+/* The GIC version is 3 for the A72 */
+
+#define BCM_GIC400_DISTOFFSET 0x00001000
+#define CONFIG_GICD_BASE (BCM_GIC400_BASEADDR + BCM_GIC400_DISTOFFSET)
+
+#define MPID_TO_CLUSTER_ID(mpid)  ((mpid) & ~0xff)
 
 /****************************************************************************
  * Assembly Macros
