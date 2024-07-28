@@ -39,6 +39,34 @@
  * Pre-processor Definitions
  ***************************************************************************/
 
+/* Mini UART settings. */
+
+#ifndef CONFIG_MINIUART_BAUD
+#define CONFIG_MINIUART_BAUD 115200
+#endif
+
+#ifndef CONFIG_MINIUART_BITS
+#define CONFIG_MINIUART_BITS 8
+#endif
+
+#ifndef CONFIG_MINIUART_PARITY
+#define CONFIG_MINIUART_PARITY 0
+#endif
+
+#ifndef CONFIG_MINIUART_2STOP
+#define CONFIG_MINIUART_2STOP 0
+#endif
+
+#ifndef CONFIG_MINIUART_RXBUFSIZE
+#define CONFIG_MINIUART_RXBUFSIZE 256
+#endif
+
+#ifndef CONFIG_MINIUART_TXBUFSIZE
+#define CONFIG_MINIUART_TXBUFSIZE 256
+#endif
+
+#define CONSOLE_DEV g_miniuartport /* Mini UART is console */
+
 /***************************************************************************
  * Private Function Prototypes
  ***************************************************************************/
@@ -78,6 +106,28 @@ static const struct uart_ops_s g_uart_ops = {
     .txint = bcm2711_uart_txint,
     .txready = bcm2711_uart_txready,
     .txempty = bcm2711_uart_txempty,
+};
+
+/* Mini UART I/O Buffers (Console) */
+
+static char g_miniuartrxbuffer[CONFIG_MINIUART_RXBUFSIZE];
+static char g_miniuarttxbuffer[CONFIG_MINIUART_TXBUFSIZE];
+
+static struct uart_dev_s g_miniuartport = {
+    .recv =
+        {
+            .size = CONFIG_MINIUART_RXBUFSIZE,
+            .buffer = g_miniuartrxbuffer,
+        },
+
+    .xmit =
+        {
+            .size = CONFIG_MINIUART_TXBUFSIZE,
+            .buffer = g_miniuarttxbuffer,
+        },
+
+    .ops = &g_uart_ops,
+    .priv = NULL, // TODO
 };
 
 /***************************************************************************
@@ -354,7 +404,7 @@ static int bcm2711_uart_attach(struct uart_dev_s *dev)
 
 static void bcm2711_uart_detach(struct uart_dev_s *dev)
 {
-  return -ENOSYS; // TODO
+  return; // TODO
 }
 
 /***************************************************************************
@@ -376,7 +426,6 @@ static void bcm2711_uart_detach(struct uart_dev_s *dev)
 
 void arm64_earlyserialinit(void)
 {
-  int ret;
   _err("arm64_earlyserialinit not implemented.");
   // TODO
 }
@@ -429,6 +478,12 @@ int up_putc(int ch)
 
 void arm64_serialinit(void)
 {
+  int ret;
+  ret = uart_register("/dev/console", &CONSOLE_DEV);
+  if (ret < 0)
+    {
+      _err("Could not register /dev/console, ret=%d\n", ret);
+    }
   _err("arm64_serialinit not implemented");
   // TODO
 }
