@@ -5,6 +5,11 @@
 
 if ARCH_BOARD_RASPBERRYPI_4B
 
-    # TODO
+    config RASBPERRYPI_4B_RAM
+        int "Raspberry Pi 4B RAM size (in GB)"
+        default 4
+        ---help---
+            The size of the Raspberry Pi 4B's RAM in GB. Supports
+            1GB, 2GB, 4GB and 8GB models.
 
 endif # ARCH_BOARD_RASPBERRYPI_4B
