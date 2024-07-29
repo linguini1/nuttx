@@ -46,9 +46,17 @@
  */
 
 #if defined(CONFIG_BCM2711_LOW_PERIPHERAL)
+
+/* Low peripheral GIC address */
+
 #define BCM_GIC400_BASEADDR 0xff840000
+
 #else
+
+/* Used for both 35-bit addressing and legacy mode. */
+
 #define BCM_GIC400_BASEADDR 0x4c0040000
+
 #endif // defined(CONFIG_BCM2711_LOW_PERIPHERAL)
 
 #define BCM_GIC400_DISTOFFSET 0x00001000  /* Distributor */
