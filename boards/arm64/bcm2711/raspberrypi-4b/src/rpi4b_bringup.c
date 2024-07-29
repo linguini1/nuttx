@@ -1,7 +1,5 @@
 /****************************************************************************
- * boards/arm64/bcm2711/raspberrypi-4b/src/rpi4b.h
- *
- * Author: Matteo Golin
+ * boards/arm64/bcm2711/raspberrypi-4b/src/rpi4b_bringup.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -20,17 +18,17 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM64_BCM2711_RASPBERRYPI_4B_SRC_RPI4B_H
-#define __BOARDS_ARM64_BCM2711_RASPBERRYPI_4B_SRC_RPI4B_H
-
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
+#include <sys/types.h>
+#include <syslog.h>
+#include "rpi4b.h"
 
 /****************************************************************************
- * Public Functions Definitions
+ * Public Functions
  ****************************************************************************/
 
 /****************************************************************************
@@ -41,8 +39,6 @@
  *
  ****************************************************************************/
 
-#if defined(CONFIG_BOARDCTL) || defined(CONFIG_BOARD_LATE_INITIALIZE)
-int rpi4b_bringup(void);
-#endif
-
-#endif // __BOARDS_ARM64_BCM2711_RASPBERRYPI_4B_SRC_RPI4B_H
+int rpi4b_bringup(void) {
+    return OK;
+}

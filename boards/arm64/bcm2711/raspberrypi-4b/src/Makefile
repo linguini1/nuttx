@@ -20,6 +20,10 @@
 
 include $(TOPDIR)/Make.defs
 
-CSRCS += rpi4b_boardinitialize.c
+CSRCS += rpi4b_boardinitialize.c rpi4b_bringup.c
+
+ifeq ($(CONFIG_BOARDCTL),y)
+CSRCS += rpi4b_appinit.c
+endif
 
 include $(TOPDIR)/boards/Board.mk
