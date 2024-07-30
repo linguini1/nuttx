@@ -5,6 +5,14 @@
 
 if ARCH_CHIP_BCM2711
 
-    menu "Broadcom BCM2711 Peripheral Selection"
+menu "Broadcom BCM2711 Peripheral Selection"
+
+config BCM2711_LOW_PERIPHERAL
+    bool "BCM2711 Low Peripheral Mode"
+    default y
+    ---help---
+        Use the Broadcom BCM2711 in low peripheral addressing mode.
+
+endmenu # Broadcom BCM2711 Peripheral Selection
 
 endif # ARCH_CHIP_BCM2711

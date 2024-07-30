@@ -36,6 +36,7 @@
 #include "bcm2711_serial.h"
 #include "hardware/bcm2711_aux.h"
 #include "hardware/bcm2711_gpio.h"
+#include "hardware/bcm2711_uart.h"
 
 /***************************************************************************
  * Pre-processor Definitions
@@ -108,8 +109,10 @@ struct bcm2711_uart_port_s
 
 /* Mini UART helper functions */
 
+#if 0
 static void bcm2711_miniuart_setbaud(uint32_t baudrate);
 static uint16_t bcm2711_miniuart_baudreg(uint32_t baudrate);
+#endif
 static void bcm2711_miniuart_wait_send(struct uart_dev_s *dev, char c);
 
 /* Mini UART operations */
@@ -204,9 +207,9 @@ static struct uart_dev_s g_miniuartport = {
  *
  ***************************************************************************/
 
+#if 0
 static uint16_t bcm2711_miniuart_baudreg(uint32_t baudrate)
 {
-  DEBUGASSERT(baudrate != 0);
   return (SYSTEM_CLOCK_FREQUENCY / (8 * baudrate)) - 1;
 }
 
@@ -226,9 +229,9 @@ static uint16_t bcm2711_miniuart_baudreg(uint32_t baudrate)
 
 static void bcm2711_miniuart_setbaud(uint32_t baudrate)
 {
-  putreg32(bcm2711_miniuart_baudreg(baudrate) & BCM_AUX_MU_BAUD_MASK,
-           BCM_AUX_MU_BAUD_REG);
+  putreg32(bcm2711_miniuart_baudreg(baudrate), BCM_AUX_MU_BAUD_REG);
 }
+#endif
 
 /***************************************************************************
  * Name: bcm2711_miniuart_txint
@@ -330,65 +333,51 @@ static int bcm2711_miniuart_setup(struct uart_dev_s *dev)
   struct bcm2711_miniuart_port_s *port =
       (struct bcm2711_miniuart_port_s *)dev->priv;
 
-  bcm2711_miniuart_setbaud(port->config.baud_rate);
+  /* Enable Mini UART peripheral */
 
-  putreg32(0, BCM_AUX_MU_IER_REG);
-  putreg32(0, BCM_AUX_MU_CNTL_REG);
-  putreg32(3, BCM_AUX_MU_LCR_REG);
-  putreg32(0, BCM_AUX_MU_MCR_REG);
-  putreg32(0, BCM_AUX_MU_IER_REG);
-  putreg32(0xc6, BCM_AUX_MU_IIR_REG);
-  putreg32((SYSTEM_CLOCK_FREQUENCY / (CONFIG_MINIUART_BAUD * 8) - 1),
-           BCM_AUX_MU_BAUD_REG);
-  putreg32(0 | (BCM_GPIO_FS_ALT5 << 12) | (BCM_GPIO_FS_ALT5 << 15),
-           BCM_GPIO_GPFSEL1);
-  putreg32(0 | (BCM_GPIO_NORES << 12) | (BCM_GPIO_NORES << 15),
-           BCM_GPIO_PUP_PDN_CNTRL_REG1);
-  putreg32(3, BCM_AUX_MU_CNTL_REG);
+  putreg32(1, BCM_AUX_ENABLES);
 
-#if 0
   /* Make sure DLAB is clear */
 
   putreg32(getreg32(BCM_AUX_MU_LCR_REG) & ~BCM_AUX_MU_LCR_DLAB,
            BCM_AUX_MU_LCR_REG);
 
-  /* Make sure transmitter and receiver are enabled */
+  /* Disable RX and TX while configuration is happening */
 
-  putreg32(getreg32(BCM_AUX_MU_CNTL_REG) | BCM_AUX_MU_CNTL_TXENABLE |
-               BCM_AUX_MU_CNTL_RXENABLE,
+  putreg32(getreg32(BCM_AUX_MU_CNTL_REG) &
+               ~(BCM_AUX_MU_CNTL_RXENABLE | BCM_AUX_MU_CNTL_TXENABLE),
            BCM_AUX_MU_CNTL_REG);
 
   /* Set data bit count */
 
-  uint32_t lcr_reg = getreg32(BCM_AUX_MU_LCR_REG);
-  if (port->config.data_bits == 8)
-    {
-      /* 8 data bits */
-
-      putreg32(lcr_reg | BCM_AUX_MU_LCR_DATA8B, BCM_AUX_MU_LCR_REG);
-    }
-  else if (port->config.data_bits == 7)
+  if (port->config.data_bits == 7)
     {
       /* 7 data bits */
 
-      putreg32(lcr_reg & ~BCM_AUX_MU_LCR_DATA8B, BCM_AUX_MU_LCR_REG);
+      putreg32(getreg32(BCM_AUX_MU_LCR_REG) & ~BCM_AUX_MU_LCR_DATA8B,
+               BCM_AUX_MU_LCR_REG);
     }
   else
     {
-      _err("Mini UART data bits should be 7 or 8.");
-      return -EINVAL;
+      /* 8 data bits */
+
+      putreg32(getreg32(BCM_AUX_MU_LCR_REG) | BCM_AUX_MU_LCR_DATA8B,
+               BCM_AUX_MU_LCR_REG);
     }
+
+  /* Disable interrupts */
+
+  bcm2711_miniuart_rxint(dev, false);
+  bcm2711_miniuart_txint(dev, false);
 
   /* Set baud rate */
 
-  DEBUGASSERT(port->config.baud_rate != 0);
-  bcm2711_miniuart_setbaud(port->config.baud_rate);
+  putreg32((SYSTEM_CLOCK_FREQUENCY / (CONFIG_MINIUART_BAUD * 8) - 1),
+           BCM_AUX_MU_BAUD_REG);
 
-  /* Enable Mini UART now that setup is complete */
-  putreg32(getreg32(BCM_AUX_ENABLES) | BCM_AUX_ENABLE_MU, BCM_AUX_ENABLES);
-#endif
+  putreg32(3, BCM_AUX_MU_CNTL_REG);
 
-  // TODO
+  // TODO: This doesn't work yet
 
   return 0;
 }
@@ -627,7 +616,9 @@ void arm64_earlyserialinit(void)
 
 void arm64_earlyprintinit(char ch)
 {
-  // TODO
+#ifdef CONSOLE_DEV
+  bcm2711_miniuart_setup(&CONSOLE_DEV);
+#endif
 }
 
 /****************************************************************************

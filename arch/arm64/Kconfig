@@ -375,4 +375,8 @@ if ARCH_CHIP_GOLDFISH
 source "arch/arm64/src/goldfish/Kconfig"
 endif
 
+if ARCH_CHIP_BCM2711
+source "arch/arm64/src/bcm2711/Kconfig"
+endif
+
 endif # ARCH_ARM64

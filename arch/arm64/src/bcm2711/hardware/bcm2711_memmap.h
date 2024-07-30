@@ -37,7 +37,7 @@
 
 #if defined(CONFIG_BCM2711_LOW_PERIPHERAL)
 
-/* Low peripheral addressing mode */
+/* Low peripheral addressing mode (default for RPi 4B boot) */
 
 #define BCM_PERIPHERAL_BASEADDR 0x0fe000000
 
@@ -51,8 +51,7 @@
 
 /* 35-bit addressing mode */
 
-//#define BCM_PERIPHERAL_BASEADDR 0x47e000000 TODO
-#define BCM_PERIPHERAL_BASEADDR 0xfe000000
+#define BCM_PERIPHERAL_BASEADDR 0x47e000000
 
 #endif // defined(CONFIG_BCM2711_LOW_PERIPHERAL)
 
