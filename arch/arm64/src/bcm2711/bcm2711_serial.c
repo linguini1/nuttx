@@ -109,10 +109,8 @@ struct bcm2711_uart_port_s
 
 /* Mini UART helper functions */
 
-#if 0
 static void bcm2711_miniuart_setbaud(uint32_t baudrate);
 static uint16_t bcm2711_miniuart_baudreg(uint32_t baudrate);
-#endif
 static void bcm2711_miniuart_wait_send(struct uart_dev_s *dev, char c);
 
 /* Mini UART operations */
@@ -207,7 +205,6 @@ static struct uart_dev_s g_miniuartport = {
  *
  ***************************************************************************/
 
-#if 0
 static uint16_t bcm2711_miniuart_baudreg(uint32_t baudrate)
 {
   return (SYSTEM_CLOCK_FREQUENCY / (8 * baudrate)) - 1;
@@ -231,7 +228,6 @@ static void bcm2711_miniuart_setbaud(uint32_t baudrate)
 {
   putreg32(bcm2711_miniuart_baudreg(baudrate), BCM_AUX_MU_BAUD_REG);
 }
-#endif
 
 /***************************************************************************
  * Name: bcm2711_miniuart_txint
@@ -372,10 +368,13 @@ static int bcm2711_miniuart_setup(struct uart_dev_s *dev)
 
   /* Set baud rate */
 
-  putreg32((SYSTEM_CLOCK_FREQUENCY / (CONFIG_MINIUART_BAUD * 8) - 1),
-           BCM_AUX_MU_BAUD_REG);
+  bcm2711_miniuart_setbaud(port->config.baud_rate);
 
-  putreg32(3, BCM_AUX_MU_CNTL_REG);
+  /* Re-enable RX and TX */
+
+  putreg32(getreg32(BCM_AUX_MU_CNTL_REG) | BCM_AUX_MU_CNTL_RXENABLE |
+               BCM_AUX_MU_CNTL_TXENABLE,
+           BCM_AUX_MU_CNTL_REG);
 
   // TODO: This doesn't work yet
 
