@@ -23,3 +23,7 @@ include common/Make.defs
 # BCM2711 specific C source files
 
 CHIP_CSRCS += bcm2711_boot.c bcm2711_serial.c
+
+ifeq ($(CONFIG_ARCH_EARLY_PRINT),y)
+CHIP_CSRCS += bcm2711_lowputc.c
+endif

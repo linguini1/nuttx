@@ -603,35 +603,6 @@ void arm64_earlyserialinit(void)
 #endif
 }
 
-#ifdef CONFIG_ARCH_EARLY_PRINT
-
-/****************************************************************************
- * Name: arm64_earlyprintinit
- *
- * Description:
- *   Configure Mini UART for non-interrupt driven operation
- *
- ****************************************************************************/
-
-void arm64_earlyprintinit(char ch)
-{
-#ifdef CONSOLE_DEV
-  bcm2711_miniuart_setup(&CONSOLE_DEV);
-#endif
-}
-
-/****************************************************************************
- * Name: arm64_lowputc
- *
- * Description:
- *   Output a byte with as few system dependencies as possible.
- *
- ****************************************************************************/
-
-void arm64_lowputc(char ch) { up_putc(ch); }
-
-#endif // CONFIG_ARCH_EARLY_PRINT
-
 /***************************************************************************
  * Name: up_putc
  *
