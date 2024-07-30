@@ -68,9 +68,9 @@
 
 #define UART_TIMEOUT_MS 100
 
-/* System clock frequency for Mini UART */
+/* System clock frequency for Mini UART (250MHz after reset) */
 
-#define SYSTEM_CLOCK_FREQUENCY 200000000 // TODO: check this
+#define SYSTEM_CLOCK_FREQUENCY 250000000 // TODO: check this
 
 /***************************************************************************
  * Private Types
@@ -365,6 +365,9 @@ static int bcm2711_miniuart_setup(struct uart_dev_s *dev)
 
   DEBUGASSERT(port->config.baud_rate != 0);
   bcm2711_miniuart_setbaud(port->config.baud_rate);
+
+  /* Enable Mini UART now that setup is complete */
+  putreg32(getreg32(BCM_AUX_ENABLES) | BCM_AUX_ENABLE_MU, BCM_AUX_ENABLES);
 
   // TODO
 
