@@ -47,8 +47,15 @@
  * Private Data
  ****************************************************************************/
 
+// TODO: this is copy pasted from the QEMU build
 static const struct arm_mmu_region g_mmu_regions[] = {
-    // TODO
+    MMU_REGION_FLAT_ENTRY("DEVICE_REGION", CONFIG_DEVICEIO_BASEADDR,
+                          CONFIG_DEVICEIO_SIZE,
+                          MT_DEVICE_NGNRNE | MT_RW | MT_SECURE),
+
+    MMU_REGION_FLAT_ENTRY("DRAM0_S0", CONFIG_RAMBANK1_ADDR,
+                          CONFIG_RAMBANK1_SIZE,
+                          MT_NORMAL | MT_RW | MT_SECURE),
 };
 
 const struct arm_mmu_config g_mmu_config = {

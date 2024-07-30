@@ -65,6 +65,16 @@
 #define CONFIG_GICR_BASE (BCM_GIC400_BASEADDR + BCM_GIC400_RDISTOFFSET)
 #define CONFIG_GICR_OFFSET BCM_GIC400_RDISTOFFSET
 
+/* BCM2711 memory map: RAM and Device I/O */
+
+// TODO: verify
+
+#define CONFIG_RAMBANK1_ADDR      0x40000000
+#define CONFIG_RAMBANK1_SIZE      MB(128)
+
+#define CONFIG_DEVICEIO_BASEADDR  0x00000000
+#define CONFIG_DEVICEIO_SIZE      MB(512)
+
 #define MPID_TO_CLUSTER_ID(mpid) ((mpid) & ~0xff)
 
 /****************************************************************************

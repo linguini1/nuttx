@@ -35,6 +35,7 @@
 #include "arm64_internal.h"
 #include "bcm2711_serial.h"
 #include "hardware/bcm2711_aux.h"
+#include "hardware/bcm2711_gpio.h"
 
 /***************************************************************************
  * Pre-processor Definitions
@@ -70,7 +71,7 @@
 
 /* System clock frequency for Mini UART (250MHz after reset) */
 
-#define SYSTEM_CLOCK_FREQUENCY 250000000 // TODO: check this
+#define SYSTEM_CLOCK_FREQUENCY 500000000 // TODO: check this
 
 /***************************************************************************
  * Private Types
@@ -329,6 +330,23 @@ static int bcm2711_miniuart_setup(struct uart_dev_s *dev)
   struct bcm2711_miniuart_port_s *port =
       (struct bcm2711_miniuart_port_s *)dev->priv;
 
+  bcm2711_miniuart_setbaud(port->config.baud_rate);
+
+  putreg32(0, BCM_AUX_MU_IER_REG);
+  putreg32(0, BCM_AUX_MU_CNTL_REG);
+  putreg32(3, BCM_AUX_MU_LCR_REG);
+  putreg32(0, BCM_AUX_MU_MCR_REG);
+  putreg32(0, BCM_AUX_MU_IER_REG);
+  putreg32(0xc6, BCM_AUX_MU_IIR_REG);
+  putreg32((SYSTEM_CLOCK_FREQUENCY / (CONFIG_MINIUART_BAUD * 8) - 1),
+           BCM_AUX_MU_BAUD_REG);
+  putreg32(0 | (BCM_GPIO_FS_ALT5 << 12) | (BCM_GPIO_FS_ALT5 << 15),
+           BCM_GPIO_GPFSEL1);
+  putreg32(0 | (BCM_GPIO_NORES << 12) | (BCM_GPIO_NORES << 15),
+           BCM_GPIO_PUP_PDN_CNTRL_REG1);
+  putreg32(3, BCM_AUX_MU_CNTL_REG);
+
+#if 0
   /* Make sure DLAB is clear */
 
   putreg32(getreg32(BCM_AUX_MU_LCR_REG) & ~BCM_AUX_MU_LCR_DLAB,
@@ -368,6 +386,7 @@ static int bcm2711_miniuart_setup(struct uart_dev_s *dev)
 
   /* Enable Mini UART now that setup is complete */
   putreg32(getreg32(BCM_AUX_ENABLES) | BCM_AUX_ENABLE_MU, BCM_AUX_ENABLES);
+#endif
 
   // TODO
 
