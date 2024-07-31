@@ -74,6 +74,11 @@ void arm64_earlyprintinit(char ch)
 
   // Enable UART again
   putreg32(3, BCM_AUX_MU_CNTL_REG);
+
+  putreg32('h', BCM_AUX_MU_IO_REG);
+  putreg32('i', BCM_AUX_MU_IO_REG);
+  putreg32('\r', BCM_AUX_MU_IO_REG);
+  putreg32('\n', BCM_AUX_MU_IO_REG);
 }
 
 /****************************************************************************
