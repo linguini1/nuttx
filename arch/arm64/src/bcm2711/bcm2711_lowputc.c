@@ -50,11 +50,6 @@
 
 void arm64_earlyprintinit(char ch)
 {
-  // Set GPIO 26 high cause I can't figure out UART
-  putreg32((BCM_GPIO_FS_OUT << 18), BCM_GPIO_GPFSEL2);
-  putreg32(0, BCM_GPIO_PUP_PDN_CNTRL_REG1);
-  putreg32((1 << 26), BCM_GPIO_GPSET0);
-
   // TODO: re-visit and make cleaner
   /* Enable Mini UART */
   putreg32(1, BCM_AUX_ENABLES);
