@@ -40,6 +40,7 @@
 
 #ifdef CONFIG_ARCH_EARLY_PRINT
 
+void arm64_lowputc(char ch);
 /****************************************************************************
  * Name: arm64_earlyprintinit
  *
@@ -70,10 +71,18 @@ void arm64_earlyprintinit(char ch)
   // Enable UART again
   putreg32(3, BCM_AUX_MU_CNTL_REG);
 
-  putreg32('h', BCM_AUX_MU_IO_REG);
-  putreg32('i', BCM_AUX_MU_IO_REG);
-  putreg32('\r', BCM_AUX_MU_IO_REG);
-  putreg32('\n', BCM_AUX_MU_IO_REG);
+  arm64_lowputc('H');
+  arm64_lowputc('e');
+  arm64_lowputc('l');
+  arm64_lowputc('l');
+  arm64_lowputc('o');
+  arm64_lowputc(' ');
+  arm64_lowputc('W');
+  arm64_lowputc('o');
+  arm64_lowputc('r');
+  arm64_lowputc('l');
+  arm64_lowputc('d');
+  arm64_lowputc('\n');
 }
 
 /****************************************************************************
