@@ -18,16 +18,25 @@
  *
  ***************************************************************************/
 
-#include "arm64_arch.h"
-#define SYSTEM_CLOCK_FREQUENCY 500000000 // TODO: check this
-
 /***************************************************************************
  * Included Files
  ***************************************************************************/
 
+#include "arm64_arch.h"
 #include "hardware/bcm2711_aux.h"
 #include "hardware/bcm2711_gpio.h"
 #include <nuttx/config.h>
+
+/***************************************************************************
+ * Pre-processor definitions
+ ***************************************************************************/
+
+#define SYSTEM_CLOCK_FREQUENCY 500000000 // TODO: check this
+#define AUX_MU_BAUD(baud) ((SYSTEM_CLOCK_FREQUENCY / (baud * 8)) - 1)
+
+/***************************************************************************
+ * Public functions
+ ***************************************************************************/
 
 #ifdef CONFIG_ARCH_EARLY_PRINT
 
@@ -41,6 +50,11 @@
 
 void arm64_earlyprintinit(char ch)
 {
+  // Set GPIO 26 high cause I can't figure out UART
+  putreg32((BCM_GPIO_FS_OUT << 18), BCM_GPIO_GPFSEL2);
+  putreg32(0, BCM_GPIO_PUP_PDN_CNTRL_REG1);
+  putreg32((1 << 26), BCM_GPIO_GPSET0);
+
   // TODO: re-visit and make cleaner
   /* Enable Mini UART */
   putreg32(1, BCM_AUX_ENABLES);
@@ -51,14 +65,12 @@ void arm64_earlyprintinit(char ch)
   putreg32(0, BCM_AUX_MU_MCR_REG);
   putreg32(0, BCM_AUX_MU_IER_REG);
   putreg32(0xc6, BCM_AUX_MU_IIR_REG);
-  putreg32(((SYSTEM_CLOCK_FREQUENCY / (8 * 115200)) - 1),
-           BCM_AUX_MU_BAUD_REG);
+  putreg32(AUX_MU_BAUD(115200), BCM_AUX_MU_BAUD_REG);
 
   // Use GPIO 14 and 15 as UART1
   putreg32((BCM_GPIO_FS_ALT5 << 12) | (BCM_GPIO_FS_ALT5 << 15),
            BCM_GPIO_GPFSEL1);
-  putreg32((BCM_GPIO_NORES << 12) | (BCM_GPIO_NORES << 15),
-           BCM_GPIO_PUP_PDN_CNTRL_REG1);
+  putreg32(0, BCM_GPIO_PUP_PDN_CNTRL_REG1);
 
   // Enable UART again
   putreg32(3, BCM_AUX_MU_CNTL_REG);
