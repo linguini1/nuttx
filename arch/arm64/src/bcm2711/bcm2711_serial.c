@@ -333,16 +333,21 @@ static int bcm2711_miniuart_setup(struct uart_dev_s *dev)
 
   putreg32(1, BCM_AUX_ENABLES);
 
-  /* Make sure DLAB is clear */
-
-  putreg32(getreg32(BCM_AUX_MU_LCR_REG) & ~BCM_AUX_MU_LCR_DLAB,
-           BCM_AUX_MU_LCR_REG);
-
   /* Disable RX and TX while configuration is happening */
 
   putreg32(getreg32(BCM_AUX_MU_CNTL_REG) &
                ~(BCM_AUX_MU_CNTL_RXENABLE | BCM_AUX_MU_CNTL_TXENABLE),
            BCM_AUX_MU_CNTL_REG);
+
+  /* Disable interrupts */
+
+  bcm2711_miniuart_rxint(dev, false);
+  bcm2711_miniuart_txint(dev, false);
+
+  /* Make sure DLAB is clear */
+
+  putreg32(getreg32(BCM_AUX_MU_LCR_REG) & ~BCM_AUX_MU_LCR_DLAB,
+           BCM_AUX_MU_LCR_REG);
 
   /* Set data bit count */
 
@@ -361,11 +366,6 @@ static int bcm2711_miniuart_setup(struct uart_dev_s *dev)
                BCM_AUX_MU_LCR_REG);
     }
 
-  /* Disable interrupts */
-
-  bcm2711_miniuart_rxint(dev, false);
-  bcm2711_miniuart_txint(dev, false);
-
   /* Set baud rate */
 
   bcm2711_miniuart_setbaud(port->config.baud_rate);
@@ -375,8 +375,6 @@ static int bcm2711_miniuart_setup(struct uart_dev_s *dev)
   putreg32(getreg32(BCM_AUX_MU_CNTL_REG) | BCM_AUX_MU_CNTL_RXENABLE |
                BCM_AUX_MU_CNTL_TXENABLE,
            BCM_AUX_MU_CNTL_REG);
-
-  // TODO: This doesn't work yet
 
   return 0;
 }
@@ -459,7 +457,9 @@ static void bcm2711_miniuart_wait_send(struct uart_dev_s *dev, char c)
 
   while (!bcm2711_miniuart_txready(dev))
     ;
+
   /* Write byte (do I need to mask to avoid writing to LS8 baud rate bits?) */
+
   bcm2711_miniuart_send(dev, c);
 }
 

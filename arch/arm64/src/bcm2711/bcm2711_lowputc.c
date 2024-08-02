@@ -77,10 +77,10 @@ void arm64_earlyprintinit(char ch)
       arm64_lowputc(str[i]);
     }
 
-  char str1[] = "Hello from NuttX (1)!\n";
-  for (uint8_t i = 0; i < sizeof(str1); i++)
+  char str2[] = "Second hello\n";
+  for (uint8_t i = 0; i < sizeof(str2); i++)
     {
-      arm64_lowputc(str1[i]);
+      arm64_lowputc(str2[i]);
     }
 }
 
