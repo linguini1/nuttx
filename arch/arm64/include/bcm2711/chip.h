@@ -69,7 +69,7 @@
 
 // TODO: verify
 #define CONFIG_RAMBANK1_ADDR      0x00000000
-#define CONFIG_RAMBANK1_SIZE      GB(4) // TODO should be configurable
+#define CONFIG_RAMBANK1_SIZE      GB(4) - MB(64) // TODO should be configurable
 
 // TODO: verify
 // For the 8GB version
@@ -77,7 +77,7 @@
 #define CONFIG_RAMBANK2_SIZE      GB(4)
 
 #define CONFIG_DEVICEIO_BASEADDR  0x0fc000000
-#define CONFIG_DEVICEIO_SIZE      MB(512)
+#define CONFIG_DEVICEIO_SIZE      MB(64)
 
 /* Raspberry Pi 4B loads NuttX at this address */
 

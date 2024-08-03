@@ -31,7 +31,12 @@
  * Pre-processor definitions
  ***************************************************************************/
 
-#define SYSTEM_CLOCK_FREQUENCY 500000000 // TODO: check this
+/* Clock starts at 5MHz. */
+
+#define SYSTEM_CLOCK_FREQUENCY 500000000
+
+/* Baud rate calculation */
+
 #define AUX_MU_BAUD(baud) ((SYSTEM_CLOCK_FREQUENCY / (baud * 8)) - 1)
 
 /***************************************************************************
