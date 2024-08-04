@@ -81,7 +81,7 @@
 
 /* Raspberry Pi 4B loads NuttX at this address */
 
-#define CONFIG_LOAD_BASE          0x80000
+#define CONFIG_LOAD_BASE          0x480000
 
 #define MPID_TO_CLUSTER_ID(mpid) ((mpid) & ~0xff)
 

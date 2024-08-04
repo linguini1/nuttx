@@ -303,6 +303,7 @@ config ARM64_DECODEFIQ
 config ARM64_GIC_VERSION
 	int "GIC version"
 	default 2           if ARCH_CHIP_A64
+    default 2           if ARCH_CHIP_BCM2711
 	default 3
 	range 2 4
 	---help---
