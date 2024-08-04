@@ -75,12 +75,6 @@ void arm64_earlyprintinit(char ch)
 
   // Enable UART again
   putreg32(3, BCM_AUX_MU_CNTL_REG);
-
-  static char str[] = "Hello from NuttX!\n";
-  for (uint8_t i = 0; i < sizeof(str); i++)
-    {
-      arm64_lowputc(str[i]);
-    }
 }
 
 /****************************************************************************
