@@ -35,6 +35,12 @@
 
 #define SYSTEM_CLOCK_FREQUENCY 500000000
 
+/* Early serial baud rate. */
+
+#ifndef BCM_EARLYSERIAL_BAUD
+#define BCM_EARLYSERIAL_BAUD 115200
+#endif // BCM_EARLYSERIAL_BAUD
+
 /* Baud rate calculation */
 
 #define AUX_MU_BAUD(baud) ((SYSTEM_CLOCK_FREQUENCY / (baud * 8)) - 1)
@@ -45,36 +51,63 @@
 
 #ifdef CONFIG_ARCH_EARLY_PRINT
 
-void arm64_lowputc(char ch);
 /****************************************************************************
  * Name: arm64_earlyprintinit
  *
  * Description:
- *   Configure Mini UART for non-interrupt driven operation
+ *   Configure BCM2711 Mini UART for polling driven operation.
  *
  ****************************************************************************/
 
 void arm64_earlyprintinit(char ch)
 {
-  // TODO: re-visit and make cleaner
   /* Enable Mini UART */
-  putreg32(1, BCM_AUX_ENABLES);
 
-  putreg32(0, BCM_AUX_MU_IER_REG);
-  putreg32(0, BCM_AUX_MU_CNTL_REG);
-  putreg32(3, BCM_AUX_MU_LCR_REG);
-  putreg32(0, BCM_AUX_MU_MCR_REG);
-  putreg32(0, BCM_AUX_MU_IER_REG);
-  putreg32(0xc6, BCM_AUX_MU_IIR_REG);
-  putreg32(AUX_MU_BAUD(115200), BCM_AUX_MU_BAUD_REG);
+  modreg32(BCM_AUX_ENABLE_MU, BCM_AUX_ENABLE_MU, BCM_AUX_ENABLES);
 
-  // Use GPIO 14 and 15 as UART1
-  putreg32((BCM_GPIO_FS_ALT5 << 12) | (BCM_GPIO_FS_ALT5 << 15),
+  /* Disable interrupts. */
+
+  modreg32(0, (BCM_AUX_MU_IER_RXD | BCM_AUX_MU_IER_TXD), BCM_AUX_MU_IER_REG);
+
+  /* Disable TX and RX of the UART */
+
+  modreg32(0, BCM_AUX_MU_CNTL_RXENABLE, BCM_AUX_MU_CNTL_REG);
+  modreg32(0, BCM_AUX_MU_CNTL_TXENABLE, BCM_AUX_MU_CNTL_REG);
+
+  /* Put the UART in 8 bit mode */
+
+  modreg32(BCM_AUX_MU_LCR_DATA8B, BCM_AUX_MU_LCR_DATA8B, BCM_AUX_MU_LCR_REG);
+
+  /* Ensure RTS line is low. */
+
+  modreg32(0, BCM_AUX_MU_MCR_RTS, BCM_AUX_MU_MCR_REG);
+
+  /* Clear the TX and RX FIFOs */
+
+  putreg32(BCM_AUX_MU_IIR_RXCLEAR | BCM_AUX_MU_IIR_TXCLEAR,
+           BCM_AUX_MU_IIR_REG);
+
+  /* Set baud rate. */
+
+  putreg32(AUX_MU_BAUD(BCM_EARLYSERIAL_BAUD), BCM_AUX_MU_BAUD_REG);
+
+  /* GPIO 14 and GPIO 15 are used as TX and RX.
+   * Enable their alternative function #5 (used as UART) and turn off any
+   * pull-up or pull-down resistors.
+   */
+
+  modreg32((BCM_GPIO_FS_ALT5 << 12), (BCM_GPIO_FS_ALT5 << 12),
+           BCM_GPIO_GPFSEL1);
+  modreg32((BCM_GPIO_FS_ALT5 << 15), (BCM_GPIO_FS_ALT5 << 15),
            BCM_GPIO_GPFSEL1);
   putreg32(0, BCM_GPIO_PUP_PDN_CNTRL_REG1);
 
-  // Enable UART again
-  putreg32(3, BCM_AUX_MU_CNTL_REG);
+  /* Enable TX and RX again. */
+
+  modreg32(BCM_AUX_MU_CNTL_TXENABLE, BCM_AUX_MU_CNTL_TXENABLE,
+           BCM_AUX_MU_CNTL_REG);
+  modreg32(BCM_AUX_MU_CNTL_RXENABLE, BCM_AUX_MU_CNTL_RXENABLE,
+           BCM_AUX_MU_CNTL_REG);
 }
 
 /****************************************************************************
@@ -82,28 +115,32 @@ void arm64_earlyprintinit(char ch)
  *
  * Description:
  *   Output a byte with as few system dependencies as possible.
+ *   This implementation uses the BCM2711's Mini UART with polling
+ *   to output bytes.
  *
  ****************************************************************************/
 
 void arm64_lowputc(char ch)
 {
-  // TODO: re-visit and make cleaner
+  /* Wait until space for one byte is free */
 
-  // Wait until space for one byte is free
   while (!(getreg32(BCM_AUX_MU_LSR_REG) & BCM_AUX_MU_LSR_TXEMPTY))
     ;
 
-  // Add carriage return
+  /* Add carriage return when there is a newline */
+
   if (ch == '\n')
     {
       putreg32('\r', BCM_AUX_MU_IO_REG);
 
-      // Wait again
+      /* Wait for space again to add new line character */
+
       while (!(getreg32(BCM_AUX_MU_LSR_REG) & BCM_AUX_MU_LSR_TXEMPTY))
         ;
     }
 
-  // Send byte
+  /* Send one byte */
+
   putreg32(ch, BCM_AUX_MU_IO_REG);
 }
 
