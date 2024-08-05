@@ -65,6 +65,7 @@
 #endif
 
 #define CONSOLE_DEV g_miniuartport /* Mini UART is console */
+#define TTYS0_DEV g_miniuartport   /* Mini UART is ttys0 */
 
 /* Timeout for UART Busy Wait, in milliseconds */
 
@@ -85,7 +86,6 @@ struct bcm2711_uart_config_s
   uint32_t baud_rate; /* UART baud rate */
   uint8_t parity;     /* 0 = N, 1 = Odd, 2 = even */
   uint8_t data_bits;  /* Number of data bits per baud */
-  bool is_console;    /* True if this port is the console UART */
 };
 
 /* UART port definition for Mini UART port */
@@ -165,7 +165,6 @@ static struct bcm2711_miniuart_port_s g_miniuartpriv = {
             .baud_rate = CONFIG_MINIUART_BAUD,
             .parity = CONFIG_MINIUART_PARITY,
             .data_bits = CONFIG_MINIUART_BITS,
-            .is_console = 1,
         },
 };
 
@@ -651,11 +650,23 @@ int up_putc(int ch)
 
 void arm64_serialinit(void)
 {
+#if defined(CONSOLE_DEV)
+
+  /* Mark the console. */
+
+  CONSOLE_DEV.isconsole = 1;
+
   int ret;
   ret = uart_register("/dev/console", &CONSOLE_DEV);
   if (ret < 0)
     {
       _err("Could not register /dev/console, ret=%d\n", ret);
     }
-  _err("arm64_serialinit not implemented");
+
+  ret = uart_register("/dev/ttys0", &TTYS0_DEV);
+  if (ret < 0)
+    {
+      _err("Could not register /dev/ttys0, ret=%d\n", ret);
+    }
+#endif // defined(CONSOLE_DEV)
 }
