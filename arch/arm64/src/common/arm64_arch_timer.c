@@ -346,18 +346,13 @@ static struct oneshot_lowerhalf_s *arm64_oneshot_initialize(void)
   irq_attach(ARM_ARCH_TIMER_IRQ,
              arm64_arch_timer_compare_isr, priv);
 
-  tmrinfo("oneshot_initialize - IRQ attached\n");
-
   /* Enable int */
 
   up_enable_irq(ARM_ARCH_TIMER_IRQ);
-  tmrinfo("oneshot_initialize - IRQ enabled\n");
 
   /* Start timer */
 
   arm64_arch_timer_enable(true);
-
-  tmrinfo("oneshot_initialize ok %p \n", &priv->lh);
 
   return &priv->lh;
 }
