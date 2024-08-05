@@ -26,6 +26,7 @@
 #include <nuttx/spinlock.h>
 
 #include <assert.h>
+#include <debug.h>
 #include <sys/types.h>
 #include <arch/irq.h>
 
@@ -101,9 +102,12 @@ irqstate_t spin_lock_irqsave(spinlock_t *lock)
   if (NULL == lock)
     {
       int me = up_cpu_index();
+      _info("me: %d", me);
       if (0 == g_irq_spin_count[me])
         {
+      _info("before spin_lock");
           spin_lock(&g_irq_spin);
+      _info("after spin_lock");
         }
 
       g_irq_spin_count[me]++;

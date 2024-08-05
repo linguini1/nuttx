@@ -68,7 +68,7 @@
 /* BCM2711 memory map: RAM and Device I/O */
 
 // TODO: verify
-#define CONFIG_RAMBANK1_ADDR      0x00000000
+#define CONFIG_RAMBANK1_ADDR      (0x00000000)
 #define CONFIG_RAMBANK1_SIZE      GB(4) - MB(64) // TODO should be configurable
 
 // TODO: verify
@@ -76,7 +76,8 @@
 #define CONFIG_RAMBANK2_ADDR      0x100000000
 #define CONFIG_RAMBANK2_SIZE      GB(4)
 
-#define CONFIG_DEVICEIO_BASEADDR  0x0fc000000
+// TODO: for low peripheral mode this is valid, otherwise it might change
+#define CONFIG_DEVICEIO_BASEADDR  (0x0fc000000)
 #define CONFIG_DEVICEIO_SIZE      MB(64)
 
 /* Raspberry Pi 4B loads NuttX at this address */

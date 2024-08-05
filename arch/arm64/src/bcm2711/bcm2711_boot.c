@@ -92,10 +92,8 @@ void arm64_el_init(void) { /* TODO: what goes here? */ }
 
 void arm64_chip_boot(void)
 {
-#if defined CONFIG_USE_MMU
   /* MAP IO and DRAM, enable MMU. */
   arm64_mmu_init(true);
-#endif
 
 #if defined(CONFIG_ARM64_PSCI)
   arm64_psci_init("smc");

@@ -28,6 +28,7 @@
 #include <stdatomic.h>
 #include <sched.h>
 #include <assert.h>
+#include <debug.h>
 
 #include <nuttx/spinlock.h>
 #include <nuttx/sched_note.h>
@@ -81,12 +82,17 @@ void spin_lock(FAR volatile spinlock_t *lock)
     atomic_fetch_add((FAR atomic_ushort *)&lock->tickets.next, 1);
   while (atomic_load((FAR atomic_ushort *)&lock->tickets.owner) != ticket)
 #else /* CONFIG_SPINLOCK */
+  _info("about to enter loop");
   while (up_testset(lock) == SP_LOCKED)
 #endif
     {
+      _info("looping");
       SP_DSB();
+      _info("DSB called");
       SP_WFE();
+      _info("WFE called");
     }
+  _info("loop over");
 
 #ifdef CONFIG_SCHED_INSTRUMENTATION_SPINLOCKS
   /* Notify that we have the spinlock */

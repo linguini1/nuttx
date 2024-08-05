@@ -27,6 +27,7 @@
 #include <errno.h>
 
 #include <nuttx/irq.h>
+#include <debug.h>
 
 #include "irq/irq.h"
 
@@ -47,6 +48,8 @@ int irq_attach(int irq, xcpt_t isr, FAR void *arg)
 {
 #if NR_IRQS > 0
   int ret = -EINVAL;
+
+  _info("In irq_attach");
 
   if ((unsigned)irq < NR_IRQS)
     {
@@ -72,7 +75,9 @@ int irq_attach(int irq, xcpt_t isr, FAR void *arg)
        * to the unexpected interrupt handler.
        */
 
+      _info("before spin_lock_irqsave");
       flags = spin_lock_irqsave(NULL);
+      _info("after spin_lock_irqsave");
       if (isr == NULL)
         {
           /* Disable the interrupt if we can before detaching it.  We might
@@ -86,7 +91,9 @@ int irq_attach(int irq, xcpt_t isr, FAR void *arg)
            */
 
 #if !defined(CONFIG_ARCH_NOINTC) && !defined(CONFIG_ARCH_VECNOTIRQ)
+      _info("before up_disable_irq");
           up_disable_irq(irq);
+      _info("after up_disable_irq");
 #endif
           /* Detaching the ISR really means re-attaching it to the
            * unexpected exception handler.
@@ -121,7 +128,9 @@ int irq_attach(int irq, xcpt_t isr, FAR void *arg)
       g_irqvector[ndx].count   = 0;
 #endif
 
+      _info("before spin_unlock_irqrestore");
       spin_unlock_irqrestore(NULL, flags);
+      _info("after spin_unlock_irqrestore");
       ret = OK;
     }
 

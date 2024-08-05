@@ -72,14 +72,14 @@ up_testset:
     /* Test if the spinlock is locked or not */
 
 1:
-    ldaxr    x2, [x0]    /* Test if spinlock is locked or not */
+    ldaxr    x2, [x0]      /* Test if spinlock is locked or not */
     cmp      x2, x1        /* Already locked? */
     beq      2f            /* If already locked, return SP_LOCKED */
 
     /* Not locked ... attempt to lock it */
 
-    stxr     w2, x1, [x0]    /* Attempt to set the locked state */
-    cbnz     w2, 1b            /* w2 will be 1 is stxr failed */
+    stxr     w2, x1, [x0]      /* Attempt to set the locked state */
+    cbnz     w2, 1b            /* w2 will be 1 if stxr failed */
 
     /* Lock acquired -- return SP_UNLOCKED */
 

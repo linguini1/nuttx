@@ -45,7 +45,7 @@
  * #define CONFIG_MMU_DEBUG 1
  * #define CONFIG_MMU_DUMP_PTE 1
  */
-
+#define CONFIG_MMU_DEBUG 1
 #ifdef CONFIG_MMU_DEBUG
 
 #define L0_SPACE                        ""

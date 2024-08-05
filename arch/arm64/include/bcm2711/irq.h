@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 // TODO: Verify that this is correct
-#define NR_IRQS 98
+#define NR_IRQS 176
 
 /* ARM_LOCAL interrupts */
 
