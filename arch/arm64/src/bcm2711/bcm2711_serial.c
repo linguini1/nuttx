@@ -71,9 +71,13 @@
 
 #define UART_TIMEOUT_MS 100
 
-/* System clock frequency for Mini UART (250MHz after reset) */
+/* System clock frequency for Mini UART in Hz */
 
-#define SYSTEM_CLOCK_FREQUENCY 500000000 // TODO: check this
+#define SYSTEM_CLOCK_FREQUENCY 500000000
+
+/* Baud rate calculation */
+
+#define AUX_MU_BAUD(baud) ((SYSTEM_CLOCK_FREQUENCY / (baud * 8)) - 1)
 
 /***************************************************************************
  * Private Types
@@ -109,8 +113,6 @@ struct bcm2711_uart_port_s
 
 /* Mini UART helper functions */
 
-static void bcm2711_miniuart_setbaud(uint32_t baudrate);
-static uint16_t bcm2711_miniuart_baudreg(uint32_t baudrate);
 static void bcm2711_miniuart_wait_send(struct uart_dev_s *dev, char c);
 
 /* Mini UART operations */
@@ -190,45 +192,6 @@ static struct uart_dev_s g_miniuartport = {
  ***************************************************************************/
 
 /***************************************************************************
- * Name: bcm2711_miniuart_baudreg
- *
- * Description:
- *   Return the value required in the baudrate register for the Mini UART to
- *   have the desired baudrate.
- *
- * Input Parameters:
- *   baudrate - The desired baudrate.
- *
- * Returned Value:
- *   The value to place in the Mini UART baudrate register.
- *
- ***************************************************************************/
-
-static uint16_t bcm2711_miniuart_baudreg(uint32_t baudrate)
-{
-  return (SYSTEM_CLOCK_FREQUENCY / (8 * baudrate)) - 1;
-}
-
-/***************************************************************************
- * Name: bcm2711_miniuart_setbaud
- *
- * Description:
- *   Set the baudrate of the Mini UART port.
- *
- * Input Parameters:
- *   baudrate - The desired baudrate.
- *
- * Returned Value:
- *   None
- *
- ***************************************************************************/
-
-static void bcm2711_miniuart_setbaud(uint32_t baudrate)
-{
-  putreg32(bcm2711_miniuart_baudreg(baudrate), BCM_AUX_MU_BAUD_REG);
-}
-
-/***************************************************************************
  * Name: bcm2711_miniuart_txint
  *
  * Description:
@@ -247,13 +210,11 @@ static void bcm2711_miniuart_txint(struct uart_dev_s *dev, bool enable)
 {
   if (enable)
     {
-      putreg32(getreg32(BCM_AUX_MU_IER_REG) | BCM_AUX_MU_IER_TXD,
-               BCM_AUX_MU_IER_REG);
+      modreg32(BCM_AUX_MU_IER_TXD, BCM_AUX_MU_IER_TXD, BCM_AUX_MU_IER_REG);
     }
   else
     {
-      putreg32(getreg32(BCM_AUX_MU_IER_REG) & ~BCM_AUX_MU_IER_TXD,
-               BCM_AUX_MU_IER_REG);
+      modreg32(0, BCM_AUX_MU_IER_TXD, BCM_AUX_MU_IER_REG);
     }
 }
 
@@ -276,13 +237,11 @@ static void bcm2711_miniuart_rxint(struct uart_dev_s *dev, bool enable)
 {
   if (enable)
     {
-      putreg32(getreg32(BCM_AUX_MU_IER_REG) | BCM_AUX_MU_IER_RXD,
-               BCM_AUX_MU_IER_REG);
+      modreg32(BCM_AUX_MU_IER_RXD, BCM_AUX_MU_IER_RXD, BCM_AUX_MU_IER_REG);
     }
   else
     {
-      putreg32(getreg32(BCM_AUX_MU_IER_REG) & ~BCM_AUX_MU_IER_RXD,
-               BCM_AUX_MU_IER_REG);
+      modreg32(0, BCM_AUX_MU_IER_RXD, BCM_AUX_MU_IER_REG);
     }
 }
 
@@ -303,8 +262,14 @@ static void bcm2711_miniuart_rxint(struct uart_dev_s *dev, bool enable)
 
 static void bcm2711_miniuart_shutdown(struct uart_dev_s *dev)
 {
+  /* Disable interrupts */
+
   bcm2711_miniuart_rxint(dev, false);
   bcm2711_miniuart_txint(dev, false);
+
+  /* Disable Mini UART peripheral. */
+
+  modreg32(BCM_AUX_ENABLE_MU, BCM_AUX_ENABLE_MU, BCM_AUX_ENABLES);
 }
 
 /***************************************************************************
@@ -328,25 +293,18 @@ static int bcm2711_miniuart_setup(struct uart_dev_s *dev)
   struct bcm2711_miniuart_port_s *port =
       (struct bcm2711_miniuart_port_s *)dev->priv;
 
-  /* Enable Mini UART peripheral */
+  /* Enable Mini UART */
 
-  putreg32(1, BCM_AUX_ENABLES);
+  modreg32(BCM_AUX_ENABLE_MU, BCM_AUX_ENABLE_MU, BCM_AUX_ENABLES);
 
-  /* Disable RX and TX while configuration is happening */
+  /* Disable interrupts. */
 
-  putreg32(getreg32(BCM_AUX_MU_CNTL_REG) &
-               ~(BCM_AUX_MU_CNTL_RXENABLE | BCM_AUX_MU_CNTL_TXENABLE),
-           BCM_AUX_MU_CNTL_REG);
+  modreg32(0, (BCM_AUX_MU_IER_RXD | BCM_AUX_MU_IER_TXD), BCM_AUX_MU_IER_REG);
 
-  /* Disable interrupts */
+  /* Disable TX and RX of the UART */
 
-  bcm2711_miniuart_rxint(dev, false);
-  bcm2711_miniuart_txint(dev, false);
-
-  /* Make sure DLAB is clear */
-
-  putreg32(getreg32(BCM_AUX_MU_LCR_REG) & ~BCM_AUX_MU_LCR_DLAB,
-           BCM_AUX_MU_LCR_REG);
+  modreg32(0, BCM_AUX_MU_CNTL_RXENABLE, BCM_AUX_MU_CNTL_REG);
+  modreg32(0, BCM_AUX_MU_CNTL_TXENABLE, BCM_AUX_MU_CNTL_REG);
 
   /* Set data bit count */
 
@@ -354,25 +312,46 @@ static int bcm2711_miniuart_setup(struct uart_dev_s *dev)
     {
       /* 7 data bits */
 
-      putreg32(getreg32(BCM_AUX_MU_LCR_REG) & ~BCM_AUX_MU_LCR_DATA8B,
-               BCM_AUX_MU_LCR_REG);
+      modreg32(0, BCM_AUX_MU_LCR_DATA8B, BCM_AUX_MU_LCR_REG);
     }
   else
     {
       /* 8 data bits */
 
-      putreg32(getreg32(BCM_AUX_MU_LCR_REG) | BCM_AUX_MU_LCR_DATA8B,
+      modreg32(BCM_AUX_MU_LCR_DATA8B, BCM_AUX_MU_LCR_DATA8B,
                BCM_AUX_MU_LCR_REG);
     }
 
-  /* Set baud rate */
+  /* Ensure RTS line is low. */
 
-  bcm2711_miniuart_setbaud(port->config.baud_rate);
+  modreg32(0, BCM_AUX_MU_MCR_RTS, BCM_AUX_MU_MCR_REG);
 
-  /* Re-enable RX and TX */
+  /* Clear the TX and RX FIFOs */
 
-  putreg32(getreg32(BCM_AUX_MU_CNTL_REG) | BCM_AUX_MU_CNTL_RXENABLE |
-               BCM_AUX_MU_CNTL_TXENABLE,
+  putreg32(BCM_AUX_MU_IIR_RXCLEAR | BCM_AUX_MU_IIR_TXCLEAR,
+           BCM_AUX_MU_IIR_REG);
+
+  /* Set baud rate. */
+
+  putreg32(AUX_MU_BAUD(port->config.baud_rate), BCM_AUX_MU_BAUD_REG);
+
+  /* GPIO 14 and GPIO 15 are used as TX and RX.
+   * Enable their alternative function #5 (used as UART) and turn off any
+   * pull-up or pull-down resistors.
+   * TODO: Make this configurable
+   */
+
+  modreg32((BCM_GPIO_FS_ALT5 << 12), (BCM_GPIO_FS_ALT5 << 12),
+           BCM_GPIO_GPFSEL1);
+  modreg32((BCM_GPIO_FS_ALT5 << 15), (BCM_GPIO_FS_ALT5 << 15),
+           BCM_GPIO_GPFSEL1);
+  putreg32(0, BCM_GPIO_PUP_PDN_CNTRL_REG1);
+
+  /* Enable TX and RX again. */
+
+  modreg32(BCM_AUX_MU_CNTL_TXENABLE, BCM_AUX_MU_CNTL_TXENABLE,
+           BCM_AUX_MU_CNTL_REG);
+  modreg32(BCM_AUX_MU_CNTL_RXENABLE, BCM_AUX_MU_CNTL_RXENABLE,
            BCM_AUX_MU_CNTL_REG);
 
   return 0;
