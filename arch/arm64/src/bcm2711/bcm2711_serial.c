@@ -638,40 +638,51 @@ static int bcm2711_miniuart_irq_handler(int irq, void *context, void *arg)
 
   DEBUGASSERT(dev != NULL && port != NULL);
 
-  /* Check if the interrupt is the Mini UART */
+  /* Check if the interrupt is the Mini UART, return early otherwise. */
+
+  if (!(getreg32(BCM_AUX_IRQ) & BCM_AUX_IRQ_MU))
+    {
+      irqinfo("Not Mini UART AUX pending");
+      return ret;
+    }
+
+  /* Check the Mini UART interrupt status */
 
   uint32_t aux_iir = getreg32(BCM_AUX_MU_IIR_REG);
-
-  if (!(aux_iir & BCM_AUX_MU_IIR_PENDING))
+  if (aux_iir & BCM_AUX_MU_IIR_PENDING)
     {
-      /* Check interrupt ID */
+      irqinfo("Not Mini UART IIR pending");
+      /* Bit is set when no interrupt is pending */
+      return ret;
+    }
 
-      switch (aux_iir & 0b110)
-        {
-        case BCM_AUX_MU_IIR_RXBYTE:
-          /* Receiver holds valid byte */
+  /* Check interrupt ID */
 
-          uart_recvchars(dev);
-          break;
+  switch (aux_iir & 0b110)
+    {
+    case BCM_AUX_MU_IIR_RXBYTE:
+      /* Receiver holds valid byte */
 
-        case BCM_AUX_MU_IIR_TXEMPTY:
-          /* Transmit holding register is empty */
+      uart_recvchars(dev);
+      _info("Received");
+      break;
 
-          uart_xmitchars(dev);
-          break;
+    case BCM_AUX_MU_IIR_TXEMPTY:
+      /* Transmit holding register is empty */
 
-        case BCM_AUX_MU_IIR_NONE:
-          /* No interrupt, do nothing */
+      uart_xmitchars(dev);
+      break;
 
-          _info("No interrupt");
-          break;
+    case BCM_AUX_MU_IIR_NONE:
+      /* No interrupt, do nothing */
 
-        default:
-          /* Impossible case of 0b11 */
-          ret = -EIO;
-          _err("Unexpected interrupt ID 0b11.");
-          break;
-        }
+      break;
+
+    default:
+      /* Impossible case of 0b11 */
+      ret = -EIO;
+      _err("Unexpected interrupt ID 0b11.");
+      break;
     }
 
   return ret;
@@ -760,12 +771,6 @@ void arm64_serialinit(void)
   if (ret < 0)
     {
       _err("Could not register /dev/console, ret=%d\n", ret);
-    }
-
-  ret = uart_register("/dev/ttys0", &TTYS0_DEV);
-  if (ret < 0)
-    {
-      _err("Could not register /dev/ttys0, ret=%d\n", ret);
     }
 #endif // defined(CONSOLE_DEV)
 }
