@@ -124,7 +124,7 @@ void arm64_lowputc(char ch)
 {
   /* Wait until space for one byte is free */
 
-  while (!(getreg32(BCM_AUX_MU_LSR_REG) & BCM_AUX_MU_LSR_TXEMPTY))
+  while (!(getreg32(BCM_AUX_MU_STAT_REG) & BCM_AUX_MU_STAT_SPACEAVAIL))
     ;
 
   /* Add carriage return when there is a newline */
@@ -135,7 +135,7 @@ void arm64_lowputc(char ch)
 
       /* Wait for space again to add new line character */
 
-      while (!(getreg32(BCM_AUX_MU_LSR_REG) & BCM_AUX_MU_LSR_TXEMPTY))
+      while (!(getreg32(BCM_AUX_MU_STAT_REG) & BCM_AUX_MU_STAT_SPACEAVAIL))
         ;
     }
 

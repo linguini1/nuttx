@@ -31,6 +31,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <nuttx/fs/ioctl.h>
+
 #include "arm64_arch.h"
 #include "arm64_internal.h"
 #include "bcm2711_serial.h"
@@ -114,6 +116,7 @@ struct bcm2711_uart_port_s
 /* Mini UART helper functions */
 
 static void bcm2711_miniuart_wait_send(struct uart_dev_s *dev, char c);
+static int bcm2711_miniuart_irq_handler(int irq, void *context, void *arg);
 
 /* Mini UART operations */
 
@@ -505,20 +508,36 @@ static int bcm2711_miniuart_receive(struct uart_dev_s *dev,
 static int bcm2711_miniuart_ioctl(struct file *filep, int cmd,
                                   unsigned long arg)
 {
-  return -ENOSYS; // TODO
+  int ret = OK;
+  UNUSED(filep);
+  UNUSED(arg);
+
+  switch (cmd)
+    {
+    case TIOCSBRK: /* BSD compatibility: Turn break on, unconditionally */
+    case TIOCCBRK: /* BSD compatibility: Turn break off, unconditionally */
+    default:
+      ret = -ENOTTY;
+      _err("not implemented: ENOTTY");
+      break;
+    }
+
+  // TODO: implement actual commands
+
+  return ret;
 }
 
 /***************************************************************************
  * Name: bcm2711_miniuart_attach
  *
  * Description:
- *   Configure the UART to operation in interrupt driven mode.
+ *   Configure the UART to operate in interrupt driven mode.
  *   This method is called when the serial port is opened.
  *   Normally, this is just after the setup() method is called,
  *   however, the serial console may operate in
  *   a non-interrupt driven mode during the boot phase.
  *
- *   RX and TX interrupts are not enabled when by the attach method
+ *   RX and TX interrupts are not enabled by the attach method
  *   (unless the hardware supports multiple levels of interrupt
  *   enabling).  The RX and TX interrupts are not enabled until
  *   the txint() and rxint() methods are called.
@@ -533,7 +552,31 @@ static int bcm2711_miniuart_ioctl(struct file *filep, int cmd,
 
 static int bcm2711_miniuart_attach(struct uart_dev_s *dev)
 {
-  return -ENOSYS; // TODO
+  int ret = -ENOSYS;
+  const struct bcm2711_miniuart_port_s *port =
+      (struct bcm2711_miniuart_port_s *)dev->priv;
+
+  DEBUGASSERT(port != NULL);
+
+  /* Attach interrupt handler. */
+  ret = irq_attach(BCM_IRQ_VC_AUX, bcm2711_miniuart_irq_handler, dev);
+
+  /* Set interrupt priority in GICv2 */
+
+  arm64_gic_irq_set_priority(BCM_IRQ_VC_AUX, 0, IRQ_TYPE_LEVEL);
+
+  /* Enable UART interrupt */
+  if (ret == OK)
+    {
+      up_enable_irq(BCM_IRQ_VC_AUX);
+      irqinfo("Attached AUX interrupt handler");
+    }
+  else
+    {
+      irqerr("Could not attach Mini UART IRQ handler, ret=%d\n", ret);
+    }
+
+  return ret;
 }
 
 /***************************************************************************
@@ -554,7 +597,84 @@ static int bcm2711_miniuart_attach(struct uart_dev_s *dev)
 
 static void bcm2711_miniuart_detach(struct uart_dev_s *dev)
 {
-  return; // TODO
+  // TODO
+  const struct bcm2711_miniuart_port_s *port =
+      (struct bcm2711_miniuart_port_s *)dev->priv;
+
+  DEBUGASSERT(port != NULL);
+
+  /* Disable the Mini UART interrupt */
+
+  up_disable_irq(BCM_IRQ_VC_AUX); // TODO: This will disable all AUX ints
+
+  /* Detach the interrupt handler */
+
+  irq_detach(BCM_IRQ_VC_AUX);
+}
+
+/***************************************************************************
+ * Name: bcm2711_miniuart_irq_handler
+ *
+ * Description:
+ *   Handles Mini UART IRQ. Performs the appropriate data transfers.
+ *
+ * Input Parameters:
+ *   irq - The IRQ number
+ *   context - The interrupt context
+ *   arg - A UART device for the Mini UART port
+ *
+ * Returned Value:
+ *   OK, or -EIO if the interrupt ID is invalid.
+ *
+ ***************************************************************************/
+
+static int bcm2711_miniuart_irq_handler(int irq, void *context, void *arg)
+{
+  // TODO
+  int ret = OK;
+  struct uart_dev_s *dev = (struct uart_dev_s *)arg;
+  const struct bcm2711_miniuart_port_s *port =
+      (struct bcm2711_miniuart_port_s *)dev->priv;
+
+  DEBUGASSERT(dev != NULL && port != NULL);
+
+  /* Check if the interrupt is the Mini UART */
+
+  uint32_t aux_iir = getreg32(BCM_AUX_MU_IIR_REG);
+
+  if (!(aux_iir & BCM_AUX_MU_IIR_PENDING))
+    {
+      /* Check interrupt ID */
+
+      switch (aux_iir & 0b110)
+        {
+        case BCM_AUX_MU_IIR_RXBYTE:
+          /* Receiver holds valid byte */
+
+          uart_recvchars(dev);
+          break;
+
+        case BCM_AUX_MU_IIR_TXEMPTY:
+          /* Transmit holding register is empty */
+
+          uart_xmitchars(dev);
+          break;
+
+        case BCM_AUX_MU_IIR_NONE:
+          /* No interrupt, do nothing */
+
+          _info("No interrupt");
+          break;
+
+        default:
+          /* Impossible case of 0b11 */
+          ret = -EIO;
+          _err("Unexpected interrupt ID 0b11.");
+          break;
+        }
+    }
+
+  return ret;
 }
 
 /***************************************************************************
