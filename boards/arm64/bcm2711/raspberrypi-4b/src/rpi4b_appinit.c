@@ -25,8 +25,10 @@
  ****************************************************************************/
 
 #include "rpi4b.h"
+#include <debug.h>
 #include <nuttx/board.h>
 #include <nuttx/config.h>
+#include <nuttx/fs/fs.h>
 #include <sys/types.h>
 
 #ifdef CONFIG_BOARDCTL
@@ -63,13 +65,25 @@
 int board_app_initialize(uintptr_t arg)
 {
   UNUSED(arg);
+  int ret = OK;
+
+#ifdef CONFIG_FS_PROCFS
+  /* Mount the proc file system */
+
+  ret = nx_mount(NULL, "/proc", "procfs", 0, NULL);
+  if (ret < 0)
+    {
+      _err("ERROR: Failed to mount procfs at /proc: %d\n", ret);
+    }
+#endif
+
 #ifndef CONFIG_BOARD_LATE_INITIALIZE
   /* Perform board initialization */
 
-  return rpi4b_bringup();
-#else
-  return OK;
+  ret = rpi4b_bringup();
 #endif
+
+  return ret;
 }
 
 #endif /* CONFIG_BOARDCTL */
