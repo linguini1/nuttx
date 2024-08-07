@@ -140,8 +140,14 @@
 #define BCM_AUX_MU_IO_RXD (0xff)      /* If DLAB=0, read-only */
 
 #define BCM_AUX_MU_IER_BAUDRATE (0xff) /* MS 8 bits of baudrate register */
-#define BCM_AUX_MU_IER_RXD (1 << 1)    /* Enable receive interrupt */
-#define BCM_AUX_MU_IER_TXD (1 << 0)    /* Enable transmit interrupt */
+
+/* NOTE: The RXD and TXD interrupts here are swapped when compared to what is
+ * visible on the BCM2711 datasheet. This is because the data sheet contains
+ * an error.
+ */
+
+#define BCM_AUX_MU_IER_RXD (1 << 0) /* Enable receive interrupt */
+#define BCM_AUX_MU_IER_TXD (1 << 1) /* Enable transmit interrupt */
 
 #define BCM_AUX_MU_IIR_PENDING (1 << 0) /* Clear when interrupt pending */
 #define BCM_AUX_MU_IIR_MASK (0x03 << 1) /* Mask interrupt ID bits */

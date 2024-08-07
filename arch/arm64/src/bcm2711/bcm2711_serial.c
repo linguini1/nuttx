@@ -22,6 +22,7 @@
  * Included Files
  ***************************************************************************/
 
+#include <nuttx/arch.h>
 #include <nuttx/config.h>
 #include <nuttx/serial/serial.h>
 
@@ -302,7 +303,8 @@ static int bcm2711_miniuart_setup(struct uart_dev_s *dev)
 
   /* Disable interrupts. */
 
-  modreg32(0, (BCM_AUX_MU_IER_RXD | BCM_AUX_MU_IER_TXD), BCM_AUX_MU_IER_REG);
+  bcm2711_miniuart_txint(dev, false);
+  bcm2711_miniuart_rxint(dev, false);
 
   /* Disable TX and RX of the UART */
 
@@ -331,7 +333,9 @@ static int bcm2711_miniuart_setup(struct uart_dev_s *dev)
 
   /* Clear the TX and RX FIFOs */
 
-  putreg32(BCM_AUX_MU_IIR_RXCLEAR | BCM_AUX_MU_IIR_TXCLEAR,
+  modreg32(BCM_AUX_MU_IIR_RXCLEAR, BCM_AUX_MU_IIR_RXCLEAR,
+           BCM_AUX_MU_IIR_REG);
+  modreg32(BCM_AUX_MU_IIR_TXCLEAR, BCM_AUX_MU_IIR_TXCLEAR,
            BCM_AUX_MU_IIR_REG);
 
   /* Set baud rate. */
@@ -642,7 +646,6 @@ static int bcm2711_miniuart_irq_handler(int irq, void *context, void *arg)
 
   if (!(getreg32(BCM_AUX_IRQ) & BCM_AUX_IRQ_MU))
     {
-      irqinfo("Not Mini UART AUX pending");
       return ret;
     }
 
@@ -651,7 +654,6 @@ static int bcm2711_miniuart_irq_handler(int irq, void *context, void *arg)
   uint32_t aux_iir = getreg32(BCM_AUX_MU_IIR_REG);
   if (aux_iir & BCM_AUX_MU_IIR_PENDING)
     {
-      irqinfo("Not Mini UART IIR pending");
       /* Bit is set when no interrupt is pending */
       return ret;
     }
@@ -664,7 +666,6 @@ static int bcm2711_miniuart_irq_handler(int irq, void *context, void *arg)
       /* Receiver holds valid byte */
 
       uart_recvchars(dev);
-      _info("Received");
       break;
 
     case BCM_AUX_MU_IIR_TXEMPTY:
@@ -681,7 +682,6 @@ static int bcm2711_miniuart_irq_handler(int irq, void *context, void *arg)
     default:
       /* Impossible case of 0b11 */
       ret = -EIO;
-      _err("Unexpected interrupt ID 0b11.");
       break;
     }
 
