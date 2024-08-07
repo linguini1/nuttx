@@ -36,10 +36,8 @@
 
 #include "arm64_arch.h"
 #include "arm64_internal.h"
-#include "bcm2711_serial.h"
 #include "hardware/bcm2711_aux.h"
 #include "hardware/bcm2711_gpio.h"
-#include "hardware/bcm2711_uart.h"
 
 /***************************************************************************
  * Pre-processor Definitions
@@ -522,7 +520,6 @@ static int bcm2711_miniuart_ioctl(struct file *filep, int cmd,
     case TIOCCBRK: /* BSD compatibility: Turn break off, unconditionally */
     default:
       ret = -ENOTTY;
-      _err("not implemented: ENOTTY");
       break;
     }
 
@@ -562,7 +559,7 @@ static int bcm2711_miniuart_attach(struct uart_dev_s *dev)
 
   DEBUGASSERT(port != NULL);
 
-  /* Attach interrupt handler. */
+  /* Attach interrupt handler. TODO: this is for all AUX interrupts */
   ret = irq_attach(BCM_IRQ_VC_AUX, bcm2711_miniuart_irq_handler, dev);
 
   /* Set interrupt priority in GICv2 */
@@ -601,7 +598,6 @@ static int bcm2711_miniuart_attach(struct uart_dev_s *dev)
 
 static void bcm2711_miniuart_detach(struct uart_dev_s *dev)
 {
-  // TODO
   const struct bcm2711_miniuart_port_s *port =
       (struct bcm2711_miniuart_port_s *)dev->priv;
 
@@ -634,7 +630,6 @@ static void bcm2711_miniuart_detach(struct uart_dev_s *dev)
 
 static int bcm2711_miniuart_irq_handler(int irq, void *context, void *arg)
 {
-  // TODO
   int ret = OK;
   struct uart_dev_s *dev = (struct uart_dev_s *)arg;
   const struct bcm2711_miniuart_port_s *port =
