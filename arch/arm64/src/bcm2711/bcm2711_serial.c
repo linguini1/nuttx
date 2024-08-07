@@ -36,6 +36,7 @@
 
 #include "arm64_arch.h"
 #include "arm64_internal.h"
+#include "bcm2711_serial.h"
 #include "hardware/bcm2711_aux.h"
 #include "hardware/bcm2711_gpio.h"
 
@@ -67,10 +68,6 @@
 
 #define CONSOLE_DEV g_miniuartport /* Mini UART is console */
 #define TTYS0_DEV g_miniuartport   /* Mini UART is ttys0 */
-
-/* Timeout for UART Busy Wait, in milliseconds */
-
-#define UART_TIMEOUT_MS 100
 
 /* System clock frequency for Mini UART in Hz */
 
