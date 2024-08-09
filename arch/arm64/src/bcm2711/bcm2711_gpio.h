@@ -80,4 +80,21 @@
 
 void rp2040_gpio_set_pulls(uint32_t gpio, bool up, bool down);
 
+/****************************************************************************
+ * Name: bcm2711_gpio_set_func
+ *
+ * Description:
+ *   Set the specified GPIO pin to use one of its alternative functions.
+ *   This will override the input/output direction selection previously set
+ *   for this pin.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to set the function of.
+ *   func - The function to set the GPIO pin to (0-5). This overrides the
+ *          pin's input/output direction with the function.
+ *
+ ****************************************************************************/
+
+void bcm2711_gpio_set_func(uint32_t gpio, uint8_t func);
+
 #endif // __ARCH_ARM64_SRC_BCM2711_BCM2711_GPIO_H

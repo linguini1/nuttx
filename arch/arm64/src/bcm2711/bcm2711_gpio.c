@@ -50,6 +50,11 @@
  * Private Data
  ***************************************************************************/
 
+static const uint8_t FSEL_MAP[] = {
+    [0] = BCM_GPIO_FS_ALT0, [1] = BCM_GPIO_FS_ALT1, [2] = BCM_GPIO_FS_ALT2,
+    [3] = BCM_GPIO_FS_ALT3, [4] = BCM_GPIO_FS_ALT4, [5] = BCM_GPIO_FS_ALT5,
+};
+
 /***************************************************************************
  * Private Function Prototypes
  ***************************************************************************/
@@ -120,5 +125,58 @@ void rp2040_gpio_set_pulls(uint32_t gpio, bool up, bool down)
     {
       value = (direction << ((gpio - 48) * 2));
       modreg32(value, value, BCM_GPIO_PUP_PDN_CNTRL_REG3);
+    }
+}
+
+/****************************************************************************
+ * Name: bcm2711_gpio_set_func
+ *
+ * Description:
+ *   Set the specified GPIO pin to use one of its alternative functions.
+ *   This will override the input/output direction selection previously set
+ *   for this pin.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to set the function of.
+ *   func - The function to set the GPIO pin to (0-5). This overrides the
+ *          pin's input/output direction with the function.
+ *
+ ****************************************************************************/
+
+void bcm2711_gpio_set_func(uint32_t gpio, uint8_t func)
+{
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
+  DEBUGASSERT(0 <= func && func <= 5); /* Only 0-5 to select from. */
+
+  uint32_t value = 0;
+  if (gpio <= 9)
+    {
+      value = (FSEL_MAP[func] << (gpio * 3));
+      modreg32(value, value, BCM_GPIO_GPFSEL0);
+    }
+  else if (gpio <= 19 && gpio > 9)
+    {
+      value = (FSEL_MAP[func] << ((gpio - 10) * 3));
+      modreg32(value, value, BCM_GPIO_GPFSEL1);
+    }
+  else if (gpio <= 29 && gpio > 20)
+    {
+      value = (FSEL_MAP[func] << ((gpio - 20) * 3));
+      modreg32(value, value, BCM_GPIO_GPFSEL2);
+    }
+  else if (gpio <= 39 && gpio > 30)
+    {
+      value = (FSEL_MAP[func] << ((gpio - 30) * 3));
+      modreg32(value, value, BCM_GPIO_GPFSEL3);
+    }
+  else if (gpio <= 49 && gpio > 40)
+    {
+      value = (FSEL_MAP[func] << ((gpio - 40) * 3));
+      modreg32(value, value, BCM_GPIO_GPFSEL4);
+    }
+  else if (gpio <= 57 && gpio > 50)
+    {
+      value = (FSEL_MAP[func] << ((gpio - 50) * 3));
+      modreg32(value, value, BCM_GPIO_GPFSEL5);
     }
 }
