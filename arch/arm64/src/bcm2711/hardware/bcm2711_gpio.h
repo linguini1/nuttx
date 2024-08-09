@@ -33,6 +33,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+#define BCM_GPIO_NUM 57 /* Number of GPIO pins */
+
 /* GPIO register offset definitions */
 
 #define BCM_GPIO_GPFSEL0_OFFSET 0x00 /* GPIO function select 0 */
