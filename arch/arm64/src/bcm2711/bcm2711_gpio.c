@@ -450,3 +450,39 @@ void bcm2711_gpio_falling_edge(uint32_t gpio, bool set)
   DEBUGASSERT(gpio <= BCM_GPIO_NUM);
   bcm2711_gpio_help_set(gpio, BCM_GPIO_GPFEN0, BCM_GPIO_GPFEN1, set);
 }
+
+/****************************************************************************
+ * Name: bcm2711_gpio_high_level
+ *
+ * Description:
+ *   Set/clear high level event detection for the given GPIO pin.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to set the event detection of.
+ *   set - True to set, false to clear.
+ *
+ ****************************************************************************/
+
+void bcm2711_gpio_high_level(uint32_t gpio, bool set)
+{
+  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  bcm2711_gpio_help_set(gpio, BCM_GPIO_GPHEN0, BCM_GPIO_GPHEN1, set);
+}
+
+/****************************************************************************
+ * Name: bcm2711_gpio_low_level
+ *
+ * Description:
+ *   Set/clear low level event detection for the given GPIO pin.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to set the event detection of.
+ *   set - True to set, false to clear.
+ *
+ ****************************************************************************/
+
+void bcm2711_gpio_low_level(uint32_t gpio, bool set)
+{
+  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  bcm2711_gpio_help_set(gpio, BCM_GPIO_GPLEN0, BCM_GPIO_GPLEN1, set);
+}
