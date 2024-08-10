@@ -59,9 +59,70 @@ static const uint8_t g_fsel_map[] = {
  * Private Function Prototypes
  ***************************************************************************/
 
+static void bcm2711_gpio_pin_high(uint32_t gpio);
+static void bcm2711_gpio_pin_low(uint32_t gpio);
+
 /***************************************************************************
  * Private Functions
  ***************************************************************************/
+
+/****************************************************************************
+ * Name: bcm2711_gpio_pin_high
+ *
+ * Description:
+ *   Set a given GPIO output pin high.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to set high.
+ *
+ ****************************************************************************/
+
+static void bcm2711_gpio_pin_high(uint32_t gpio)
+{
+  uint32_t value;
+  if (gpio <= 31)
+    {
+      value = (1 << gpio);
+      modreg32(value, value, BCM_GPIO_GPSET0);
+    }
+  else
+    {
+      /* Up to calling code to ensure no GPIO number over `BCM_NUM_GPIO` is
+       * passed. */
+
+      value = (1 << (gpio - 32));
+      modreg32(value, value, BCM_GPIO_GPSET1);
+    }
+}
+
+/****************************************************************************
+ * Name: bcm2711_gpio_pin_low
+ *
+ * Description:
+ *   Set a given GPIO output pin low.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to set low.
+ *
+ ****************************************************************************/
+
+static void bcm2711_gpio_pin_low(uint32_t gpio)
+{
+  uint32_t value;
+  if (gpio <= 31)
+    {
+      value = (1 << gpio);
+      modreg32(value, value, BCM_GPIO_GPCLR0);
+    }
+  else
+    {
+      /* Up to calling code to ensure no GPIO number over `BCM_NUM_GPIO` is
+       * passed. */
+
+      value = (1 << (gpio - 32));
+      modreg32(value, value, BCM_GPIO_GPCLR1);
+    }
+}
 
 /***************************************************************************
  * Public Functions
@@ -71,9 +132,9 @@ static const uint8_t g_fsel_map[] = {
  * Name: bcm2711_gpio_set_pulls
  *
  * Description:
- *   Set the specified GPIO pin to have pull up, pull down or no resistor.
- *   With both `up` and `down` as false, the resistor will be set to none.
- *   It is not possible to set both pull-up and pull-down.
+ *   Set the specified GPIO pin to have pull up, pull down or no
+ *resistor. With both `up` and `down` as false, the resistor will be set
+ *to none. It is not possible to set both pull-up and pull-down.
  *
  * Input parameters:
  *   gpio - The GPIO pin number to set the resistors on.
@@ -84,7 +145,7 @@ static const uint8_t g_fsel_map[] = {
 
 void rp2040_gpio_set_pulls(uint32_t gpio, bool up, bool down)
 {
-  DEBUGASSERT(gpio < BCM_GPIO_NUM);
+  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
   DEBUGASSERT(!(up && down)); /* Not valid to set pull-up and pull-down */
 
   /* Pick direction. */
@@ -133,19 +194,19 @@ void rp2040_gpio_set_pulls(uint32_t gpio, bool up, bool down)
  *
  * Description:
  *   Set the specified GPIO pin to use one of its alternative functions.
- *   This will override the input/output direction selection previously set
- *   for this pin.
+ *   This will override the input/output direction selection previously
+ *set for this pin.
  *
  * Input parameters:
  *   gpio - The GPIO pin number to set the function of.
- *   func - The function to set the GPIO pin to (0-5). This overrides the
- *          pin's input/output direction with the function.
+ *   func - The function to set the GPIO pin to (0-5). This overrides
+ *the pin's input/output direction with the function.
  *
  ****************************************************************************/
 
 void bcm2711_gpio_set_func(uint32_t gpio, uint8_t func)
 {
-  DEBUGASSERT(gpio < BCM_GPIO_NUM);
+  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
   DEBUGASSERT(0 <= func && func <= 5); /* Only 0-5 to select from. */
 
   uint32_t value = 0;
@@ -186,18 +247,18 @@ void bcm2711_gpio_set_func(uint32_t gpio, uint8_t func)
  *
  * Description:
  *   Set the direction (input/output) of a specific GPIO pin.
- *   Calling this function will override any previous function selection for
- *   this pin.
+ *   Calling this function will override any previous function selection
+ *for this pin.
  *
  * Input parameters:
- *   gpio - The GPIO pin number to set the function of.
+ *   gpio - The GPIO pin number to set the direction of.
  *   out  - True to set the pin as an output, false to be an input.
  *
  ****************************************************************************/
 
 void bcm2711_gpio_set_dir(uint32_t gpio, bool out)
 {
-  DEBUGASSERT(gpio < BCM_GPIO_NUM);
+  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
 
   /* Select input or output. */
 
@@ -228,5 +289,32 @@ void bcm2711_gpio_set_dir(uint32_t gpio, bool out)
   else if (gpio <= 57 && gpio > 50)
     {
       modreg32(value, value, BCM_GPIO_GPFSEL5);
+    }
+}
+
+/****************************************************************************
+ * Name: bcm2711_gpio_pin_set
+ *
+ * Description:
+ *   Set the output of a GPIO output pin to high or low.
+ *   Calling this function on a GPIO pin set as an input does nothing.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to set high or low.
+ *   high  - True to set the pin high, false to set the pin low.
+ *
+ ****************************************************************************/
+
+void bcm2711_gpio_pin_set(uint32_t gpio, bool set)
+{
+  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+
+  if (set)
+    {
+      bcm2711_gpio_pin_high(gpio);
+    }
+  else
+    {
+      bcm2711_gpio_pin_low(gpio);
     }
 }

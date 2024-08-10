@@ -106,11 +106,27 @@ void bcm2711_gpio_set_func(uint32_t gpio, uint8_t func);
  *   this pin.
  *
  * Input parameters:
- *   gpio - The GPIO pin number to set the function of.
+ *   gpio - The GPIO pin number to set the direction of.
  *   out  - True to set the pin as an output, false to be an input.
  *
  ****************************************************************************/
 
 void bcm2711_gpio_set_dir(uint32_t gpio, bool out);
+
+
+/****************************************************************************
+ * Name: bcm2711_gpio_pin_set
+ *
+ * Description:
+ *   Set the output of a GPIO output pin to high or low.
+ *   Calling this function on a GPIO pin set as an input does nothing.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to set high or low.
+ *   high  - True to set the pin high, false to set the pin low.
+ *
+ ****************************************************************************/
+
+void bcm2711_gpio_pin_set(uint32_t gpio, bool set);
 
 #endif // __ARCH_ARM64_SRC_BCM2711_BCM2711_GPIO_H
