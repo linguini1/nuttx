@@ -160,4 +160,18 @@ bool bcm2711_gpio_event_get(uint32_t gpio);
 
 void bcm2711_gpio_event_clear(uint32_t gpio);
 
+/****************************************************************************
+ * Name: bcm2711_gpio_rising_edge
+ *
+ * Description:
+ *   Set/clear rising edge event detection for the given GPIO pin.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to set the event detection of.
+ *   set - True to set, false to clear.
+ *
+ ****************************************************************************/
+
+void bcm2711_gpio_rising_edge(uint32_t gpio, bool set);
+
 #endif // __ARCH_ARM64_SRC_BCM2711_BCM2711_GPIO_H

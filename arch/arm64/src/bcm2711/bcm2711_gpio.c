@@ -59,69 +59,97 @@ static const uint8_t g_fsel_map[] = {
  * Private Function Prototypes
  ***************************************************************************/
 
-static void bcm2711_gpio_pin_high(uint32_t gpio);
-static void bcm2711_gpio_pin_low(uint32_t gpio);
+static inline void bcm2711_gpio_help_set(uint32_t gpio, uint32_t reg1,
+                                         uint32_t reg2, bool val);
+static inline bool bcm2711_gpio_help_get(uint32_t gpio, uint32_t reg1,
+                                         uint32_t reg2);
 
 /***************************************************************************
  * Private Functions
  ***************************************************************************/
 
 /****************************************************************************
- * Name: bcm2711_gpio_pin_high
+ * Name: bcm2711_gpio_help_set
  *
  * Description:
- *   Set a given GPIO output pin high.
+ *   Helper function for setting a GPIO pin value on the BCM2711 GPIO
+ *   register where one register is for pins 0-31 and the second is pins
+ *   32-57.
  *
  * Input parameters:
- *   gpio - The GPIO pin number to set high.
+ *   gpio - The GPIO pin number to set the value of.
+ *   reg1 - The GPIO register for pins 0-31.
+ *   reg2 - The GPIO register for pins 0-33.
+ *   val - The value to set (true for 1, false for 0).
  *
  ****************************************************************************/
 
-static void bcm2711_gpio_pin_high(uint32_t gpio)
+static inline void bcm2711_gpio_help_set(uint32_t gpio, uint32_t reg1,
+                                         uint32_t reg2, bool val)
 {
-  uint32_t value;
+  /* Choose appropriate bit and register */
+
+  uint32_t bitmask;
+  uint32_t reg;
+
   if (gpio <= 31)
     {
-      value = (1 << gpio);
-      modreg32(value, value, BCM_GPIO_GPSET0);
+      bitmask = (1 << gpio);
+      reg = reg1;
     }
   else
     {
-      /* Up to calling code to ensure no GPIO number over `BCM_NUM_GPIO` is
-       * passed. */
+      bitmask = (1 << (gpio - 32));
+      reg = reg2;
+    }
 
-      value = (1 << (gpio - 32));
-      modreg32(value, value, BCM_GPIO_GPSET1);
+  /* Set or clear bit */
+
+  if (val)
+    {
+      modreg32(bitmask, bitmask, reg);
+    }
+  else
+    {
+      modreg32(0, bitmask, reg);
     }
 }
 
 /****************************************************************************
- * Name: bcm2711_gpio_pin_low
+ * Name: bcm2711_gpio_help_get
  *
  * Description:
- *   Set a given GPIO output pin low.
+ *   Helper function for reading a GPIO pin value on the BCM2711 GPIO
+ *   register where one register is for pins 0-31 and the second is pins
+ *   32-57.
  *
  * Input parameters:
- *   gpio - The GPIO pin number to set low.
+ *   gpio - The GPIO pin number to get the value of.
+ *   reg1 - The GPIO register for pins 0-31.
+ *   reg2 - The GPIO register for pins 0-33.
  *
  ****************************************************************************/
 
-static void bcm2711_gpio_pin_low(uint32_t gpio)
+static inline bool bcm2711_gpio_help_get(uint32_t gpio, uint32_t reg1,
+                                         uint32_t reg2)
 {
-  uint32_t value;
+  /* Choose appropriate bit and register */
+
+  uint32_t bitmask;
+  uint32_t reg;
+
   if (gpio <= 31)
     {
-      value = (1 << gpio);
-      modreg32(value, value, BCM_GPIO_GPCLR0);
+      bitmask = (1 << gpio);
+      reg = reg1;
     }
   else
     {
-      /* Up to calling code to ensure no GPIO number over `BCM_NUM_GPIO` is
-       * passed. */
-
-      value = (1 << (gpio - 32));
-      modreg32(value, value, BCM_GPIO_GPCLR1);
+      bitmask = (1 << (gpio - 32));
+      reg = reg2;
     }
+
+  return getreg32(reg) & bitmask;
 }
 
 /***************************************************************************
@@ -311,11 +339,11 @@ void bcm2711_gpio_pin_set(uint32_t gpio, bool set)
 
   if (set)
     {
-      bcm2711_gpio_pin_high(gpio);
+      bcm2711_gpio_help_set(gpio, BCM_GPIO_GPSET0, BCM_GPIO_GPSET0, true);
     }
   else
     {
-      bcm2711_gpio_pin_low(gpio);
+      bcm2711_gpio_help_set(gpio, BCM_GPIO_GPCLR0, BCM_GPIO_GPCLR0, true);
     }
 }
 
@@ -367,15 +395,7 @@ bool bcm2711_gpio_pin_get(uint32_t gpio)
 bool bcm2711_gpio_event_get(uint32_t gpio)
 {
   DEBUGASSERT(gpio <= BCM_GPIO_NUM);
-
-  if (gpio <= 31)
-    {
-      return getreg32(BCM_GPIO_GPEDS0) & (1 << gpio);
-    }
-  else
-    {
-      return getreg32(BCM_GPIO_GPEDS1) & (1 << (gpio - 32));
-    }
+  return bcm2711_gpio_help_get(gpio, BCM_GPIO_GPEDS0, BCM_GPIO_GPEDS1);
 }
 
 /****************************************************************************
@@ -392,17 +412,23 @@ bool bcm2711_gpio_event_get(uint32_t gpio)
 void bcm2711_gpio_event_clear(uint32_t gpio)
 {
   DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  bcm2711_gpio_help_set(gpio, BCM_GPIO_GPEDS0, BCM_GPIO_GPEDS1, false);
+}
 
-  uint32_t value;
+/****************************************************************************
+ * Name: bcm2711_gpio_rising_edge
+ *
+ * Description:
+ *   Set/clear rising edge event detection for the given GPIO pin.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to set the event detection of.
+ *   set - True to set, false to clear.
+ *
+ ****************************************************************************/
 
-  if (gpio <= 31)
-    {
-      value = (1 << gpio);
-      modreg32(value, value, BCM_GPIO_GPEDS0);
-    }
-  else
-    {
-      value = (1 << (gpio - 32));
-      modreg32(value, value, BCM_GPIO_GPEDS1);
-    }
+void bcm2711_gpio_rising_edge(uint32_t gpio, bool set)
+{
+  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  bcm2711_gpio_help_set(gpio, BCM_GPIO_GPREN0, BCM_GPIO_GPREN1, set);
 }
