@@ -113,7 +113,6 @@ void bcm2711_gpio_set_func(uint32_t gpio, uint8_t func);
 
 void bcm2711_gpio_set_dir(uint32_t gpio, bool out);
 
-
 /****************************************************************************
  * Name: bcm2711_gpio_pin_set
  *
@@ -128,5 +127,21 @@ void bcm2711_gpio_set_dir(uint32_t gpio, bool out);
  ****************************************************************************/
 
 void bcm2711_gpio_pin_set(uint32_t gpio, bool set);
+
+/****************************************************************************
+ * Name: bcm2711_gpio_pin_get
+ *
+ * Description:
+ *   Get the current value of the GPIO.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to set high or low.
+ *
+ * Return:
+ *    True for high, false for low.
+ *
+ ****************************************************************************/
+
+bool bcm2711_gpio_pin_get(uint32_t gpio);
 
 #endif // __ARCH_ARM64_SRC_BCM2711_BCM2711_GPIO_H

@@ -318,3 +318,31 @@ void bcm2711_gpio_pin_set(uint32_t gpio, bool set)
       bcm2711_gpio_pin_low(gpio);
     }
 }
+
+/****************************************************************************
+ * Name: bcm2711_gpio_pin_get
+ *
+ * Description:
+ *   Get the current value of the GPIO.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to set high or low.
+ *
+ * Return:
+ *    True for high, false for low.
+ *
+ ****************************************************************************/
+
+bool bcm2711_gpio_pin_get(uint32_t gpio)
+{
+  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+
+  if (gpio <= 31)
+    {
+      return getreg32(BCM_GPIO_GPLEV0) & (1 << gpio);
+    }
+  else
+    {
+      return getreg32(BCM_GPIO_GPLEV1) & (1 << (gpio - 32));
+    }
+}
