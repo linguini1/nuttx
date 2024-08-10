@@ -44,6 +44,24 @@
  ***************************************************************************/
 
 /***************************************************************************
+ * Public Types
+ ***************************************************************************/
+
+/* Possible functions for the BCM2711 GPIO pins */
+
+enum bcm2711_gpio_func_e
+{
+  BCM_GPIO_FUNC0 = 0,  /* Alternative function 0 */
+  BCM_GPIO_FUNC1 = 1,  /* Alternative function 1 */
+  BCM_GPIO_FUNC2 = 2,  /* Alternative function 2 */
+  BCM_GPIO_FUNC3 = 3,  /* Alternative function 3 */
+  BCM_GPIO_FUNC4 = 4,  /* Alternative function 4 */
+  BCM_GPIO_FUNC5 = 5,  /* Alternative function 5 */
+  BCM_GPIO_INPUT = 6,  /* Input */
+  BCM_GPIO_OUTPUT = 7, /* Output */
+};
+
+/***************************************************************************
  * Public Functions
  ***************************************************************************/
 
@@ -68,34 +86,16 @@ void rp2040_gpio_set_pulls(uint32_t gpio, bool up, bool down);
  * Name: bcm2711_gpio_set_func
  *
  * Description:
- *   Set the specified GPIO pin to use one of its alternative functions.
- *   This will override the input/output direction selection previously set
- *   for this pin.
+ *   Set the specified GPIO pin to be input, output or use one of its
+ *   alternative functions.
  *
  * Input parameters:
  *   gpio - The GPIO pin number to set the function of.
- *   func - The function to set the GPIO pin to (0-5). This overrides the
- *          pin's input/output direction with the function.
+ *   func - The function to set the GPIO pin to use.
  *
  ****************************************************************************/
 
-void bcm2711_gpio_set_func(uint32_t gpio, uint8_t func);
-
-/****************************************************************************
- * Name: bcm2711_gpio_set_dir
- *
- * Description:
- *   Set the direction (input/output) of a specific GPIO pin.
- *   Calling this function will override any previous function selection for
- *   this pin.
- *
- * Input parameters:
- *   gpio - The GPIO pin number to set the direction of.
- *   out  - True to set the pin as an output, false to be an input.
- *
- ****************************************************************************/
-
-void bcm2711_gpio_set_dir(uint32_t gpio, bool out);
+void bcm2711_gpio_set_func(uint32_t gpio, enum bcm2711_gpio_func_e func);
 
 /****************************************************************************
  * Name: bcm2711_gpio_pin_set

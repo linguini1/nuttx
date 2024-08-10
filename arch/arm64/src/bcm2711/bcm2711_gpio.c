@@ -50,9 +50,18 @@
  * Private Data
  ***************************************************************************/
 
+// TODO: is it necessary to encode the alternate function possibilities for
+// each pin in a lookup table?
+
+/* Mapping from function selection enum to BCM2711 function selection
+ * representation.
+ */
+
 static const uint8_t g_fsel_map[] = {
-    [0] = BCM_GPIO_FS_ALT0, [1] = BCM_GPIO_FS_ALT1, [2] = BCM_GPIO_FS_ALT2,
-    [3] = BCM_GPIO_FS_ALT3, [4] = BCM_GPIO_FS_ALT4, [5] = BCM_GPIO_FS_ALT5,
+    [BCM_GPIO_FUNC0] = BCM_GPIO_FS_ALT0, [BCM_GPIO_FUNC1] = BCM_GPIO_FS_ALT1,
+    [BCM_GPIO_FUNC2] = BCM_GPIO_FS_ALT2, [BCM_GPIO_FUNC3] = BCM_GPIO_FS_ALT3,
+    [BCM_GPIO_FUNC4] = BCM_GPIO_FS_ALT4, [BCM_GPIO_FUNC5] = BCM_GPIO_FS_ALT5,
+    [BCM_GPIO_INPUT] = BCM_GPIO_FS_IN,   [BCM_GPIO_OUTPUT] = BCM_GPIO_FS_OUT,
 };
 
 /***************************************************************************
@@ -221,21 +230,18 @@ void rp2040_gpio_set_pulls(uint32_t gpio, bool up, bool down)
  * Name: bcm2711_gpio_set_func
  *
  * Description:
- *   Set the specified GPIO pin to use one of its alternative functions.
- *   This will override the input/output direction selection previously
- *set for this pin.
+ *   Set the specified GPIO pin to be input, output or use one of its
+ *   alternative functions.
  *
  * Input parameters:
  *   gpio - The GPIO pin number to set the function of.
- *   func - The function to set the GPIO pin to (0-5). This overrides
- *the pin's input/output direction with the function.
+ *   func - The function to set the GPIO pin to use.
  *
  ****************************************************************************/
 
-void bcm2711_gpio_set_func(uint32_t gpio, uint8_t func)
+void bcm2711_gpio_set_func(uint32_t gpio, enum bcm2711_gpio_func_e func)
 {
   DEBUGASSERT(gpio <= BCM_GPIO_NUM);
-  DEBUGASSERT(0 <= func && func <= 5); /* Only 0-5 to select from. */
 
   uint32_t value = 0;
   if (gpio <= 9)
@@ -266,56 +272,6 @@ void bcm2711_gpio_set_func(uint32_t gpio, uint8_t func)
   else if (gpio <= 57 && gpio > 50)
     {
       value = (g_fsel_map[func] << ((gpio - 50) * 3));
-      modreg32(value, value, BCM_GPIO_GPFSEL5);
-    }
-}
-
-/****************************************************************************
- * Name: bcm2711_gpio_set_dir
- *
- * Description:
- *   Set the direction (input/output) of a specific GPIO pin.
- *   Calling this function will override any previous function selection
- *for this pin.
- *
- * Input parameters:
- *   gpio - The GPIO pin number to set the direction of.
- *   out  - True to set the pin as an output, false to be an input.
- *
- ****************************************************************************/
-
-void bcm2711_gpio_set_dir(uint32_t gpio, bool out)
-{
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
-
-  /* Select input or output. */
-
-  uint32_t value = out ? BCM_GPIO_FS_OUT : BCM_GPIO_FS_IN;
-
-  /* Modify appropriate register. */
-
-  if (gpio <= 9)
-    {
-      modreg32(value, value, BCM_GPIO_GPFSEL0);
-    }
-  else if (gpio <= 19 && gpio > 9)
-    {
-      modreg32(value, value, BCM_GPIO_GPFSEL1);
-    }
-  else if (gpio <= 29 && gpio > 20)
-    {
-      modreg32(value, value, BCM_GPIO_GPFSEL2);
-    }
-  else if (gpio <= 39 && gpio > 30)
-    {
-      modreg32(value, value, BCM_GPIO_GPFSEL3);
-    }
-  else if (gpio <= 49 && gpio > 40)
-    {
-      modreg32(value, value, BCM_GPIO_GPFSEL4);
-    }
-  else if (gpio <= 57 && gpio > 50)
-    {
       modreg32(value, value, BCM_GPIO_GPFSEL5);
     }
 }
