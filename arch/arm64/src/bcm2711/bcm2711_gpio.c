@@ -50,7 +50,7 @@
  * Private Data
  ***************************************************************************/
 
-static const uint8_t FSEL_MAP[] = {
+static const uint8_t g_fsel_map[] = {
     [0] = BCM_GPIO_FS_ALT0, [1] = BCM_GPIO_FS_ALT1, [2] = BCM_GPIO_FS_ALT2,
     [3] = BCM_GPIO_FS_ALT3, [4] = BCM_GPIO_FS_ALT4, [5] = BCM_GPIO_FS_ALT5,
 };
@@ -151,32 +151,32 @@ void bcm2711_gpio_set_func(uint32_t gpio, uint8_t func)
   uint32_t value = 0;
   if (gpio <= 9)
     {
-      value = (FSEL_MAP[func] << (gpio * 3));
+      value = (g_fsel_map[func] << (gpio * 3));
       modreg32(value, value, BCM_GPIO_GPFSEL0);
     }
   else if (gpio <= 19 && gpio > 9)
     {
-      value = (FSEL_MAP[func] << ((gpio - 10) * 3));
+      value = (g_fsel_map[func] << ((gpio - 10) * 3));
       modreg32(value, value, BCM_GPIO_GPFSEL1);
     }
   else if (gpio <= 29 && gpio > 20)
     {
-      value = (FSEL_MAP[func] << ((gpio - 20) * 3));
+      value = (g_fsel_map[func] << ((gpio - 20) * 3));
       modreg32(value, value, BCM_GPIO_GPFSEL2);
     }
   else if (gpio <= 39 && gpio > 30)
     {
-      value = (FSEL_MAP[func] << ((gpio - 30) * 3));
+      value = (g_fsel_map[func] << ((gpio - 30) * 3));
       modreg32(value, value, BCM_GPIO_GPFSEL3);
     }
   else if (gpio <= 49 && gpio > 40)
     {
-      value = (FSEL_MAP[func] << ((gpio - 40) * 3));
+      value = (g_fsel_map[func] << ((gpio - 40) * 3));
       modreg32(value, value, BCM_GPIO_GPFSEL4);
     }
   else if (gpio <= 57 && gpio > 50)
     {
-      value = (FSEL_MAP[func] << ((gpio - 50) * 3));
+      value = (g_fsel_map[func] << ((gpio - 50) * 3));
       modreg32(value, value, BCM_GPIO_GPFSEL5);
     }
 }
