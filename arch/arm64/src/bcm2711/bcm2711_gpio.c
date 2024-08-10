@@ -346,3 +346,63 @@ bool bcm2711_gpio_pin_get(uint32_t gpio)
       return getreg32(BCM_GPIO_GPLEV1) & (1 << (gpio - 32));
     }
 }
+
+/****************************************************************************
+ * Name: bcm2711_gpio_event_get
+ *
+ * Description:
+ *   Check if an event was detected for the given GPIO pin.
+ *   The event bit will be set if an event has happened that matches the event
+ *   detection configuration for the given pin (rising edge, falling edge,
+ *   level).
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to check for an event.
+ *
+ * Return:
+ *    True if an event was detected, false otherwise.
+ *
+ ****************************************************************************/
+
+bool bcm2711_gpio_event_get(uint32_t gpio)
+{
+  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+
+  if (gpio <= 31)
+    {
+      return getreg32(BCM_GPIO_GPEDS0) & (1 << gpio);
+    }
+  else
+    {
+      return getreg32(BCM_GPIO_GPEDS1) & (1 << (gpio - 32));
+    }
+}
+
+/****************************************************************************
+ * Name: bcm2711_gpio_event_clear
+ *
+ * Description:
+ *   Clear the event detect status for the given GPIO pin.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to clear the event status of.
+ *
+ ****************************************************************************/
+
+void bcm2711_gpio_event_clear(uint32_t gpio)
+{
+  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+
+  uint32_t value;
+
+  if (gpio <= 31)
+    {
+      value = (1 << gpio);
+      modreg32(value, value, BCM_GPIO_GPEDS0);
+    }
+  else
+    {
+      value = (1 << (gpio - 32));
+      modreg32(value, value, BCM_GPIO_GPEDS1);
+    }
+}

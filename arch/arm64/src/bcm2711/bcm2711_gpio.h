@@ -44,22 +44,6 @@
  ***************************************************************************/
 
 /***************************************************************************
- * Private Types
- ***************************************************************************/
-
-/***************************************************************************
- * Private Data
- ***************************************************************************/
-
-/***************************************************************************
- * Private Function Prototypes
- ***************************************************************************/
-
-/***************************************************************************
- * Private Functions
- ***************************************************************************/
-
-/***************************************************************************
  * Public Functions
  ***************************************************************************/
 
@@ -143,5 +127,37 @@ void bcm2711_gpio_pin_set(uint32_t gpio, bool set);
  ****************************************************************************/
 
 bool bcm2711_gpio_pin_get(uint32_t gpio);
+
+/****************************************************************************
+ * Name: bcm2711_gpio_event_get
+ *
+ * Description:
+ *   Check if an event was detected for the given GPIO pin.
+ *   The event bit will be set if an event has happened that matches the event
+ *   detection configuration for the given pin (rising edge, falling edge,
+ *   level).
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to check for an event.
+ *
+ * Return:
+ *    True if an event was detected, false otherwise.
+ *
+ ****************************************************************************/
+
+bool bcm2711_gpio_event_get(uint32_t gpio);
+
+/****************************************************************************
+ * Name: bcm2711_gpio_event_clear
+ *
+ * Description:
+ *   Clear the event detect status for the given GPIO pin.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to clear the event status of.
+ *
+ ****************************************************************************/
+
+void bcm2711_gpio_event_clear(uint32_t gpio);
 
 #endif // __ARCH_ARM64_SRC_BCM2711_BCM2711_GPIO_H
