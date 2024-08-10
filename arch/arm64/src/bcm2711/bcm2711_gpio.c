@@ -180,3 +180,53 @@ void bcm2711_gpio_set_func(uint32_t gpio, uint8_t func)
       modreg32(value, value, BCM_GPIO_GPFSEL5);
     }
 }
+
+/****************************************************************************
+ * Name: bcm2711_gpio_set_dir
+ *
+ * Description:
+ *   Set the direction (input/output) of a specific GPIO pin.
+ *   Calling this function will override any previous function selection for
+ *   this pin.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to set the function of.
+ *   out  - True to set the pin as an output, false to be an input.
+ *
+ ****************************************************************************/
+
+void bcm2711_gpio_set_dir(uint32_t gpio, bool out)
+{
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
+
+  /* Select input or output. */
+
+  uint32_t value = out ? BCM_GPIO_FS_OUT : BCM_GPIO_FS_IN;
+
+  /* Modify appropriate register. */
+
+  if (gpio <= 9)
+    {
+      modreg32(value, value, BCM_GPIO_GPFSEL0);
+    }
+  else if (gpio <= 19 && gpio > 9)
+    {
+      modreg32(value, value, BCM_GPIO_GPFSEL1);
+    }
+  else if (gpio <= 29 && gpio > 20)
+    {
+      modreg32(value, value, BCM_GPIO_GPFSEL2);
+    }
+  else if (gpio <= 39 && gpio > 30)
+    {
+      modreg32(value, value, BCM_GPIO_GPFSEL3);
+    }
+  else if (gpio <= 49 && gpio > 40)
+    {
+      modreg32(value, value, BCM_GPIO_GPFSEL4);
+    }
+  else if (gpio <= 57 && gpio > 50)
+    {
+      modreg32(value, value, BCM_GPIO_GPFSEL5);
+    }
+}
