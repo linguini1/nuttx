@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <debug.h>
 #include <errno.h>
+#include <nuttx/irq.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -40,6 +41,7 @@
 #include <nuttx/mutex.h>
 
 #include "arm64_arch.h"
+#include "arm64_gic.h"
 #include "bcm2711_gpio.h"
 #include "bcm2711_i2c.h"
 #include "chip.h"
@@ -73,6 +75,7 @@ struct bcm2711_i2cdev_s
 {
   struct i2c_master_s dev; /* Generic I2C device */
   uint32_t base;           /* Base address of I2C interface */
+  uint8_t port;            /* Port number */
 
   mutex_t lock;       /* Exclusive access */
   sem_t wait;         /* Wait for transfer completion */
@@ -92,6 +95,8 @@ static void bcm2711_i2c_setfrequency(struct bcm2711_i2cdev_s *priv,
                                      uint32_t frequency);
 static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv);
 static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv);
+
+static int bcm2711_i2c_interrupt_handler(int irq, void *context, void *arg);
 
 static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
                                 struct i2c_msg_s *msgs, int count);
@@ -120,6 +125,7 @@ static struct bcm2711_i2cdev_s g_i2c1dev = {
     .base = BCM_BSC1,
     .lock = NXMUTEX_INITIALIZER,
     .wait = SEM_INITIALIZER(0),
+    .port = 1,
     .refs = 0,
     .err = 0,
 };
@@ -225,6 +231,75 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
 }
 
 /****************************************************************************
+ * Name: bcm2711_i2c_interrupt_handler
+ *
+ * Description:
+ *   Handle I2C interrupts.
+ *
+ * Input Parameters:
+ *     irq - The IRQ number
+ *     context - The interrupt context
+ *     arg - The argument passed to the interrupt handler
+ ****************************************************************************/
+
+static int bcm2711_i2c_interrupt_handler(int irq, void *context, void *arg)
+{
+  int ret = OK;
+  uint32_t status;
+  uint32_t status_addr;
+  struct bcm2711_i2cdev_s *priv = (struct bcm2711_i2cdev_s *)arg;
+
+  /* Get interrupt status for this device. */
+
+  status_addr = BCM_BSC_S(priv->base);
+  status = getreg32(status_addr);
+
+  /* Decide what to do with the status */
+
+  /* There was an ACK error */
+
+  if (status & BCM_BSC_S_ERR)
+    {
+      modreg32(BCM_BSC_S_ERR, BCM_BSC_S_ERR,
+               status_addr); /* Acknowledge err */
+      priv->err = -EIO;
+    }
+
+  /* There was a clock stretch timeout */
+
+  if (status & BCM_BSC_S_CLKT)
+    {
+      modreg32(BCM_BSC_S_CLKT, BCM_BSC_S_CLKT,
+               status_addr); /* Acknowledge err */
+      priv->err = -EIO;
+    }
+
+  /* FIFO is full */
+
+  if (status & BCM_BSC_S_RXF)
+    {
+      // TODO
+    }
+
+  /* FIFO is empty */
+
+  if (status & BCM_BSC_S_TXE)
+    {
+      // TODO
+    }
+
+  /* Transfer is done */
+
+  if (status & BCM_BSC_S_DONE)
+    {
+      modreg32(BCM_BSC_S_DONE, BCM_BSC_S_DONE, status_addr);
+      // TODO
+    }
+
+  return ret;
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -241,7 +316,7 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
 
 struct i2c_master_s *bcm2711_i2cbus_initialize(int port)
 {
-
+  int ret;
   struct bcm2711_i2cdev_s *priv;
 
   /* Initialize selected port */
@@ -274,7 +349,25 @@ struct i2c_master_s *bcm2711_i2cbus_initialize(int port)
     }
 
   /* Not yet initialized, little more work to do. */
-  // TODO
+
+  // TODO: init
+  bcm2711_i2c_disable(priv); /* Only enabled when used. */
+  bcm2711_i2c_setfrequency(priv, I2C_DEFAULT_FREQUENCY);
+
+  /* Attach interrupt handler */
+
+  ret = irq_attach(BCM_IRQ_VC_I2C, bcm2711_i2c_interrupt_handler, priv);
+  if (ret < 0)
+    {
+      i2cerr("Could not attach interrupt handler for port %d: %d\n", port,
+             ret);
+      return NULL;
+    }
+
+  /* Enable interrupt handler */
+
+  arm64_gic_irq_set_priority(BCM_IRQ_VC_I2C, 0, IRQ_TYPE_EDGE);
+  up_enable_irq(BCM_IRQ_VC_I2C);
 
   nxmutex_unlock(&priv->lock);
   return &priv->dev;
