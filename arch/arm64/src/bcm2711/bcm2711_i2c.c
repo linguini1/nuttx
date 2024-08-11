@@ -300,6 +300,20 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
 
   DEBUGASSERT(msg != NULL);
 
+  if (stop)
+    {
+      putreg32(msg->length, BCM_BSC_DLEN(priv->base));
+    }
+  else
+    {
+      /* If there is no stop condition desired, avoid sending one by setting
+       * the transfer length register to one byte greater than the actual
+       * transfer.
+       * TODO: does this actually work?
+       */
+      putreg32(msg->length + 1, BCM_BSC_DLEN(priv->base));
+    }
+
   /* Start buffer fresh for receiving full message. */
 
   priv->reg_buff_offset = 0;
