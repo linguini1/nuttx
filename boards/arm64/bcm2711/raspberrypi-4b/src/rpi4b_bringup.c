@@ -78,7 +78,45 @@ int rpi4b_bringup(void)
     }
 #endif // defined(CONFIG_BCM2711_I2C1)
 
-    // TODO: initializer calls for remaining I2C devices
+#if defined(CONFIG_BCM2711_I2C2)
+  ret = bcm2711_i2cdev_initialize(2);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "Failed to initialize I2C2: %d\n", ret);
+    }
+#endif // defined(CONFIG_BCM2711_I2C2)
+
+#if defined(CONFIG_BCM2711_I2C3)
+  ret = bcm2711_i2cdev_initialize(3);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "Failed to initialize I2C3: %d\n", ret);
+    }
+#endif // defined(CONFIG_BCM2711_I2C3)
+
+#if defined(CONFIG_BCM2711_I2C4)
+  ret = bcm2711_i2cdev_initialize(4);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "Failed to initialize I2C4: %d\n", ret);
+    }
+#endif // defined(CONFIG_BCM2711_I2C4)
+
+#if defined(CONFIG_BCM2711_I2C5)
+  ret = bcm2711_i2cdev_initialize(5);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "Failed to initialize I2C5: %d\n", ret);
+    }
+#endif // defined(CONFIG_BCM2711_I2C5)
+
+#if defined(CONFIG_BCM2711_I2C6)
+  ret = bcm2711_i2cdev_initialize(6);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "Failed to initialize I2C6: %d\n", ret);
+    }
+#endif // defined(CONFIG_BCM2711_I2C6)
 
 #endif // defined(CONFIG_BCM2711_I2C)
 
