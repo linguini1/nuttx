@@ -45,4 +45,8 @@
 int rpi4b_bringup(void);
 #endif
 
+#if defined(CONFIG_DEV_GPIO)
+int bcm2711_dev_gpio_init(void);
+#endif // defined(CONFIG_DEV_GPIO)
+
 #endif // __BOARDS_ARM64_BCM2711_RASPBERRYPI_4B_SRC_RPI4B_H

@@ -273,8 +273,8 @@ static int bcm2711_gpio_irqs_init(void)
  *
  * Description:
  *   Set the specified GPIO pin to have pull up, pull down or no
- *resistor. With both `up` and `down` as false, the resistor will be set
- *to none. It is not possible to set both pull-up and pull-down.
+ *   resistor. With both `up` and `down` as false, the resistor will be set
+ *   to none. It is not possible to set both pull-up and pull-down.
  *
  * Input parameters:
  *   gpio - The GPIO pin number to set the resistors on.
@@ -283,7 +283,7 @@ static int bcm2711_gpio_irqs_init(void)
  *
  ****************************************************************************/
 
-void rp2040_gpio_set_pulls(uint32_t gpio, bool up, bool down)
+void bcm2711_gpio_set_pulls(uint32_t gpio, bool up, bool down)
 {
   DEBUGASSERT(gpio < BCM_GPIO_NUM);
   DEBUGASSERT(!(up && down)); /* Not valid to set pull-up and pull-down */

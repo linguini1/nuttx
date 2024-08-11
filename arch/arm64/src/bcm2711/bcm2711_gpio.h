@@ -80,7 +80,7 @@ enum bcm2711_gpio_func_e
  *
  ****************************************************************************/
 
-void rp2040_gpio_set_pulls(uint32_t gpio, bool up, bool down);
+void bcm2711_gpio_set_pulls(uint32_t gpio, bool up, bool down);
 
 /****************************************************************************
  * Name: bcm2711_gpio_set_func

@@ -1,5 +1,7 @@
 /****************************************************************************
- * boards/arm64/bcm2711/raspberrypi-4b/src/rpi4b_bringup.c
+ * boards/arm64/bcm2711/raspberrypi-4b/include/board.h
+ *
+ * Author: Matteo Golin <matteo.golin@gmail.com>
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,41 +20,23 @@
  *
  ****************************************************************************/
 
+#ifndef __BOARDS_ARM64_BCM2711_RPI4B_INCLUDE_BOARD_H
+#define __BOARDS_ARM64_BCM2711_RPI4B_INCLUDE_BOARD_H
+
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include "rpi4b.h"
 #include <nuttx/config.h>
-#include <sys/types.h>
-#include <syslog.h>
 
 /****************************************************************************
- * Public Functions
+ * Pre-processor Definitions
  ****************************************************************************/
 
-/****************************************************************************
- * Name: rpi4b_bringup
- *
- * Description:
- *   Bring up board features
- *
- ****************************************************************************/
+/* TODO: define all the GPIO pins properly */
 
-int rpi4b_bringup(void)
-{
+#define BOARD_NGPIOOUT 1
+#define BOARD_NGPIOIN 1
+#define BOARD_NGPIOINT 0
 
-  int ret = OK;
-
-  /* Initialize GPIO driver. */
-
-#if defined(CONFIG_DEV_GPIO)
-  ret = bcm2711_dev_gpio_init();
-  if (ret < 0)
-    {
-      syslog(LOG_ERR, "Failed to initialize GPIO driver: %d\n.", ret);
-    }
-#endif // defined(CONFIG_DEV_GPIO)
-
-  return ret;
-}
+#endif // __BOARDS_ARM64_BCM2711_RPI4B_INCLUDE_BOARD_H
