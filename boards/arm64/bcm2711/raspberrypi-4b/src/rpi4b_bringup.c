@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #include <syslog.h>
 
-#if defined(CONFIG_BCM2711_I2C)
+#if defined(CONFIG_BCM2711_I2C_DRIVER)
 #include "bcm2711_i2cdev.h"
 #endif // defined(CONFIG_BCM2711_I2C)
 

@@ -40,7 +40,7 @@
  *
  ****************************************************************************/
 
-#if defined(BCM2711_I2C_DRIVER)
+#if defined(CONFIG_BCM2711_I2C_DRIVER)
 int bcm2711_i2cdev_initialize(int port);
 #endif // defined(BCM2711_I2C_DRIVER)
 
