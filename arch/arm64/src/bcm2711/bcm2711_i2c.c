@@ -65,6 +65,10 @@
 
 #define CLK_DIVISOR(freq) (CORE_CLOCK_FREQUENCY / (freq))
 
+/* The FIFO buffer length of the I2C interfaces */
+
+#define FIFO_DEPTH 16
+
 /****************************************************************************
  * Private Types
  ****************************************************************************/
@@ -82,6 +86,8 @@ struct bcm2711_i2cdev_s
   uint32_t frequency; /* I2C bus frequency */
 
   struct i2c_msg_s *msgs; /* Messages to send */
+  size_t reg_buff_offset; /* Offset into message buffer */
+  uint8_t rw_size;        /* max(FIFO_DEPTH, remaining message size) */
 
   int err;  /* Error status of transfers */
   int refs; /* Reference count */
@@ -95,6 +101,7 @@ static void bcm2711_i2c_setfrequency(struct bcm2711_i2cdev_s *priv,
                                      uint32_t frequency);
 static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv);
 static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv);
+static void bcm2711_i2c_drainrxfifo(struct bcm2711_i2cdev_s *priv);
 
 static int bcm2711_i2c_interrupt_handler(int irq, void *context, void *arg);
 
@@ -209,6 +216,48 @@ static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv)
   modreg32(BCM_BSC_C_INTD, BCM_BSC_C_INTD, BCM_BSC_C(priv->base));
   modreg32(BCM_BSC_C_INTR, BCM_BSC_C_INTR, BCM_BSC_C(priv->base));
   modreg32(BCM_BSC_C_INTT, BCM_BSC_C_INTT, BCM_BSC_C(priv->base));
+}
+
+/****************************************************************************
+ * Name: bcm2711_i2c_drainrxfifo
+ *
+ * Description:
+ *   Drain the RX FIFO into the receive message buffer of the I2C device.
+ *
+ * Input Parameters:
+ *     priv - The BCM2711 I2C interface to receive on.
+ *
+ ****************************************************************************/
+
+static void bcm2711_i2c_drainrxfifo(struct bcm2711_i2cdev_s *priv)
+{
+  struct i2c_msg_s *msg = priv->msgs;
+  uint32_t status_addr = BCM_BSC_S(priv->base);
+  uint32_t fifo_addr = BCM_BSC_FIFO(priv->base);
+  uint32_t data;
+  size_t i;
+
+  DEBUGASSERT(msg != NULL);
+
+  /* While the RX FIFO contains data to be received, drain it into the message
+   * buffer. Do not read more than the `rw_size` to avoid overflowing the
+   * message buffer.
+   */
+
+  for (i = 0; (i < priv->rw_size) && (getreg32(status_addr) & BCM_BSC_S_RXD);
+       i++)
+    {
+      data = getreg32(fifo_addr);
+      msg->buffer[priv->reg_buff_offset + i] = data & 0xff;
+    }
+
+  /* We have either reached the rw_size or the RX FIFO is out of data.
+   * Update the buffer offset with the amount of data we have read.
+   * NOTE: If the receive FIFO contains less data than `rw_size`, then we skip
+   * bytes.
+   */
+
+  priv->reg_buff_offset += i;
 }
 
 /****************************************************************************
