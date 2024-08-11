@@ -147,6 +147,8 @@ static struct bcm2711_gpio_dev_s g_gpin[BOARD_NGPIOIN];
 
 #if BOARD_NGPIOINT > 0
 
+#warn "Missing functionality for interrupt GPIO pins."
+
 /* GPIO operations for interrupt pins. */
 
 static const struct gpio_operations_s gpint_ops = {
