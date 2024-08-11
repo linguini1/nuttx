@@ -33,6 +33,21 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+/* BSC interface base addresses */
+
+#define BCM_BSC0                                                             \
+  (BCM_PERIPHERAL_BASEADDR + 0x000205000) /* BSC/I2C interface 0 */
+#define BCM_BSC1                                                             \
+  (BCM_PERIPHERAL_BASEADDR + 0x000804000) /* BSC/I2C interface 1 */
+#define BCM_BSC3                                                             \
+  (BCM_PERIPHERAL_BASEADDR + 0x000205600) /* BSC/I2C interface 2 */
+#define BCM_BSC4                                                             \
+  (BCM_PERIPHERAL_BASEADDR + 0x000205800) /* BSC/I2C interface 3 */
+#define BCM_BSC5                                                             \
+  (BCM_PERIPHERAL_BASEADDR + 0x000205a80) /* BSC/I2C interface 4 */
+#define BCM_BSC6                                                             \
+  (BCM_PERIPHERAL_BASEADDR + 0x000205c00) /* BSC/I2C interface 5 */
+
 /* BSC register offsets */
 
 #define BCM_BSC_C_OFFSET 0x00    /* Control */
@@ -43,6 +58,18 @@
 #define BCM_BSC_DIV_OFFSET 0x14  /* Clock Divider */
 #define BCM_BSC_DEL_OFFSET 0x18  /* Data Delay */
 #define BCM_BSC_CLKT_OFFSET 0x1c /* Clock Stretch Timeout */
+
+/* BSC registers */
+
+#define BCM_BSC_C(reg) (reg + BCM_BSC_C_OFFSET)       /* Control */
+#define BCM_BSC_S(reg) (reg + BCM_BSC_S_OFFSET)       /* Status */
+#define BCM_BSC_DLEN(reg) (reg + BCM_BSC_DLEN_OFFSET) /* Data Length */
+#define BCM_BSC_A(reg) (reg + BCM_BSC_A_OFFSET)       /* Slave Address */
+#define BCM_BSC_FIFO(reg) (reg + BCM_BSC_FIFO_OFFSET) /* Data FIFO */
+#define BCM_BSC_DIV(reg) (reg + BCM_BSC_DIV_OFFSET)   /* Clock Divider */
+#define BCM_BSC_DEL(reg) (reg + BCM_BSC_DEL_OFFSET)   /* Data Delay */
+#define BCM_BSC_CLKT(reg)                                                    \
+  (reg + BCM_BSC_CLKT_OFFSET) /* Clock Stretch Timeout */
 
 /* BSC register bit definitions */
 

@@ -68,21 +68,6 @@
 #define BCM_SYST_BASEADDR                                                    \
   (BCM_PERIPHERAL_BASEADDR + 0x000003000) /* System timer */
 
-/* BSC interface base addresses */
-
-#define BCM_BSC0                                                             \
-  (BCM_PERIPHERAL_BASEADDR + 0x000205000) /* BSC/I2C interface 0 */
-#define BCM_BSC1                                                             \
-  (BCM_PERIPHERAL_BASEADDR + 0x000804000) /* BSC/I2C interface 1 */
-#define BCM_BSC3                                                             \
-  (BCM_PERIPHERAL_BASEADDR + 0x000205600) /* BSC/I2C interface 2 */
-#define BCM_BSC4                                                             \
-  (BCM_PERIPHERAL_BASEADDR + 0x000205800) /* BSC/I2C interface 3 */
-#define BCM_BSC5                                                             \
-  (BCM_PERIPHERAL_BASEADDR + 0x000205a80) /* BSC/I2C interface 4 */
-#define BCM_BSC6                                                             \
-  (BCM_PERIPHERAL_BASEADDR + 0x000205c00) /* BSC/I2C interface 5 */
-
 /* SPI interface register base addresses */
 
 #define BCM_SPI0_BASEADDR                                                    \
