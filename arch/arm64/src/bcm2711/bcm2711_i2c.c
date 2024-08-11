@@ -162,6 +162,18 @@ static void bcm2711_i2c_setfrequency(struct bcm2711_i2cdev_s *priv,
 
 static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv)
 {
+  /* Disable interrupts */
+
+  modreg32(0, BCM_BSC_C_INTD, BCM_BSC_C(priv->base));
+  modreg32(0, BCM_BSC_C_INTR, BCM_BSC_C(priv->base));
+  modreg32(0, BCM_BSC_C_INTT, BCM_BSC_C(priv->base));
+
+  /* Clear FIFO */
+
+  modreg32(0, BCM_BSC_C_CLRFIFO, BCM_BSC_C(priv->base));
+
+  /* Disable interface */
+
   modreg32(0, BCM_BSC_C_I2CEN, BCM_BSC_C(priv->base));
 }
 
@@ -178,7 +190,19 @@ static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv)
 
 static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv)
 {
+  /* Enable interface */
+
   modreg32(BCM_BSC_C_I2CEN, BCM_BSC_C_I2CEN, BCM_BSC_C(priv->base));
+
+  /* Clear FIFO */
+
+  modreg32(0, BCM_BSC_C_CLRFIFO, BCM_BSC_C(priv->base));
+
+  /* Enable interrupts */
+
+  modreg32(BCM_BSC_C_INTD, BCM_BSC_C_INTD, BCM_BSC_C(priv->base));
+  modreg32(BCM_BSC_C_INTR, BCM_BSC_C_INTR, BCM_BSC_C(priv->base));
+  modreg32(BCM_BSC_C_INTT, BCM_BSC_C_INTT, BCM_BSC_C(priv->base));
 }
 
 /****************************************************************************
