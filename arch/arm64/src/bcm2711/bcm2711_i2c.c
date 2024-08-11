@@ -90,6 +90,8 @@ struct bcm2711_i2cdev_s
 
 static void bcm2711_i2c_setfrequency(struct bcm2711_i2cdev_s *priv,
                                      uint32_t frequency);
+static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv);
+static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv);
 
 static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
                                 struct i2c_msg_s *msgs, int count);
@@ -145,6 +147,38 @@ static void bcm2711_i2c_setfrequency(struct bcm2711_i2cdev_s *priv,
 {
   putreg32(CLK_DIVISOR(frequency), BCM_BSC_DIV(priv->base));
   priv->frequency = frequency;
+}
+
+/****************************************************************************
+ * Name: bcm2711_i2c_disable
+ *
+ * Description:
+ *   Disable the I2C interface.
+ *
+ * Input Parameters:
+ *     priv - The BCM2711 I2C interface to disable.
+ *
+ ****************************************************************************/
+
+static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv)
+{
+  modreg32(0, BCM_BSC_C_I2CEN, BCM_BSC_C(priv->base));
+}
+
+/****************************************************************************
+ * Name: bcm2711_i2c_enable
+ *
+ * Description:
+ *   Enable the I2C interface.
+ *
+ * Input Parameters:
+ *     priv - The BCM2711 I2C interface to enable.
+ *
+ ****************************************************************************/
+
+static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv)
+{
+  modreg32(BCM_BSC_C_I2CEN, BCM_BSC_C_I2CEN, BCM_BSC_C(priv->base));
 }
 
 /****************************************************************************
