@@ -209,6 +209,8 @@ static int bcm2711_gpio_interrupt_handler(int irq, void *context, void *arg)
   // TODO: depending on irq number, decide which GPIO handlers to search
   // through and call
 
+  // TODO: test interrupt handling
+
   xcpt_t isr;
 
   /* Since I don't know which IRQ corresponds to which GPIO pins, for now I'll
