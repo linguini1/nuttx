@@ -587,13 +587,8 @@ static int bcm2711_i2c_interrupt_handler(int irq, void *context, void *arg)
 
   if (status & BCM_BSC_S_RXR)
     {
-      /* NOTE: This status bit is cleared after reading data from RX FIFO.
-       * Once RX FIFO has been drained, post the wait semaphore to signal to
-       * `bcm2711_i2c_receive` that the last read request was completed.
-       */
-
+      /* NOTE: This status bit is cleared after reading data from RX FIFO. */
       bcm2711_i2c_drainrxfifo(priv);
-      nxsem_post(&priv->wait);
     }
 
   /* TX FIFO needs writing */
@@ -611,6 +606,7 @@ static int bcm2711_i2c_interrupt_handler(int irq, void *context, void *arg)
       // TODO
     }
 
+  nxsem_post(&priv->wait);
   return ret;
 }
 
