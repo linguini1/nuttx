@@ -35,4 +35,30 @@
  * Public Function Prototypes
  ****************************************************************************/
 
+/****************************************************************************
+ * Name: bcm2711_i2cbus_initialize
+ *
+ * Description:
+ *   Initialise an I2C device for the BCM2711.
+ *
+ * Input parameters:
+ *     port - The bus number for the I2C interface.
+ *
+ ****************************************************************************/
+
+struct i2c_master_s *bcm2711_i2cbus_initialize(int port);
+
+/****************************************************************************
+ * Name: bcm2711_i2cbus_uninitialize
+ *
+ * Description:
+ *   Uninitialize an I2C device on the BCM2711.
+ *
+ * Input parameters;
+ *     dev - The device to uninitialize.
+ *
+ ****************************************************************************/
+
+int bcm2711_i2cbus_uninitialize(struct i2c_master_s *dev);
+
 #endif // __ARCH_ARM64_SRC_BCM2711_BCM2711_I2C_H

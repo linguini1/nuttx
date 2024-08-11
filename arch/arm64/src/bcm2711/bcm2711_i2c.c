@@ -166,4 +166,98 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
   return 0;
 }
 
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: bcm2711_i2cbus_initialize
+ *
+ * Description:
+ *   Initialise an I2C device for the BCM2711.
+ *
+ * Input parameters:
+ *     port - The bus number for the I2C interface.
+ *
+ ****************************************************************************/
+
+struct i2c_master_s *bcm2711_i2cbus_initialize(int port)
+{
+
+  struct bcm2711_i2cdev_s *priv;
+
+  /* Initialize selected port */
+
+  switch (port)
+    {
+#if defined(CONFIG_BCM2711_I2C1)
+    case 1:
+      priv = &g_i2c1dev;
+      priv->dev.ops = &bcm2711_i2c_ops;
+      break;
+#endif
+    default:
+      i2cerr("Port %d is unsupported.\n", port);
+      return NULL;
+    }
+
+  /* Exclusive access */
+
+  nxmutex_lock(&priv->lock);
+
+  /* Test for previous initialization. If already initialized, nothing more
+   * needs to be done.
+   */
+
+  if (1 < ++priv->refs)
+    {
+      nxmutex_unlock(&priv->lock);
+      return &priv->dev;
+    }
+
+  /* Not yet initialized, little more work to do. */
+  // TODO
+
+  nxmutex_unlock(&priv->lock);
+  return &priv->dev;
+}
+
+/****************************************************************************
+ * Name: bcm2711_i2cbus_uninitialize
+ *
+ * Description:
+ *   Uninitialize an I2C device on the BCM2711.
+ *
+ * Input parameters;
+ *     dev - The device to uninitialize.
+ *
+ ****************************************************************************/
+
+int bcm2711_i2cbus_uninitialize(struct i2c_master_s *dev)
+{
+
+  int ret = 0;
+  struct bcm2711_i2cdev_s *priv = (struct bcm2711_i2cdev_s *)dev;
+
+  if (priv->refs == 0)
+    {
+      return -1;
+    }
+
+  /* If there are still references to the device, just decrement references.
+   */
+
+  nxmutex_lock(&priv->lock);
+  if (--priv->refs)
+    {
+      nxmutex_unlock(&priv->lock);
+      return OK;
+    }
+
+  /* This was the last reference to the I2C device. */
+  // TODO: final cleanup
+
+  return ret;
+}
+
 #endif // defined(CONFIG_BCM2711_I2C)
