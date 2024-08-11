@@ -247,10 +247,13 @@ int bcm2711_dev_gpio_init(void)
           return ret;
         }
 
-      /* Configure the pins that will be used as output. */
+      /* Configure the pins that will be used as output.
+       * They will start low and have no pull-up or pull-down resistors.
+       */
 
-      bcm2711_gpio_set_func(g_gpiooutputs[i], BCM_GPIO_OUTPUT); /* Output */
-      bcm2711_gpio_pin_set(g_gpiooutputs[i], false); /* Start low */
+      bcm2711_gpio_set_pulls(g_gpiooutputs[i], false, false);
+      bcm2711_gpio_set_func(g_gpiooutputs[i], BCM_GPIO_OUTPUT);
+      bcm2711_gpio_pin_set(g_gpiooutputs[i], false);
     }
 #endif
 
@@ -272,11 +275,13 @@ int bcm2711_dev_gpio_init(void)
           return ret;
         }
 
-      /* Configure the pins that will be used as INPUT */
+      /* Configure the pins that will be used as INPUT.
+       * They will have pull-up resistors.
+       */
 
-      bcm2711_gpio_set_func(g_gpiooutputs[i], BCM_GPIO_INPUT); /* Output */
-      bcm2711_gpio_set_pulls(g_gpiooutputs[i], true, false);   /* Pull-up */
-      // TODO: pull-up or pull-down should be configurable
+      bcm2711_gpio_set_func(g_gpioinputs[i], BCM_GPIO_INPUT);
+      bcm2711_gpio_set_pulls(g_gpioinputs[i], true, false);
+      // TODO: pull-up or pull-down should be configurable per pin
     }
 #endif
 
