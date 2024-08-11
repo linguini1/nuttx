@@ -30,6 +30,7 @@
 #include <debug.h>
 #include <errno.h>
 #include <nuttx/irq.h>
+#include <nuttx/semaphore.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -274,8 +275,6 @@ static void bcm2711_i2c_drainrxfifo(struct bcm2711_i2cdev_s *priv)
 
   /* We have either reached the rw_size or the RX FIFO is out of data.
    * Update the buffer offset with the amount of data we have read.
-   * NOTE: If the receive FIFO contains less data than `rw_size`, then we skip
-   * bytes.
    */
 
   priv->reg_buff_offset += i;
@@ -335,7 +334,11 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
           en = 0;
         }
 
-      // TODO
+      /* Wait here for interrupt handler to signal that RX FIFO has been
+       * drained into message buffer. We can then continue reading.
+       */
+
+      nxsem_wait_uninterruptible(&priv->wait);
     }
 
   return 0;
@@ -540,18 +543,22 @@ static int bcm2711_i2c_interrupt_handler(int irq, void *context, void *arg)
       priv->err = -EIO;
     }
 
-  /* RX FIFO is full */
+  /* RX FIFO needs reading */
 
-  if (status & BCM_BSC_S_RXF)
+  if (status & BCM_BSC_S_RXR)
     {
-      /* This status bit is cleared after reading data from RX FIFO. */
+      /* NOTE: This status bit is cleared after reading data from RX FIFO.
+       * Once RX FIFO has been drained, post the wait semaphore to signal to
+       * `bcm2711_i2c_receive` that the last read request was completed.
+       */
 
       bcm2711_i2c_drainrxfifo(priv);
+      nxsem_post(&priv->wait);
     }
 
-  /* FIFO is empty */
+  /* TX FIFO needs writing */
 
-  if (status & BCM_BSC_S_TXE)
+  if (status & BCM_BSC_S_TXW)
     {
       // TODO
     }
