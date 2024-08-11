@@ -36,9 +36,9 @@
 
 #include <nuttx/fs/ioctl.h>
 
+#include "bcm2711_gpio.h"
 #include "bcm2711_serial.h"
 #include "hardware/bcm2711_aux.h"
-#include "hardware/bcm2711_gpio.h"
 
 /***************************************************************************
  * Pre-processor Definitions
@@ -338,16 +338,18 @@ static int bcm2711_miniuart_setup(struct uart_dev_s *dev)
   putreg32(AUX_MU_BAUD(port->config.baud_rate), BCM_AUX_MU_BAUD_REG);
 
   /* GPIO 14 and GPIO 15 are used as TX and RX.
-   * Enable their alternative function #5 (used as UART) and turn off any
-   * pull-up or pull-down resistors.
-   * TODO: Make this configurable
+   * TODO: Make pins configurable.
    */
 
-  modreg32((BCM_GPIO_FS_ALT5 << 12), (BCM_GPIO_FS_ALT5 << 12),
-           BCM_GPIO_GPFSEL1);
-  modreg32((BCM_GPIO_FS_ALT5 << 15), (BCM_GPIO_FS_ALT5 << 15),
-           BCM_GPIO_GPFSEL1);
-  putreg32(0, BCM_GPIO_PUP_PDN_CNTRL_REG1);
+  /* Turn off pull-up/pull-down resistors. */
+
+  bcm2711_gpio_set_pulls(14, false, false);
+  bcm2711_gpio_set_pulls(15, false, false);
+
+  /* Use alternative function 5 (UART1). */
+
+  bcm2711_gpio_set_func(14, BCM_GPIO_FUNC5);
+  bcm2711_gpio_set_func(15, BCM_GPIO_FUNC5);
 
   /* Enable TX and RX again. */
 
