@@ -440,6 +440,7 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
   int i;
   int ret = 0;
   bool stop = 1;
+  int semval = 0;
 
   DEBUGASSERT(dev != NULL);
 
@@ -447,7 +448,12 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
 
   nxmutex_lock(&priv->lock);
 
-  // TODO: something about semaphores
+  /* If the semaphore value is not 0, we must be waiting on something, so a
+   * transfer cannot be started. This state should never happen.
+   */
+
+  ret = nxsem_get_value(&priv->wait, &semval);
+  DEBUGASSERT(ret == 0 && semval == 0);
 
   /* Perform send/receive operations for each message */
 
@@ -465,7 +471,7 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
       bcm2711_i2c_setaddr(priv, msgs->addr);
       bcm2711_i2c_enable(priv);
 
-      /* TODO: start/stop configuration needs to actually have an effect. */
+      // TODO: do I need to support I2C_M_NOSTART?
 
       if (msgs->flags & I2C_M_NOSTOP)
         {
