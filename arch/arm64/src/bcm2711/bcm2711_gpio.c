@@ -208,6 +208,19 @@ static int bcm2711_gpio_interrupt_handler(int irq, void *context, void *arg)
 {
   // TODO: depending on irq number, decide which GPIO handlers to search
   // through and call
+
+  /* Since I don't know which IRQ corresponds to which GPIO pins, for now I'll
+   * search all 58 GPIOs on an interrupt
+   */
+
+  for (uint32_t gpio = 0; gpio < BCM_GPIO_NUM; gpio++)
+    {
+      if (bcm2711_gpio_event_get(gpio) && g_gpio_pin_isrs[gpio] != NULL)
+        {
+          g_gpio_pin_isrs[gpio](gpio, context, g_gpio_pin_isr_args[gpio]);
+        }
+    }
+
   return 0;
 }
 
@@ -269,7 +282,7 @@ static int bcm2711_gpio_irqs_init(void)
 
 void rp2040_gpio_set_pulls(uint32_t gpio, bool up, bool down)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
   DEBUGASSERT(!(up && down)); /* Not valid to set pull-up and pull-down */
 
   /* Pick direction. */
@@ -328,7 +341,7 @@ void rp2040_gpio_set_pulls(uint32_t gpio, bool up, bool down)
 
 void bcm2711_gpio_set_func(uint32_t gpio, enum bcm2711_gpio_func_e func)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
 
   uint32_t value = 0;
   if (gpio <= 9)
@@ -378,7 +391,7 @@ void bcm2711_gpio_set_func(uint32_t gpio, enum bcm2711_gpio_func_e func)
 
 void bcm2711_gpio_pin_set(uint32_t gpio, bool set)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
 
   if (set)
     {
@@ -406,7 +419,7 @@ void bcm2711_gpio_pin_set(uint32_t gpio, bool set)
 
 bool bcm2711_gpio_pin_get(uint32_t gpio)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
 
   if (gpio <= 31)
     {
@@ -437,7 +450,7 @@ bool bcm2711_gpio_pin_get(uint32_t gpio)
 
 bool bcm2711_gpio_event_get(uint32_t gpio)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
   return bcm2711_gpio_help_get(gpio, BCM_GPIO_GPEDS0, BCM_GPIO_GPEDS1);
 }
 
@@ -454,7 +467,7 @@ bool bcm2711_gpio_event_get(uint32_t gpio)
 
 void bcm2711_gpio_event_clear(uint32_t gpio)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
   bcm2711_gpio_help_set(gpio, BCM_GPIO_GPEDS0, BCM_GPIO_GPEDS1, false);
 }
 
@@ -472,7 +485,7 @@ void bcm2711_gpio_event_clear(uint32_t gpio)
 
 void bcm2711_gpio_rising_edge(uint32_t gpio, bool set)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
   bcm2711_gpio_help_set(gpio, BCM_GPIO_GPREN0, BCM_GPIO_GPREN1, set);
 }
 
@@ -490,7 +503,7 @@ void bcm2711_gpio_rising_edge(uint32_t gpio, bool set)
 
 void bcm2711_gpio_falling_edge(uint32_t gpio, bool set)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
   bcm2711_gpio_help_set(gpio, BCM_GPIO_GPFEN0, BCM_GPIO_GPFEN1, set);
 }
 
@@ -508,7 +521,7 @@ void bcm2711_gpio_falling_edge(uint32_t gpio, bool set)
 
 void bcm2711_gpio_high_level(uint32_t gpio, bool set)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
   bcm2711_gpio_help_set(gpio, BCM_GPIO_GPHEN0, BCM_GPIO_GPHEN1, set);
 }
 
@@ -526,7 +539,7 @@ void bcm2711_gpio_high_level(uint32_t gpio, bool set)
 
 void bcm2711_gpio_low_level(uint32_t gpio, bool set)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
   bcm2711_gpio_help_set(gpio, BCM_GPIO_GPLEN0, BCM_GPIO_GPLEN1, set);
 }
 
@@ -544,7 +557,7 @@ void bcm2711_gpio_low_level(uint32_t gpio, bool set)
 
 void bcm2711_gpio_rising_edge_async(uint32_t gpio, bool set)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
   bcm2711_gpio_help_set(gpio, BCM_GPIO_GPAREN0, BCM_GPIO_GPAREN1, set);
 }
 
@@ -562,7 +575,7 @@ void bcm2711_gpio_rising_edge_async(uint32_t gpio, bool set)
 
 void bcm2711_gpio_falling_edge_async(uint32_t gpio, bool set)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
   bcm2711_gpio_help_set(gpio, BCM_GPIO_GPAFEN0, BCM_GPIO_GPAFEN1, set);
 }
 
@@ -583,7 +596,7 @@ void bcm2711_gpio_falling_edge_async(uint32_t gpio, bool set)
 
 int bcm2711_gpio_irq_attach(uint32_t gpio, xcpt_t isr, void *arg)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
   int ret = 0;
 
   /* If primary interrupt handler has not been attached to IRQs yet, do that
@@ -625,7 +638,7 @@ int bcm2711_gpio_irq_attach(uint32_t gpio, xcpt_t isr, void *arg)
 
 void bcm2711_gpio_irq_detach(uint32_t gpio)
 {
-  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  DEBUGASSERT(gpio < BCM_GPIO_NUM);
   g_gpio_pin_isrs[gpio] = NULL;
   g_gpio_pin_isr_args[gpio] = NULL;
 }
