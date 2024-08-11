@@ -102,6 +102,8 @@ static void bcm2711_i2c_setfrequency(struct bcm2711_i2cdev_s *priv,
 static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv);
 static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv);
 static void bcm2711_i2c_drainrxfifo(struct bcm2711_i2cdev_s *priv);
+static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv);
+static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv);
 
 static int bcm2711_i2c_interrupt_handler(int irq, void *context, void *arg);
 
@@ -258,6 +260,94 @@ static void bcm2711_i2c_drainrxfifo(struct bcm2711_i2cdev_s *priv)
    */
 
   priv->reg_buff_offset += i;
+}
+
+/****************************************************************************
+ * Name: bcm2711_i2c_receive
+ *
+ * Description:
+ *   Receive I2C data.
+ *
+ * Input Parameters:
+ *     dev - The I2C interface to receive on.
+ ****************************************************************************/
+
+static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv)
+{
+  struct i2c_msg_s *msg = priv->msgs;
+  ssize_t msg_length;
+  bool en;
+
+  DEBUGASSERT(msg != NULL);
+
+  /* Start buffer fresh for receiving full message. */
+
+  priv->reg_buff_offset = 0;
+
+  /* Continuously read until message has been completely read. */
+
+  for (msg_length = msg->length; msg_length > 0; msg_length -= priv->rw_size)
+    {
+      /* Read maximum FIFO depth or the remaining message length. */
+
+      if (msg_length <= FIFO_DEPTH)
+        {
+          priv->rw_size = msg_length;
+          en = 1;
+        }
+      else
+        {
+          priv->rw_size = FIFO_DEPTH;
+          en = 0;
+        }
+
+      // TODO
+    }
+
+  return 0;
+}
+
+/****************************************************************************
+ * Name: bcm2711_i2c_send
+ *
+ * Description:
+ *   Send I2C data.
+ *
+ * Input Parameters:
+ *     dev - The I2C interface to send on.
+ ****************************************************************************/
+
+static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv)
+{
+  struct i2c_msg_s *msg = priv->msgs;
+  ssize_t i;
+  uint32_t status_reg = BCM_BSC_S(priv->base);
+  uint32_t fifo_reg = BCM_BSC_FIFO(priv->base);
+
+  DEBUGASSERT(msg != NULL);
+
+  /* Send the entire message */
+
+  for (i = 0; i < msg->length - 1; i++)
+    {
+
+      /* While the TX FIFO cannot accept more data, wait. */
+
+      while (!(getreg32(status_reg) & BCM_BSC_S_TXD))
+        ;
+
+      /* Once TX FIFO can accept more data, send a byte at a time. */
+
+      putreg32(msg->buffer[i] & 0xff, fifo_reg);
+    }
+
+  /* Once message has been fully transmitted, determine whether or not to send
+   * stop condition based on message configuration.
+   */
+
+  // TODO
+
+  return 0;
 }
 
 /****************************************************************************
