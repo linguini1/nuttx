@@ -323,11 +323,13 @@ static int bcm2711_i2c_interrupt_handler(int irq, void *context, void *arg)
       priv->err = -EIO;
     }
 
-  /* FIFO is full */
+  /* RX FIFO is full */
 
   if (status & BCM_BSC_S_RXF)
     {
-      // TODO
+      /* This status bit is cleared after reading data from RX FIFO. */
+
+      bcm2711_i2c_drainrxfifo(priv);
     }
 
   /* FIFO is empty */
