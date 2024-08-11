@@ -27,6 +27,10 @@
 #include <sys/types.h>
 #include <syslog.h>
 
+#if defined(CONFIG_BCM2711_I2C)
+#include "bcm2711_i2cdev.h"
+#endif // defined(CONFIG_BCM2711_I2C)
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -53,6 +57,30 @@ int rpi4b_bringup(void)
       syslog(LOG_ERR, "Failed to initialize GPIO driver: %d\n.", ret);
     }
 #endif // defined(CONFIG_DEV_GPIO)
+
+    /* Initialize I2C interfaces. */
+
+#if defined(CONFIG_BCM2711_I2C)
+
+#if defined(CONFIG_BCM2711_I2C0)
+  ret = bcm2711_i2cdev_initialize(0);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "Failed to initialize I2C0: %d\n", ret);
+    }
+#endif // defined(CONFIG_BCM2711_I2C0)
+
+#if defined(CONFIG_BCM2711_I2C1)
+  ret = bcm2711_i2cdev_initialize(1);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "Failed to initialize I2C1: %d\n", ret);
+    }
+#endif // defined(CONFIG_BCM2711_I2C1)
+
+    // TODO: initializer calls for remaining I2C devices
+
+#endif // defined(CONFIG_BCM2711_I2C)
 
   return ret;
 }
