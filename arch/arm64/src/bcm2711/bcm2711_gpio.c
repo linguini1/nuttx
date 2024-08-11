@@ -209,15 +209,18 @@ static int bcm2711_gpio_interrupt_handler(int irq, void *context, void *arg)
   // TODO: depending on irq number, decide which GPIO handlers to search
   // through and call
 
+  xcpt_t isr;
+
   /* Since I don't know which IRQ corresponds to which GPIO pins, for now I'll
    * search all 58 GPIOs on an interrupt
    */
 
   for (uint32_t gpio = 0; gpio < BCM_GPIO_NUM; gpio++)
     {
-      if (bcm2711_gpio_event_get(gpio) && g_gpio_pin_isrs[gpio] != NULL)
+      isr = g_gpio_pin_isrs[gpio];
+      if (bcm2711_gpio_event_get(gpio) && isr != NULL)
         {
-          g_gpio_pin_isrs[gpio](gpio, context, g_gpio_pin_isr_args[gpio]);
+          isr(gpio, context, g_gpio_pin_isr_args[gpio]);
         }
     }
 
@@ -239,7 +242,7 @@ static int bcm2711_gpio_irqs_init(void)
 {
   int err;
 
-  /* Attach all interrupt handlers. */
+  /* Attach all interrupt handlers for primary IRQs. */
 
   for (int i = 0; i < NUM_GPIO_IRQS; i++)
     {
