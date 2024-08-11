@@ -312,7 +312,6 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
 {
   struct i2c_msg_s *msg = priv->msgs;
   ssize_t msg_length;
-  bool en;
 
   DEBUGASSERT(msg != NULL);
 
@@ -347,12 +346,10 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
       if (msg_length <= FIFO_DEPTH)
         {
           priv->rw_size = msg_length;
-          en = 1;
         }
       else
         {
           priv->rw_size = FIFO_DEPTH;
-          en = 0;
         }
 
       /* Wait here for interrupt handler to signal that RX FIFO has been
