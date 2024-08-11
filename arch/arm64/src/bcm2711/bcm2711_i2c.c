@@ -198,6 +198,7 @@ static void bcm2711_i2c_setaddr(struct bcm2711_i2cdev_s *priv, uint16_t addr)
 
 static void bcm2711_i2c_starttransfer(struct bcm2711_i2cdev_s *priv)
 {
+  i2cinfo("Transfer started\n");
   modreg32(BCM_BSC_C_ST, BCM_BSC_C_ST, BCM_BSC_C(priv->base));
 }
 
@@ -214,6 +215,8 @@ static void bcm2711_i2c_starttransfer(struct bcm2711_i2cdev_s *priv)
 
 static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv)
 {
+  i2cinfo("Disabled I2C%u\n", priv->port);
+
   /* Disable interrupts */
 
   modreg32(0, BCM_BSC_C_INTD, BCM_BSC_C(priv->base));
@@ -242,6 +245,8 @@ static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv)
 
 static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv)
 {
+  i2cinfo("Enabled I2C%u\n", priv->port);
+
   /* Enable interface */
 
   modreg32(BCM_BSC_C_I2CEN, BCM_BSC_C_I2CEN, BCM_BSC_C(priv->base));
@@ -314,6 +319,7 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
   ssize_t msg_length;
 
   DEBUGASSERT(msg != NULL);
+  i2cinfo("Starting receive on I2C%u\n", priv->port);
 
   if (stop)
     {
@@ -381,6 +387,7 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop)
   uint32_t fifo_reg = BCM_BSC_FIFO(priv->base);
 
   DEBUGASSERT(msg != NULL);
+  i2cinfo("Starting send on I2C%u\n", priv->port);
 
   if (stop)
     {
@@ -452,6 +459,8 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
   ret = nxsem_get_value(&priv->wait, &semval);
   DEBUGASSERT(ret == 0 && semval == 0);
 
+  i2cinfo("Beginning transfer logic for I2C%u\n", priv->port);
+
   /* Perform send/receive operations for each message */
 
   for (i = 0; i < count; i++, msgs++)
@@ -467,6 +476,8 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
       bcm2711_i2c_setfrequency(priv, msgs->frequency);
       bcm2711_i2c_setaddr(priv, msgs->addr);
       bcm2711_i2c_enable(priv);
+
+      i2cinfo("I2C%u interface configured for message\n", priv->port);
 
       // TODO: do I need to support I2C_M_NOSTART?
 
@@ -512,6 +523,7 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
       /* If no error occurred, we are here. TODO: Something about NULL `msgs`
        * for illegal access in interrupt.
        */
+      i2cinfo("I2C%u message successful\n", priv->port);
     }
 
   /* If our last message had a stop condition, we can safely disable this I2C
@@ -637,6 +649,8 @@ struct i2c_master_s *bcm2711_i2cbus_initialize(int port)
       return NULL;
     }
 
+  i2cinfo("Initializing I2C%u\n", port);
+
   /* Exclusive access */
 
   nxmutex_lock(&priv->lock);
@@ -648,6 +662,7 @@ struct i2c_master_s *bcm2711_i2cbus_initialize(int port)
   if (1 < ++priv->refs)
     {
       nxmutex_unlock(&priv->lock);
+      i2cinfo("I2C%u already initialized\n", port);
       return &priv->dev;
     }
 
@@ -659,6 +674,8 @@ struct i2c_master_s *bcm2711_i2cbus_initialize(int port)
 
   /* Attach interrupt handler */
 
+  // TODO: will this overwrite all interrupt handlers with the last one?
+  // Should I have one generic handler?
   ret = irq_attach(BCM_IRQ_VC_I2C, bcm2711_i2c_interrupt_handler, priv);
   if (ret < 0)
     {
@@ -666,11 +683,13 @@ struct i2c_master_s *bcm2711_i2cbus_initialize(int port)
              ret);
       return NULL;
     }
+  i2cinfo("I2C%u interrupt handler attached\n", port);
 
   /* Enable interrupt handler */
 
   arm64_gic_irq_set_priority(BCM_IRQ_VC_I2C, 0, IRQ_TYPE_EDGE);
   up_enable_irq(BCM_IRQ_VC_I2C);
+  i2cinfo("I2C IRQ enabled\n");
 
   nxmutex_unlock(&priv->lock);
   return &priv->dev;
@@ -709,8 +728,13 @@ int bcm2711_i2cbus_uninitialize(struct i2c_master_s *dev)
     }
 
   /* This was the last reference to the I2C device. */
-  // TODO: final cleanup
 
+  bcm2711_i2c_disable(priv);
+  up_disable_irq(BCM_IRQ_VC_I2C); // TODO: this disables all I2C interrupts
+  irq_detach(BCM_IRQ_VC_I2C);
+  i2cinfo("Detached I2C interrupt handler and disabled IRQ.\n");
+
+  nxmutex_unlock(&priv->lock);
   return ret;
 }
 
