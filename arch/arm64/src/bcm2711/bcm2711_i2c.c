@@ -101,6 +101,7 @@ struct bcm2711_i2cdev_s
 static void bcm2711_i2c_setfrequency(struct bcm2711_i2cdev_s *priv,
                                      uint32_t frequency);
 static void bcm2711_i2c_setaddr(struct bcm2711_i2cdev_s *priv, uint16_t addr);
+static void bcm2711_i2c_starttransfer(struct bcm2711_i2cdev_s *priv);
 static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv);
 static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv);
 static void bcm2711_i2c_drainrxfifo(struct bcm2711_i2cdev_s *priv);
@@ -182,6 +183,22 @@ static void bcm2711_i2c_setaddr(struct bcm2711_i2cdev_s *priv, uint16_t addr)
 {
   // TODO: handle 10-bit addresses
   putreg32(addr & 0x7f, BCM_BSC_A(priv->base));
+}
+
+/****************************************************************************
+ * Name: bcm2711_i2c_starttransfer
+ *
+ * Description:
+ *   Start the next transfer.
+ *
+ * Input Parameters:
+ *     priv - The BCM2711 I2C interface to start the transfer on.
+ *
+ ****************************************************************************/
+
+static void bcm2711_i2c_starttransfer(struct bcm2711_i2cdev_s *priv)
+{
+  modreg32(BCM_BSC_C_ST, BCM_BSC_C_ST, BCM_BSC_C(priv->base));
 }
 
 /****************************************************************************
@@ -317,6 +334,10 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
 
   priv->reg_buff_offset = 0;
 
+  /* Start transfer. */
+
+  bcm2711_i2c_starttransfer(priv);
+
   /* Continuously read until message has been completely read. */
 
   for (msg_length = msg->length; msg_length > 0; msg_length -= priv->rw_size)
@@ -377,6 +398,10 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop)
        */
       putreg32(msg->length + 1, BCM_BSC_DLEN(priv->base));
     }
+
+  /* Start transfer. */
+
+  bcm2711_i2c_starttransfer(priv);
 
   /* Send the entire message */
 
