@@ -99,11 +99,12 @@ struct bcm2711_i2cdev_s
 
 static void bcm2711_i2c_setfrequency(struct bcm2711_i2cdev_s *priv,
                                      uint32_t frequency);
+static void bcm2711_i2c_setaddr(struct bcm2711_i2cdev_s *priv, uint16_t addr);
 static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv);
 static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv);
 static void bcm2711_i2c_drainrxfifo(struct bcm2711_i2cdev_s *priv);
-static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv);
-static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv);
+static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop);
+static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop);
 
 static int bcm2711_i2c_interrupt_handler(int irq, void *context, void *arg);
 
@@ -162,6 +163,24 @@ static void bcm2711_i2c_setfrequency(struct bcm2711_i2cdev_s *priv,
 {
   putreg32(CLK_DIVISOR(frequency), BCM_BSC_DIV(priv->base));
   priv->frequency = frequency;
+}
+
+/****************************************************************************
+ * Name: bcm2711_i2c_setaddr
+ *
+ * Description:
+ *   Set the slave address for the next transfer.
+ *
+ * Input Parameters:
+ *     priv - The BCM2711 I2C interface to set the slave address on.
+ *     addr - The slave address.
+ *
+ ****************************************************************************/
+
+static void bcm2711_i2c_setaddr(struct bcm2711_i2cdev_s *priv, uint16_t addr)
+{
+  // TODO: handle 10-bit addresses
+  putreg32(addr & 0x7f, BCM_BSC_A(priv->base));
 }
 
 /****************************************************************************
@@ -270,9 +289,10 @@ static void bcm2711_i2c_drainrxfifo(struct bcm2711_i2cdev_s *priv)
  *
  * Input Parameters:
  *     dev - The I2C interface to receive on.
+ *     stop - Whether to send a stop condition at the end of the transfer.
  ****************************************************************************/
 
-static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv)
+static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
 {
   struct i2c_msg_s *msg = priv->msgs;
   ssize_t msg_length;
@@ -315,9 +335,10 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv)
  *
  * Input Parameters:
  *     dev - The I2C interface to send on.
+ *     stop - Whether to send a stop condition at the end of the transfer.
  ****************************************************************************/
 
-static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv)
+static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop)
 {
   struct i2c_msg_s *msg = priv->msgs;
   ssize_t i;
@@ -325,6 +346,20 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv)
   uint32_t fifo_reg = BCM_BSC_FIFO(priv->base);
 
   DEBUGASSERT(msg != NULL);
+
+  if (stop)
+    {
+      putreg32(msg->length, BCM_BSC_DLEN(priv->base));
+    }
+  else
+    {
+      /* If there is no stop condition desired, avoid sending one by setting
+       * the transfer length register to one byte greater than the actual
+       * transfer.
+       * TODO: does this actually work?
+       */
+      putreg32(msg->length + 1, BCM_BSC_DLEN(priv->base));
+    }
 
   /* Send the entire message */
 
@@ -340,12 +375,6 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv)
 
       putreg32(msg->buffer[i] & 0xff, fifo_reg);
     }
-
-  /* Once message has been fully transmitted, determine whether or not to send
-   * stop condition based on message configuration.
-   */
-
-  // TODO
 
   return 0;
 }
@@ -365,8 +394,92 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv)
 static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
                                 struct i2c_msg_s *msgs, int count)
 {
-  // TODO
-  return 0;
+  struct bcm2711_i2cdev_s *priv = (struct bcm2711_i2cdev_s *)dev;
+  int i;
+  int ret = 0;
+  bool stop = 1;
+
+  DEBUGASSERT(dev != NULL);
+
+  /* Get exclusive access before doing a transfer */
+
+  nxmutex_lock(&priv->lock);
+
+  // TODO: something about semaphores
+
+  /* Perform send/receive operations for each message */
+
+  for (i = 0; i < count; i++, msgs++)
+    {
+      /* Put message in device context */
+
+      priv->msgs = msgs;
+      priv->err = 0; /* No errors yet */
+
+      /* Configure I2C interface according to message. */
+
+      bcm2711_i2c_disable(priv);
+      bcm2711_i2c_setfrequency(priv, msgs->frequency);
+      bcm2711_i2c_setaddr(priv, msgs->addr);
+      bcm2711_i2c_enable(priv);
+
+      /* TODO: start/stop configuration needs to actually have an effect. */
+
+      if (msgs->flags & I2C_M_NOSTOP)
+        {
+          stop = 0;
+        }
+      else
+        {
+          stop = 1;
+        }
+
+      /* Set read/write bit according to message configuration, and then
+       * perform the corresponding operation.
+       */
+
+      if (msgs->flags & I2C_M_READ)
+        {
+          modreg32(BCM_BSC_C_READ, BCM_BSC_C_READ, BCM_BSC_C(priv->base));
+          ret = bcm2711_i2c_receive(priv, stop);
+        }
+      else
+        {
+          modreg32(0, BCM_BSC_C_READ, BCM_BSC_C(priv->base));
+          ret = bcm2711_i2c_send(priv, stop);
+        }
+
+      /* Check if there was an error during the send/receive operation and
+       * return early if so.
+       */
+
+      if (ret < 0)
+        {
+          break;
+        }
+
+      if (priv->err != 0)
+        {
+          ret = priv->err;
+          break;
+        }
+
+      /* If no error occurred, we are here. TODO: Something about NULL `msgs`
+       * for illegal access in interrupt.
+       */
+    }
+
+  /* If our last message had a stop condition, we can safely disable this I2C
+   * interface until it's used again.
+   */
+
+  if (stop)
+    {
+      bcm2711_i2c_disable(priv);
+    }
+
+  nxmutex_unlock(&priv->lock);
+  return ret;
 }
 
 /****************************************************************************
