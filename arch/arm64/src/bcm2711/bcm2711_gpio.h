@@ -244,4 +244,38 @@ void bcm2711_gpio_rising_edge_async(uint32_t gpio, bool set);
 
 void bcm2711_gpio_falling_edge_async(uint32_t gpio, bool set);
 
+/****************************************************************************
+ * Name: bcm2711_gpio_irq_attach
+ *
+ * Description:
+ *   Attach an interrupt handler for the specified GPIO pin.
+ *   NOTE: Interrupt mode (rising edge, falling edge, etc.) is configured
+ *   separately.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to attach the handler for.
+ *   isr - The interrupt handler function.
+ *   arg - The argument to be passed to the interrupt handler.
+ *
+ ****************************************************************************/
+
+int bcm2711_gpio_irq_attach(uint32_t gpio, xcpt_t isr, void *arg);
+
+/****************************************************************************
+ * Name: bcm2711_gpio_irq_detach
+ *
+ * Description:
+ *   Detach an interrupt handler for a GPIO pin. NOTE: this does not disable
+ *   interrupts for that particular pin; this must be done by disabling event
+ *   detection for that pin separately.
+ *   This function just detaches the pin's ISR, ensuring it won't be called
+ *   when an interrupt is triggered.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to detach the handler of.
+ *
+ ****************************************************************************/
+
+void bcm2711_gpio_irq_detach(uint32_t gpio);
+
 #endif // __ARCH_ARM64_SRC_BCM2711_BCM2711_GPIO_H

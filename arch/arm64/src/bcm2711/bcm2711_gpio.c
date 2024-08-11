@@ -35,6 +35,7 @@
 #include <stdint.h>
 
 #include "arm64_arch.h"
+#include "arm64_gic.h"
 #include "arm64_internal.h"
 #include "bcm2711_gpio.h"
 
@@ -42,13 +43,34 @@
  * Pre-processor Definitions
  ***************************************************************************/
 
+/* Number of IRQs for GPIO interrupts */
+
+#define NUM_GPIO_IRQS (sizeof(g_gpio_irqs) / sizeof(g_gpio_irqs[0]))
+
 /***************************************************************************
  * Private Types
  ***************************************************************************/
 
+/* True if the primary interrupt handler (which call pin-specific handlers)
+ * has already been attached to GPIO 0-3 IRQs. False otherwise.
+ */
+
+static bool g_gpio_irqs_init = false;
+
+/* GPIO pin interrupt handler functions (initialized to NULL). */
+
+static xcpt_t g_gpio_pin_isrs[BCM_GPIO_NUM] = {0};
+
+/* Arguments to GPIO pin interrupt handlers (initialized to NULL). */
+
+static void *g_gpio_pin_isr_args[BCM_GPIO_NUM] = {0};
+
 /***************************************************************************
  * Private Data
  ***************************************************************************/
+
+// TODO: Which GPIO pins are associated with VC IRQ 49 (GPIO 0), 50, 51 and
+// 52?
 
 // TODO: is it necessary to encode the alternate function possibilities for
 // each pin in a lookup table?
@@ -64,6 +86,11 @@ static const uint8_t g_fsel_map[] = {
     [BCM_GPIO_INPUT] = BCM_GPIO_FS_IN,   [BCM_GPIO_OUTPUT] = BCM_GPIO_FS_OUT,
 };
 
+/* IRQs for GPIO interrupts */
+
+static const uint32_t g_gpio_irqs[] = {BCM_IRQ_VC_GPIO0, BCM_IRQ_VC_GPIO1,
+                                       BCM_IRQ_VC_GPIO2, BCM_IRQ_VC_GPIO3};
+
 /***************************************************************************
  * Private Function Prototypes
  ***************************************************************************/
@@ -72,6 +99,9 @@ static inline void bcm2711_gpio_help_set(uint32_t gpio, uint32_t reg1,
                                          uint32_t reg2, bool val);
 static inline bool bcm2711_gpio_help_get(uint32_t gpio, uint32_t reg1,
                                          uint32_t reg2);
+
+static int bcm2711_gpio_interrupt_handler(int irq, void *context, void *arg);
+static int bcm2711_gpio_irqs_init(void);
 
 /***************************************************************************
  * Private Functions
@@ -159,6 +189,63 @@ static inline bool bcm2711_gpio_help_get(uint32_t gpio, uint32_t reg1,
     }
 
   return getreg32(reg) & bitmask;
+}
+
+/****************************************************************************
+ * Name: bcm2711_gpio_interrupt_handler
+ *
+ * Description:
+ *   Interrupt handler for GPIO 1, GPIO 2 and GPIO 3 IRQs.
+ *
+ * Input parameters:
+ *   irq - The IRQ number
+ *   context - The interrupt context.
+ *   arg - The argument passed to the interrupt handler.
+ *
+ ****************************************************************************/
+
+static int bcm2711_gpio_interrupt_handler(int irq, void *context, void *arg)
+{
+  // TODO: depending on irq number, decide which GPIO handlers to search
+  // through and call
+  return 0;
+}
+
+/****************************************************************************
+ * Name: bcm2711_gpio_irqs_init
+ *
+ * Description:
+ *   Attach the primary GPIO interrupt handler to GPIO 0, 1, 2 and 3 IRQs.
+ *
+ * Returns:
+ *    0 if successful, negated errno otherwise.
+ *
+ ****************************************************************************/
+
+static int bcm2711_gpio_irqs_init(void)
+{
+  int err;
+
+  /* Attach all interrupt handlers. */
+
+  for (int i = 0; i < NUM_GPIO_IRQS; i++)
+    {
+      err = irq_attach(g_gpio_irqs[i], bcm2711_gpio_interrupt_handler, NULL);
+      if (err) return err;
+    }
+
+  /* Enable all GPIO IRQs. */
+
+  for (int i = 0; i < NUM_GPIO_IRQS; i++)
+    {
+      up_enable_irq(g_gpio_irqs[i]);
+      arm64_gic_irq_set_priority(g_gpio_irqs[i], 0, IRQ_TYPE_LEVEL);
+    }
+
+  /* Mark as initialized. */
+
+  g_gpio_irqs_init = true;
+  return 0;
 }
 
 /***************************************************************************
@@ -477,4 +564,68 @@ void bcm2711_gpio_falling_edge_async(uint32_t gpio, bool set)
 {
   DEBUGASSERT(gpio <= BCM_GPIO_NUM);
   bcm2711_gpio_help_set(gpio, BCM_GPIO_GPAFEN0, BCM_GPIO_GPAFEN1, set);
+}
+
+/****************************************************************************
+ * Name: bcm2711_gpio_irq_attach
+ *
+ * Description:
+ *   Attach an interrupt handler for the specified GPIO pin.
+ *   NOTE: Interrupt mode (rising edge, falling edge, etc.) is configured
+ *   separately. Once configured, the IRQ is enabled for that event type.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to attach the handler for.
+ *   isr - The interrupt handler function.
+ *   arg - The argument to be passed to the interrupt handler.
+ *
+ ****************************************************************************/
+
+int bcm2711_gpio_irq_attach(uint32_t gpio, xcpt_t isr, void *arg)
+{
+  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  int ret = 0;
+
+  /* If primary interrupt handler has not been attached to IRQs yet, do that
+   * first.
+   */
+
+  if (!g_gpio_irqs_init)
+    {
+      ret = bcm2711_gpio_irqs_init();
+      if (ret < 0) return ret; /* Early return if primary attach failed. */
+    }
+
+  /* Save handler information for this pin. */
+
+  g_gpio_pin_isrs[gpio] = isr;
+  g_gpio_pin_isr_args[gpio] = arg;
+
+  /* Clear pending interrupts for this pin. */
+
+  bcm2711_gpio_event_clear(gpio);
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: bcm2711_gpio_irq_detach
+ *
+ * Description:
+ *   Detach an interrupt handler for a GPIO pin. NOTE: this does not disable
+ *   interrupts for that particular pin; this must be done by disabling event
+ *   detection for that pin separately.
+ *   This function just detaches the pin's ISR, ensuring it won't be called
+ *   when an interrupt is triggered.
+ *
+ * Input parameters:
+ *   gpio - The GPIO pin number to detach the handler of.
+ *
+ ****************************************************************************/
+
+void bcm2711_gpio_irq_detach(uint32_t gpio)
+{
+  DEBUGASSERT(gpio <= BCM_GPIO_NUM);
+  g_gpio_pin_isrs[gpio] = NULL;
+  g_gpio_pin_isr_args[gpio] = NULL;
 }
