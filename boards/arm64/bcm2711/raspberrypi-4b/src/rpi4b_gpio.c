@@ -65,15 +65,15 @@
 
 struct bcm2711_gpio_dev_s
 {
-  struct gpio_dev_s gpio;
-  uint8_t id;
+  struct gpio_dev_s gpio; /* Underlying GPIO device */
+  uint8_t id;             /* The index of the pin in its list. */
 };
 
 /* GPIO device with interrupt capabilities on the BCM2711 */
 
 struct bcm2711_gpioint_dev_s
 {
-  struct bcm2711_gpio_dev_s bcm2711_gpio;
+  struct bcm2711_gpio_dev_s bcm2711_gpio; /* BCM2711 GPIO device */
 };
 
 /****************************************************************************
@@ -100,6 +100,9 @@ static int gpint_enable(struct gpio_dev_s *dev, bool enable);
  ****************************************************************************/
 
 #if BOARD_NGPIOOUT > 0
+
+/* GPIO operations for output pins. */
+
 static const struct gpio_operations_s gpout_ops = {
     .go_read = gpout_read,
     .go_write = gpout_write,
@@ -113,11 +116,16 @@ static const uint32_t g_gpiooutputs[BOARD_NGPIOOUT] = {
     GPIO_OUT1,
 };
 
+/* GPIO output pin devices */
+
 static struct bcm2711_gpio_dev_s g_gpout[BOARD_NGPIOOUT];
 
 #endif // BOARD_NGPIOOUT > 0
 
 #if BOARD_NGPIOIN > 0
+
+/* GPIO operations for input pins. */
+
 static const struct gpio_operations_s gpin_ops = {
     .go_read = gpin_read,
     .go_write = NULL,
@@ -131,11 +139,16 @@ static const uint32_t g_gpioinputs[BOARD_NGPIOIN] = {
     GPIO_IN1,
 };
 
+/* GPIO input pin devices */
+
 static struct bcm2711_gpio_dev_s g_gpin[BOARD_NGPIOIN];
 
 #endif // BOARD_NGPIOIN > 0
 
 #if BOARD_NGPIOINT > 0
+
+/* GPIO operations for interrupt pins. */
+
 static const struct gpio_operations_s gpint_ops = {
     .go_read = gpint_read,
     .go_write = NULL,
@@ -149,7 +162,9 @@ static const uint32_t g_gpiointinputs[BOARD_NGPIOINT] = {
     GPIO_IRQPIN1,
 };
 
-static struct rp2040gpint_dev_s g_gpint[BOARD_NGPIOINT];
+/* GPIO interrupt pin devices */
+
+static struct bcm2711_gpioint_dev_s g_gpint[BOARD_NGPIOINT];
 
 #endif // BOARD_NGPIOINT > 0
 
@@ -161,6 +176,13 @@ static struct rp2040gpint_dev_s g_gpint[BOARD_NGPIOINT];
 
 /****************************************************************************
  * Name: gpout_read
+ *
+ * Description:
+ *     Read the output pin's current status (0 or 1).
+ *
+ * Input parameters:
+ *     dev - The GPIO device structure.
+ *     value - A pointer to the location to store the pin status.
  ****************************************************************************/
 
 static int gpout_read(struct gpio_dev_s *dev, bool *value)
@@ -178,6 +200,13 @@ static int gpout_read(struct gpio_dev_s *dev, bool *value)
 
 /****************************************************************************
  * Name: gpout_write
+ *
+ * Description:
+ *     Write a value to a GPIO output pin.
+ *
+ * Input parameters:
+ *     dev - The GPIO device struct of the pin to write to.
+ *     value - The value to write to the pin.
  ****************************************************************************/
 
 static int gpout_write(struct gpio_dev_s *dev, bool value)
@@ -199,6 +228,13 @@ static int gpout_write(struct gpio_dev_s *dev, bool value)
 
 /****************************************************************************
  * Name: gpin_read
+ *
+ * Description:
+ *     Read the input pin's current status (0 or 1).
+ *
+ * Input parameters:
+ *     dev - The GPIO device structure.
+ *     value - A pointer to the location to store the pin status.
  ****************************************************************************/
 
 static int gpin_read(struct gpio_dev_s *dev, bool *value)
