@@ -40,6 +40,8 @@
 #include <nuttx/arch.h>
 #include <nuttx/i2c/i2c_master.h>
 #include <nuttx/mutex.h>
+#include <sys/wait.h>
+#include <time.h>
 
 #include "arm64_arch.h"
 #include "arm64_gic.h"
@@ -53,6 +55,10 @@
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+
+/* Timeout duration in ms for transfers waiting on interrupt handler. */
+
+#define I2C_TIMEOUT_MS 50
 
 /* Default bus frequency at 400kbps. */
 
@@ -98,6 +104,8 @@ struct bcm2711_i2cdev_s
  * Private Function Prototypes
  ****************************************************************************/
 
+static int bcm2711_i2c_semtimedwait(struct bcm2711_i2cdev_s *priv,
+                                    uint32_t ms);
 static void bcm2711_i2c_setfrequency(struct bcm2711_i2cdev_s *priv,
                                      uint32_t frequency);
 static void bcm2711_i2c_setaddr(struct bcm2711_i2cdev_s *priv, uint16_t addr);
@@ -147,6 +155,40 @@ static struct bcm2711_i2cdev_s g_i2c1dev = {
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: bcm2711_i2c_semtimedwait
+ *
+ * Description:
+ *   Wait on the I2C interface semaphore for a given number of milliseconds.
+ *
+ * Input Parameters:
+ *     priv - The BCM2711 I2C interface to wait on.
+ *     ms - The number of milliseconds before timeout
+ *
+ * Returns:
+ *     0 for success, negated errno otherwise.
+ *
+ ****************************************************************************/
+
+static int bcm2711_i2c_semtimedwait(struct bcm2711_i2cdev_s *priv,
+                                    uint32_t ms)
+{
+  struct timespec future;
+  int ret = 0;
+
+  ret = clock_gettime(CLOCK_REALTIME, &future);
+  if (ret < 0)
+    {
+      i2cerr("Timed wait failed on I2C%u.\n", priv->port);
+      return ret;
+    }
+
+  future.tv_sec += (ms / 1000);
+  future.tv_nsec += ((ms % 1000) * 1000);
+
+  return nxsem_timedwait_uninterruptible(&priv->wait, &future);
+}
 
 /****************************************************************************
  * Name: bcm2711_i2c_setfrequency
@@ -317,6 +359,7 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
 {
   struct i2c_msg_s *msg = priv->msgs;
   ssize_t msg_length;
+  int ret = 0;
 
   DEBUGASSERT(msg != NULL);
   i2cinfo("Starting receive on I2C%u\n", priv->port);
@@ -362,10 +405,15 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
        * drained into message buffer. We can then continue reading.
        */
 
-      nxsem_wait_uninterruptible(&priv->wait);
+      ret = bcm2711_i2c_semtimedwait(priv, I2C_TIMEOUT_MS);
+      if (ret == -ETIMEDOUT)
+        {
+          i2cerr("I2C%u timed out waiting for interrupt handler\n",
+                 priv->port);
+        }
     }
 
-  return 0;
+  return ret;
 }
 
 /****************************************************************************
