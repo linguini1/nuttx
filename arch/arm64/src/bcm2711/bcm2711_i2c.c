@@ -417,16 +417,17 @@ static void bcm2711_i2c_drainrxfifo(struct bcm2711_i2cdev_s *priv)
   size_t i;
 
   DEBUGASSERT(msg != NULL);
+  i2cinfo("Draining RX FIFO for I2C%u\n", priv->port);
 
   /* While the RX FIFO contains data to be received, drain it into the message
    * buffer. Do not read more than the `rw_size` to avoid overflowing the
    * message buffer.
    */
 
-  for (i = 0; (i < priv->rw_size) && (getreg32(status_addr) & BCM_BSC_S_RXD);
-       i++)
+  for (i = 0; (i < priv->rw_size) && (getreg32(status_addr) & BCM_BSC_S_RXD);)
     {
       msg->buffer[priv->reg_buff_offset + i] = getreg32(fifo_addr) & 0xff;
+      i++;
     }
 
   /* We have either reached the rw_size or the RX FIFO is out of data.
@@ -474,15 +475,25 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
   /* Start buffer fresh for receiving full message. */
 
   priv->reg_buff_offset = 0;
+  msg_length = msg->length;
+
+  /* Read maximum FIFO depth or the remaining message length. */
+
+  if (msg_length <= FIFO_DEPTH)
+    {
+      priv->rw_size = msg_length;
+    }
+  else
+    {
+      priv->rw_size = FIFO_DEPTH;
+    }
 
   /* Start transfer. */
 
-  priv->rw_size = FIFO_DEPTH;
   bcm2711_i2c_starttransfer(priv);
 
   /* Continuously read until message has been completely read. */
 
-  msg_length = msg->length;
   while (msg_length > 0)
     {
       /* Read maximum FIFO depth or the remaining message length. */
@@ -501,11 +512,25 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
        */
 
       ret = bcm2711_i2c_semtimedwait(priv, I2C_TIMEOUT_MS);
-      if (ret == -ETIMEDOUT)
+      if (ret < 0)
         {
-          i2cerr("I2C%u timed out waiting for interrupt handler\n",
-                 priv->port);
+          i2cerr("I2C%u error waiting for interrupt handler: %d\n",
+                 priv->port, ret);
+          return ret;
         }
+
+      /* The semaphore was posted without a timeout, so we have to handle some
+       * reading.
+       */
+
+      if (priv->err != 0)
+        {
+          i2cerr("I2C%u encountered receive error: %d\n", priv->port,
+                 priv->err);
+          return priv->err;
+        }
+
+      bcm2711_i2c_drainrxfifo(priv);
 
       /* The remaining message length is the total length minus how far into
        * the message we are.
@@ -783,9 +808,7 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
 
   if (status & BCM_BSC_S_RXR)
     {
-      /* NOTE: This status bit is cleared after reading data from RX FIFO. */
-      i2cinfo("Draining RX FIFO.\n");
-      bcm2711_i2c_drainrxfifo(priv);
+      i2cinfo("RX FIFO needs reading.\n");
     }
 
   /* TX FIFO needs writing */
