@@ -48,6 +48,10 @@
 #define BCM_BSC6                                                             \
   (BCM_PERIPHERAL_BASEADDR + 0x000205c00) /* BSC/I2C interface 5 */
 
+/* Number of BSC interfaces. */
+
+#define BCM_BSCS_NUM 7
+
 /* BSC register offsets */
 
 #define BCM_BSC_C_OFFSET 0x00    /* Control */

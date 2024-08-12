@@ -110,13 +110,14 @@ static void bcm2711_i2c_setfrequency(struct bcm2711_i2cdev_s *priv,
                                      uint32_t frequency);
 static void bcm2711_i2c_setaddr(struct bcm2711_i2cdev_s *priv, uint16_t addr);
 static void bcm2711_i2c_starttransfer(struct bcm2711_i2cdev_s *priv);
+static int bcm2711_i2c_interrupted(struct bcm2711_i2cdev_s *priv);
 static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv);
 static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv);
 static void bcm2711_i2c_drainrxfifo(struct bcm2711_i2cdev_s *priv);
 static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop);
 static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop);
 
-static int bcm2711_i2c_interrupt_handler(int irq, void *context, void *arg);
+static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv);
 
 static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
                                 struct i2c_msg_s *msgs, int count);
@@ -127,6 +128,14 @@ static int bcm2711_i2c_reset(struct i2c_master_s *dev);
 /****************************************************************************
  * Private Data
  ****************************************************************************/
+
+/* True if the IRQ for all I2C interrupts has been set up. */
+
+static bool g_i2c_irqinit = false;
+
+/* The number of I2C interfaces currently initialized. */
+
+static uint8_t g_i2c_devsinit = 0;
 
 /* I2C operations for BCM2711 I2C interfaces. */
 
@@ -151,6 +160,54 @@ static struct bcm2711_i2cdev_s g_i2c1dev = {
 };
 
 #endif // CONFIG_BCM2711_I2C1
+
+/* I2C interfaces */
+
+static struct bcm2711_i2cdev_s *g_i2c_devices[BCM_BSCS_NUM] = {
+
+#ifdef CONFIG_BCM2711_I2C0
+#warning "I2C0 unsupported"
+#else
+    [0] = NULL,
+#endif // CONFIG_BCM2711_I2C0
+
+#ifdef CONFIG_BCM2711_I2C1
+    [1] = &g_i2c1dev,
+#else
+    [1] = NULL,
+#endif // CONFIG_BCM2711_I2C1
+
+#ifdef CONFIG_BCM2711_I2C2
+#warning "I2C2 unsupported"
+#else
+    [2] = NULL,
+#endif // CONFIG_BCM2711_I2C2
+
+#ifdef CONFIG_BCM2711_I2C3
+#warning "I2C3 unsupported"
+#else
+    [3] = NULL,
+#endif // CONFIG_BCM2711_I2C3
+
+#ifdef CONFIG_BCM2711_I2C4
+#warning "I2C4 unsupported"
+#else
+    [4] = NULL,
+#endif // CONFIG_BCM2711_I2C4
+
+#ifdef CONFIG_BCM2711_I2C5
+#warning "I2C5 unsupported"
+#else
+    [5] = NULL,
+#endif // CONFIG_BCM2711_I2C5
+
+#ifdef CONFIG_BCM2711_I2C6
+#warning "I2C6 unsupported"
+#else
+    [6] = NULL,
+#endif // CONFIG_BCM2711_I2C6
+
+};
 
 /****************************************************************************
  * Private Functions
@@ -242,6 +299,26 @@ static void bcm2711_i2c_starttransfer(struct bcm2711_i2cdev_s *priv)
 {
   i2cinfo("Transfer started\n");
   modreg32(BCM_BSC_C_ST, BCM_BSC_C_ST, BCM_BSC_C(priv->base));
+}
+
+/****************************************************************************
+ * Name: bcm2711_i2c_interrupted
+ *
+ * Description:
+ *   Checks if the I2C device has a pending interrupt.
+ *
+ * Input Parameters:
+ *     priv - The BCM2711 I2C interface to check for a pending interrupt.
+ *
+ * Returns:
+ *     0 if no interrupt pending, non-zero if interrupt pending.
+ *
+ ****************************************************************************/
+
+static int bcm2711_i2c_interrupted(struct bcm2711_i2cdev_s *priv)
+{
+  return getreg32(BCM_BSC_S(priv->base)) &
+         (BCM_BSC_S_DONE | BCM_BSC_S_RXR | BCM_BSC_S_TXW);
 }
 
 /****************************************************************************
@@ -588,7 +665,7 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
 }
 
 /****************************************************************************
- * Name: bcm2711_i2c_interrupt_handler
+ * Name: bcm2711_i2c_primary_handler
  *
  * Description:
  *   Handle I2C interrupts.
@@ -599,12 +676,55 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
  *     arg - The argument passed to the interrupt handler
  ****************************************************************************/
 
-static int bcm2711_i2c_interrupt_handler(int irq, void *context, void *arg)
+static int bcm2711_i2c_primary_handler(int irq, void *context, void *arg)
+{
+  int ret = 0;
+  struct bcm2711_i2cdev_s *priv;
+
+  i2cinfo("I2C primary handler called\n");
+
+  /* Check all I2C interfaces for an interrupt */
+
+  for (int i = 0; i < BCM_BSCS_NUM; i++)
+    {
+      priv = g_i2c_devices[i];
+      if (priv == NULL)
+        {
+          continue;
+        }
+
+      /* If interface had interrupt triggered, call its handler. */
+
+      if (bcm2711_i2c_interrupted(priv))
+        {
+          if (bcm2711_i2c_secondary_handler(priv) < 0)
+            {
+              ret = -EIO;
+              i2cerr("Handler failed for I2C%d\n", i);
+            }
+        }
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: bcm2711_i2c_secondary_handler
+ *
+ * Description:
+ *   Handle I2C interrupts on a per-device basis.
+ *
+ * Input Parameters:
+ *     priv - The I2C interface device which has an interrupt triggered.
+ ****************************************************************************/
+
+static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
 {
   int ret = OK;
   uint32_t status;
   uint32_t status_addr;
-  struct bcm2711_i2cdev_s *priv = (struct bcm2711_i2cdev_s *)arg;
+
+  i2cinfo("Secondary handler called for I2C%u\n", priv->port);
 
   /* Get interrupt status for this device. */
 
@@ -695,14 +815,6 @@ struct i2c_master_s *bcm2711_i2cbus_initialize(int port)
 
   i2cinfo("Initializing I2C%u\n", port);
 
-  /* TODO: allow pins to be configured for different I2C interfaces. Currently
-   * hard-coded for default I2C1 interface.
-   */
-  bcm2711_gpio_set_pulls(2, false, false);
-  bcm2711_gpio_set_pulls(3, false, false);
-  bcm2711_gpio_set_func(2, BCM_GPIO_FUNC0);
-  bcm2711_gpio_set_func(3, BCM_GPIO_FUNC0);
-
   /* Exclusive access */
 
   nxmutex_lock(&priv->lock);
@@ -720,29 +832,39 @@ struct i2c_master_s *bcm2711_i2cbus_initialize(int port)
 
   /* Not yet initialized, little more work to do. */
 
-  // TODO: init
+  /* TODO: allow pins to be configured for different I2C interfaces. Currently
+   * hard-coded for default I2C1 interface.
+   */
+  bcm2711_gpio_set_pulls(2, false, false);
+  bcm2711_gpio_set_pulls(3, false, false);
+  bcm2711_gpio_set_func(2, BCM_GPIO_FUNC0);
+  bcm2711_gpio_set_func(3, BCM_GPIO_FUNC0);
+
   bcm2711_i2c_disable(priv); /* Only enabled when used. */
   bcm2711_i2c_setfrequency(priv, I2C_DEFAULT_FREQUENCY);
 
-  /* Attach interrupt handler */
+  /* Attach interrupt handler if it hasn't been already */
 
-  // TODO: will this overwrite all interrupt handlers with the last one?
-  // Should I have one generic handler?
-  ret = irq_attach(BCM_IRQ_VC_I2C, bcm2711_i2c_interrupt_handler, priv);
-  if (ret < 0)
+  if (!g_i2c_irqinit)
     {
-      i2cerr("Could not attach interrupt handler for port %d: %d\n", port,
-             ret);
-      return NULL;
+      ret = irq_attach(BCM_IRQ_VC_I2C, bcm2711_i2c_primary_handler, NULL);
+      if (ret < 0)
+        {
+          i2cerr("Could not attach interrupt handler for port %d: %d\n", port,
+                 ret);
+          return NULL;
+        }
+      i2cinfo("I2C%u interrupt handler attached\n", port);
+
+      /* Enable interrupt handler */
+
+      arm64_gic_irq_set_priority(BCM_IRQ_VC_I2C, 0, IRQ_TYPE_EDGE);
+      up_enable_irq(BCM_IRQ_VC_I2C);
+      i2cinfo("I2C IRQ enabled\n");
+      g_i2c_irqinit = true; /* Mark IRQ handler as initialized */
     }
-  i2cinfo("I2C%u interrupt handler attached\n", port);
 
-  /* Enable interrupt handler */
-
-  arm64_gic_irq_set_priority(BCM_IRQ_VC_I2C, 0, IRQ_TYPE_EDGE);
-  up_enable_irq(BCM_IRQ_VC_I2C);
-  i2cinfo("I2C IRQ enabled\n");
-
+  g_i2c_devsinit++; /* Another device initialized */
   nxmutex_unlock(&priv->lock);
   return &priv->dev;
 }
@@ -776,15 +898,23 @@ int bcm2711_i2cbus_uninitialize(struct i2c_master_s *dev)
   if (--priv->refs)
     {
       nxmutex_unlock(&priv->lock);
-      return OK;
+      return ret;
     }
 
   /* This was the last reference to the I2C device. */
 
   bcm2711_i2c_disable(priv);
-  up_disable_irq(BCM_IRQ_VC_I2C); // TODO: this disables all I2C interrupts
-  irq_detach(BCM_IRQ_VC_I2C);
-  i2cinfo("Detached I2C interrupt handler and disabled IRQ.\n");
+  g_i2c_devsinit--; /* One less device initialized */
+
+  /* If there are no more I2C devices initialized, turn off interrupts. */
+
+  if (g_i2c_devsinit == 0)
+    {
+      up_disable_irq(BCM_IRQ_VC_I2C);
+      irq_detach(BCM_IRQ_VC_I2C);
+      g_i2c_irqinit = false;
+      i2cinfo("Detached I2C interrupt handler and disabled IRQ.\n");
+    }
 
   nxmutex_unlock(&priv->lock);
   return ret;
