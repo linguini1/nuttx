@@ -414,7 +414,6 @@ static void bcm2711_i2c_drainrxfifo(struct bcm2711_i2cdev_s *priv)
   struct i2c_msg_s *msg = priv->msgs;
   uint32_t status_addr = BCM_BSC_S(priv->base);
   uint32_t fifo_addr = BCM_BSC_FIFO(priv->base);
-  uint32_t data;
   size_t i;
 
   DEBUGASSERT(msg != NULL);
@@ -427,8 +426,7 @@ static void bcm2711_i2c_drainrxfifo(struct bcm2711_i2cdev_s *priv)
   for (i = 0; (i < priv->rw_size) && (getreg32(status_addr) & BCM_BSC_S_RXD);
        i++)
     {
-      data = getreg32(fifo_addr);
-      msg->buffer[priv->reg_buff_offset + i] = data & 0xff;
+      msg->buffer[priv->reg_buff_offset + i] = getreg32(fifo_addr) & 0xff;
     }
 
   /* We have either reached the rw_size or the RX FIFO is out of data.
@@ -479,11 +477,13 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
 
   /* Start transfer. */
 
+  priv->rw_size = FIFO_DEPTH;
   bcm2711_i2c_starttransfer(priv);
 
   /* Continuously read until message has been completely read. */
 
-  for (msg_length = msg->length; msg_length > 0; msg_length -= priv->rw_size)
+  msg_length = msg->length;
+  while (msg_length > 0)
     {
       /* Read maximum FIFO depth or the remaining message length. */
 
@@ -506,6 +506,13 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
           i2cerr("I2C%u timed out waiting for interrupt handler\n",
                  priv->port);
         }
+
+      /* The remaining message length is the total length minus how far into
+       * the message we are.
+       */
+
+      msg_length = msg->length - priv->reg_buff_offset;
+      i2cinfo("Remaining length: %ld/%ld\n", msg_length, msg->length);
     }
 
   return ret;
