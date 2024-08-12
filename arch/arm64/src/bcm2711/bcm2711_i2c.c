@@ -457,6 +457,7 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
 
   DEBUGASSERT(msg != NULL);
   i2cinfo("Starting receive on I2C%u\n", priv->port);
+  i2cinfo("Stop bit: %u\n", stop);
 
   if (stop)
     {
