@@ -695,6 +695,14 @@ struct i2c_master_s *bcm2711_i2cbus_initialize(int port)
 
   i2cinfo("Initializing I2C%u\n", port);
 
+  /* TODO: allow pins to be configured for different I2C interfaces. Currently
+   * hard-coded for default I2C1 interface.
+   */
+  bcm2711_gpio_set_pulls(2, false, false);
+  bcm2711_gpio_set_pulls(3, false, false);
+  bcm2711_gpio_set_func(2, BCM_GPIO_FUNC0);
+  bcm2711_gpio_set_func(3, BCM_GPIO_FUNC0);
+
   /* Exclusive access */
 
   nxmutex_lock(&priv->lock);
