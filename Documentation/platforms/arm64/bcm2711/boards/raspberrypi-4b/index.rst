@@ -55,7 +55,7 @@ Booting
 ========
 
 In order to boot NuttX on the Raspberry Pi 4B, you will need to have a formatted micro SD card. The SD card should
-contain a FAT32 partition that is marked as bootable and which contains the generated ``nuttx.img`` and ``config.txt``
+contain a FAT32 partition that is marked as bootable and which contains the generated ``nuttx.bin`` and ``config.txt``
 files from the build process. In addition to those files, you will also need the following files from the Raspberry Pi
 repository for loading the image:
 

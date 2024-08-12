@@ -28,9 +28,6 @@
 
 ifeq ($(CONFIG_ARCH_BOARD_RASPBERRYPI_4B),y)
 define POSTBUILD
-	$(Q)echo "Creating kernel image";
-	aarch64-none-elf-objcopy -O binary nuttx nuttx.img;
-
 	$(Q)echo "Generating config.txt";
 endef
 endif
