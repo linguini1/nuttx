@@ -737,6 +737,7 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
 
   if (status & BCM_BSC_S_ERR)
     {
+      i2cerr("ACK error.\n");
       modreg32(BCM_BSC_S_ERR, BCM_BSC_S_ERR,
                status_addr); /* Acknowledge err */
       priv->err = -EIO;
@@ -746,6 +747,7 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
 
   if (status & BCM_BSC_S_CLKT)
     {
+      i2cerr("Clock stretch timeout.\n");
       modreg32(BCM_BSC_S_CLKT, BCM_BSC_S_CLKT,
                status_addr); /* Acknowledge err */
       priv->err = -EIO;
@@ -756,6 +758,7 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
   if (status & BCM_BSC_S_RXR)
     {
       /* NOTE: This status bit is cleared after reading data from RX FIFO. */
+      i2cinfo("Draining RX FIFO.\n");
       bcm2711_i2c_drainrxfifo(priv);
     }
 
@@ -763,6 +766,7 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
 
   if (status & BCM_BSC_S_TXW)
     {
+      i2cinfo("TX FIFO needs writing.\n");
       // TODO
     }
 
@@ -770,6 +774,7 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
 
   if (status & BCM_BSC_S_DONE)
     {
+      i2cinfo("Transfer done.\n");
       modreg32(BCM_BSC_S_DONE, BCM_BSC_S_DONE, status_addr);
       // TODO
     }
