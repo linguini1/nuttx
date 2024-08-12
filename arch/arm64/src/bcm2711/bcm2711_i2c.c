@@ -854,7 +854,8 @@ struct i2c_master_s *bcm2711_i2cbus_initialize(int port)
                  ret);
           return NULL;
         }
-      i2cinfo("I2C%u interrupt handler attached\n", port);
+
+      i2cinfo("I2C interrupt handler attached\n");
 
       /* Enable interrupt handler */
 
