@@ -106,6 +106,7 @@ struct bcm2711_i2cdev_s
 
 static int bcm2711_i2c_semtimedwait(struct bcm2711_i2cdev_s *priv,
                                     uint32_t ms);
+static void bcm2711_i2c_clearfifos(struct bcm2711_i2cdev_s *priv);
 static void bcm2711_i2c_setfrequency(struct bcm2711_i2cdev_s *priv,
                                      uint32_t frequency);
 static void bcm2711_i2c_setaddr(struct bcm2711_i2cdev_s *priv, uint16_t addr);
@@ -248,6 +249,22 @@ static int bcm2711_i2c_semtimedwait(struct bcm2711_i2cdev_s *priv,
 }
 
 /****************************************************************************
+ * Name: bcm2711_i2c_clearfifos
+ *
+ * Description:
+ *   Clear the FIFOs of the I2C interface.
+ *
+ * Input Parameters:
+ *     priv - The BCM2711 I2C interface to clear the FIFOs of.
+ *
+ ****************************************************************************/
+
+static void bcm2711_i2c_clearfifos(struct bcm2711_i2cdev_s *priv)
+{
+  modreg32(0, BCM_BSC_C_CLRFIFO, BCM_BSC_C(priv->base));
+}
+
+/****************************************************************************
  * Name: bcm2711_i2c_setfrequency
  *
  * Description:
@@ -344,7 +361,7 @@ static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv)
 
   /* Clear FIFO */
 
-  modreg32(0, BCM_BSC_C_CLRFIFO, BCM_BSC_C(priv->base));
+  bcm2711_i2c_clearfifos(priv);
 
   /* Disable interface */
 
@@ -372,7 +389,7 @@ static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv)
 
   /* Clear FIFO */
 
-  modreg32(0, BCM_BSC_C_CLRFIFO, BCM_BSC_C(priv->base));
+  bcm2711_i2c_clearfifos(priv);
 
   /* Enable interrupts */
 
@@ -600,6 +617,7 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
       bcm2711_i2c_disable(priv);
       bcm2711_i2c_setfrequency(priv, msgs->frequency);
       bcm2711_i2c_setaddr(priv, msgs->addr);
+      bcm2711_i2c_clearfifos(priv);
       bcm2711_i2c_enable(priv);
 
       i2cinfo("I2C%u interface configured for message\n", priv->port);
