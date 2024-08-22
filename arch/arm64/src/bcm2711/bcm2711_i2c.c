@@ -381,8 +381,6 @@ static void bcm2711_i2c_disable(struct bcm2711_i2cdev_s *priv)
 
 static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv)
 {
-  i2cinfo("Enabled I2C%u\n", priv->port);
-
   /* Enable interface */
 
   modreg32(BCM_BSC_C_I2CEN, BCM_BSC_C_I2CEN, BCM_BSC_C(priv->base));
@@ -396,6 +394,8 @@ static void bcm2711_i2c_enable(struct bcm2711_i2cdev_s *priv)
   modreg32(BCM_BSC_C_INTD, BCM_BSC_C_INTD, BCM_BSC_C(priv->base));
   modreg32(BCM_BSC_C_INTR, BCM_BSC_C_INTR, BCM_BSC_C(priv->base));
   modreg32(BCM_BSC_C_INTT, BCM_BSC_C_INTT, BCM_BSC_C(priv->base));
+
+  i2cinfo("Enabled I2C%u\n", priv->port);
 }
 
 /****************************************************************************
@@ -417,7 +417,6 @@ static void bcm2711_i2c_drainrxfifo(struct bcm2711_i2cdev_s *priv)
   size_t i;
 
   DEBUGASSERT(msg != NULL);
-  i2cinfo("Draining RX FIFO for I2C%u\n", priv->port);
 
   /* While the RX FIFO contains data to be received, drain it into the message
    * buffer. Do not read more than the `rw_size` to avoid overflowing the
@@ -456,21 +455,29 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
 
   DEBUGASSERT(msg != NULL);
   i2cinfo("Starting receive on I2C%u\n", priv->port);
-  i2cinfo("Stop bit: %u\n", stop);
 
-  if (stop)
-    {
-      putreg32(msg->length, BCM_BSC_DLEN(priv->base));
-    }
-  else
-    {
-      /* If there is no stop condition desired, avoid sending one by setting
-       * the transfer length register to one byte greater than the actual
-       * transfer.
-       * TODO: does this actually work?
-       */
-      putreg32(msg->length + 1, BCM_BSC_DLEN(priv->base));
-    }
+  /* Set read bit */
+
+  modreg32(BCM_BSC_C_READ, BCM_BSC_C_READ, BCM_BSC_C(priv->base));
+
+  /* Set message length */
+
+  putreg32(msg->length, BCM_BSC_DLEN(priv->base));
+
+  // if (stop)
+  //   {
+  //     putreg32(msg->length, BCM_BSC_DLEN(priv->base));
+  //   }
+  // else
+  //   {
+  //     /* If there is no stop condition desired, avoid sending one by
+  //     setting
+  //      * the transfer length register to one byte greater than the actual
+  //      * transfer.
+  //      * TODO: does this actually work?
+  //      */
+  //     putreg32(msg->length + 1, BCM_BSC_DLEN(priv->base));
+  //   }
 
   /* Start buffer fresh for receiving full message. */
 
@@ -507,8 +514,8 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
           priv->rw_size = FIFO_DEPTH;
         }
 
-      /* Wait here for interrupt handler to signal that RX FIFO has been
-       * drained into message buffer. We can then continue reading.
+      /* Wait here for interrupt handler to signal that RX FIFO has data.
+       * We can then continue reading.
        */
 
       ret = bcm2711_i2c_semtimedwait(priv, I2C_TIMEOUT_MS);
@@ -537,7 +544,6 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
        */
 
       msg_length = msg->length - priv->reg_buff_offset;
-      i2cinfo("Remaining length: %ld/%ld\n", msg_length, msg->length);
     }
 
   return ret;
@@ -564,19 +570,28 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop)
   DEBUGASSERT(msg != NULL);
   i2cinfo("Starting send on I2C%u\n", priv->port);
 
-  if (stop)
-    {
-      putreg32(msg->length, BCM_BSC_DLEN(priv->base));
-    }
-  else
-    {
-      /* If there is no stop condition desired, avoid sending one by setting
-       * the transfer length register to one byte greater than the actual
-       * transfer.
-       * TODO: does this actually work?
-       */
-      putreg32(msg->length + 1, BCM_BSC_DLEN(priv->base));
-    }
+  /* Set write bit */
+
+  modreg32(0, BCM_BSC_C_READ, BCM_BSC_C(priv->base));
+
+  /* Set message length */
+
+  putreg32(msg->length, BCM_BSC_DLEN(priv->base));
+
+  // if (stop)
+  //   {
+  //     putreg32(msg->length, BCM_BSC_DLEN(priv->base));
+  //   }
+  // else
+  //   {
+  //     /* If there is no stop condition desired, avoid sending one by
+  //     setting
+  //      * the transfer length register to one byte greater than the actual
+  //      * transfer.
+  //      * TODO: does this actually work?
+  //      */
+  //     putreg32(msg->length + 1, BCM_BSC_DLEN(priv->base));
+  //   }
 
   /* Start transfer. */
 
@@ -618,7 +633,7 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
   struct bcm2711_i2cdev_s *priv = (struct bcm2711_i2cdev_s *)dev;
   int i;
   int ret = 0;
-  bool stop = 1;
+  bool stop = true;
   int semval = 0;
 
   DEBUGASSERT(dev != NULL);
@@ -672,12 +687,10 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
 
       if (msgs->flags & I2C_M_READ)
         {
-          modreg32(BCM_BSC_C_READ, BCM_BSC_C_READ, BCM_BSC_C(priv->base));
           ret = bcm2711_i2c_receive(priv, stop);
         }
       else
         {
-          modreg32(0, BCM_BSC_C_READ, BCM_BSC_C(priv->base));
           ret = bcm2711_i2c_send(priv, stop);
         }
 
@@ -732,8 +745,6 @@ static int bcm2711_i2c_primary_handler(int irq, void *context, void *arg)
   int ret = 0;
   struct bcm2711_i2cdev_s *priv;
 
-  i2cinfo("I2C primary handler called\n");
-
   /* Check all I2C interfaces for an interrupt */
 
   for (int i = 0; i < BCM_BSCS_NUM; i++)
@@ -775,8 +786,6 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
   uint32_t status;
   uint32_t status_addr;
 
-  i2cinfo("Secondary handler called for I2C%u\n", priv->port);
-
   /* Get interrupt status for this device. */
 
   status_addr = BCM_BSC_S(priv->base);
@@ -788,7 +797,6 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
 
   if (status & BCM_BSC_S_ERR)
     {
-      i2cerr("ACK error.\n");
       modreg32(BCM_BSC_S_ERR, BCM_BSC_S_ERR,
                status_addr); /* Acknowledge err */
       priv->err = -EIO;
@@ -808,14 +816,14 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
 
   if (status & BCM_BSC_S_RXR)
     {
-      i2cinfo("RX FIFO needs reading.\n");
+      // i2cinfo("RX FIFO needs reading.\n");
     }
 
   /* TX FIFO needs writing */
 
   if (status & BCM_BSC_S_TXW)
     {
-      i2cinfo("TX FIFO needs writing.\n");
+      // i2cinfo("TX FIFO needs writing.\n");
       // TODO
     }
 
@@ -823,9 +831,7 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
 
   if (status & BCM_BSC_S_DONE)
     {
-      i2cinfo("Transfer done.\n");
       modreg32(BCM_BSC_S_DONE, BCM_BSC_S_DONE, status_addr);
-      // TODO
     }
 
   nxsem_post(&priv->wait);
@@ -851,6 +857,8 @@ struct i2c_master_s *bcm2711_i2cbus_initialize(int port)
 {
   int ret;
   struct bcm2711_i2cdev_s *priv;
+
+  DEBUGASSERT(0 <= port && port < BCM_BSCS_NUM);
 
   /* Initialize selected port */
 
