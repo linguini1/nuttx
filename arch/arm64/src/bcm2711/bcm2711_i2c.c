@@ -473,6 +473,13 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
 
   bcm2711_i2c_starttransfer(priv);
 
+  /* Handle special 0 byte read case by waiting for DONE signal. */
+
+  if (msg->length == 0)
+    {
+      ret = bcm2711_i2c_semtimedwait(priv, I2C_TIMEOUT_MS);
+    }
+
   /* Continuously read until message has been completely read. */
 
   while (msg_length > 0)
