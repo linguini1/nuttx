@@ -785,6 +785,7 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
   int ret = OK;
   uint32_t status;
   uint32_t status_addr;
+  bool post_sem = false;
 
   /* Get interrupt status for this device. */
 
@@ -800,6 +801,8 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
       modreg32(BCM_BSC_S_ERR, BCM_BSC_S_ERR,
                status_addr); /* Acknowledge err */
       priv->err = -EIO;
+      ret = -EIO;
+      post_sem = true;
     }
 
   /* There was a clock stretch timeout */
@@ -810,21 +813,23 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
       modreg32(BCM_BSC_S_CLKT, BCM_BSC_S_CLKT,
                status_addr); /* Acknowledge err */
       priv->err = -EIO;
+      ret = -EIO;
+      post_sem = true;
     }
 
   /* RX FIFO needs reading */
 
   if (status & BCM_BSC_S_RXR)
     {
-      // i2cinfo("RX FIFO needs reading.\n");
+      post_sem = true;
     }
 
   /* TX FIFO needs writing */
 
   if (status & BCM_BSC_S_TXW)
     {
-      // i2cinfo("TX FIFO needs writing.\n");
-      // TODO
+      post_sem = true;
+      // TODO: handle in interrupt
     }
 
   /* Transfer is done */
@@ -832,9 +837,14 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
   if (status & BCM_BSC_S_DONE)
     {
       modreg32(BCM_BSC_S_DONE, BCM_BSC_S_DONE, status_addr);
+      post_sem = true;
     }
 
-  nxsem_post(&priv->wait);
+  if (post_sem)
+    {
+      nxsem_post(&priv->wait);
+    }
+
   return ret;
 }
 
