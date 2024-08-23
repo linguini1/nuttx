@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <nuttx/irq.h>
 #include <nuttx/semaphore.h>
+#include <semaphore.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -573,7 +574,6 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop)
   int ret = OK;
 
   DEBUGASSERT(msg != NULL);
-  i2cinfo("Starting send on I2C%u\n", priv->port);
 
   /* Set write bit */
 
@@ -591,6 +591,13 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop)
   /* Start transfer. */
 
   bcm2711_i2c_starttransfer(priv);
+
+  /* Special 0 write case, just wait for DONE signal */
+
+  if (msg->length == 0)
+    {
+      ret = bcm2711_i2c_semtimedwait(priv, I2C_TIMEOUT_MS);
+    }
 
   /* Send the entire message */
 
@@ -635,7 +642,7 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop)
       msg_length = msg->length - priv->reg_buff_offset;
     }
 
-  return 0;
+  return ret;
 }
 
 /****************************************************************************
@@ -693,13 +700,15 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
 
       // TODO: do I need to support I2C_M_NOSTART?
 
+      // TODO: Support restart condition (no stop)
+
       if (msgs->flags & I2C_M_NOSTOP)
         {
-          stop = 0;
+          stop = false;
         }
       else
         {
-          stop = 1;
+          stop = true;
         }
 
       /* Set read/write bit according to message configuration, and then
@@ -763,6 +772,7 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
 static int bcm2711_i2c_primary_handler(int irq, void *context, void *arg)
 {
   int ret = 0;
+  int tempret = 0;
   struct bcm2711_i2cdev_s *priv;
 
   /* Check all I2C interfaces for an interrupt */
@@ -779,10 +789,16 @@ static int bcm2711_i2c_primary_handler(int irq, void *context, void *arg)
 
       if (bcm2711_i2c_interrupted(priv))
         {
-          if (bcm2711_i2c_secondary_handler(priv) < 0)
+          tempret = bcm2711_i2c_secondary_handler(priv);
+
+          /* If there was an error, record it. Otherwise don't overwrite the
+           * ret value, it may contain an error from a previous iteration that
+           * we still need to report.
+           */
+
+          if (tempret < 0)
             {
-              ret = -EIO;
-              i2cerr("Handler failed for I2C%d\n", i);
+              ret = tempret;
             }
         }
     }
@@ -829,7 +845,6 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
 
   if (status & BCM_BSC_S_CLKT)
     {
-      i2cerr("Clock stretch timeout.\n");
       modreg32(BCM_BSC_S_CLKT, BCM_BSC_S_CLKT,
                status_addr); /* Acknowledge err */
       priv->err = -EIO;
@@ -849,7 +864,6 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
   if (status & BCM_BSC_S_TXW)
     {
       post_sem = true;
-      // TODO: handle in interrupt
     }
 
   /* Transfer is done */
