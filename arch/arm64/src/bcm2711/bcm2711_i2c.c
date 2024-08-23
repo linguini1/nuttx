@@ -454,7 +454,6 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
   int ret = 0;
 
   DEBUGASSERT(msg != NULL);
-  i2cinfo("Starting receive on I2C%u\n", priv->port);
 
   /* Set read bit */
 
@@ -464,36 +463,10 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
 
   putreg32(msg->length, BCM_BSC_DLEN(priv->base));
 
-  // if (stop)
-  //   {
-  //     putreg32(msg->length, BCM_BSC_DLEN(priv->base));
-  //   }
-  // else
-  //   {
-  //     /* If there is no stop condition desired, avoid sending one by
-  //     setting
-  //      * the transfer length register to one byte greater than the actual
-  //      * transfer.
-  //      * TODO: does this actually work?
-  //      */
-  //     putreg32(msg->length + 1, BCM_BSC_DLEN(priv->base));
-  //   }
-
   /* Start buffer fresh for receiving full message. */
 
   priv->reg_buff_offset = 0;
   msg_length = msg->length;
-
-  /* Read maximum FIFO depth or the remaining message length. */
-
-  if (msg_length <= FIFO_DEPTH)
-    {
-      priv->rw_size = msg_length;
-    }
-  else
-    {
-      priv->rw_size = FIFO_DEPTH;
-    }
 
   /* Start transfer. */
 
@@ -521,8 +494,6 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
       ret = bcm2711_i2c_semtimedwait(priv, I2C_TIMEOUT_MS);
       if (ret < 0)
         {
-          i2cerr("I2C%u error waiting for interrupt handler: %d\n",
-                 priv->port, ret);
           return ret;
         }
 
@@ -532,8 +503,6 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
 
       if (priv->err != 0)
         {
-          i2cerr("I2C%u encountered receive error: %d\n", priv->port,
-                 priv->err);
           return priv->err;
         }
 
@@ -550,6 +519,43 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
 }
 
 /****************************************************************************
+ * Name: bcm2711_i2c_filltxfifo
+ *
+ * Description:
+ *   Fill the TX FIFO with data to be sent.
+ *
+ * Input Parameters:
+ *     priv - The BCM2711 I2C interface to send on.
+ *
+ ****************************************************************************/
+
+static void bcm2711_i2c_filltxfifo(struct bcm2711_i2cdev_s *priv)
+{
+  struct i2c_msg_s *msg = priv->msgs;
+  uint32_t status_addr = BCM_BSC_S(priv->base);
+  uint32_t fifo_addr = BCM_BSC_FIFO(priv->base);
+  size_t i;
+
+  DEBUGASSERT(msg != NULL);
+
+  /* While there is data to be sent, and the TX FIFO is not full, write the
+   * data to the TX FIFO. Stop when full or data stream is over.
+   */
+
+  for (i = 0; (i < priv->rw_size) && (getreg32(status_addr) & BCM_BSC_S_TXD);)
+    {
+      putreg32(fifo_addr, msg->buffer[priv->reg_buff_offset + i] & 0xff);
+      i++;
+    }
+
+  /* We have either reached the rw_size or the RX FIFO is out of data.
+   * Update the buffer offset with the amount of data we have read.
+   */
+
+  priv->reg_buff_offset += i;
+}
+
+/****************************************************************************
  * Name: bcm2711_i2c_send
  *
  * Description:
@@ -563,9 +569,8 @@ static int bcm2711_i2c_receive(struct bcm2711_i2cdev_s *priv, bool stop)
 static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop)
 {
   struct i2c_msg_s *msg = priv->msgs;
-  ssize_t i;
-  uint32_t status_reg = BCM_BSC_S(priv->base);
-  uint32_t fifo_reg = BCM_BSC_FIFO(priv->base);
+  ssize_t msg_length;
+  int ret = OK;
 
   DEBUGASSERT(msg != NULL);
   i2cinfo("Starting send on I2C%u\n", priv->port);
@@ -578,20 +583,10 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop)
 
   putreg32(msg->length, BCM_BSC_DLEN(priv->base));
 
-  // if (stop)
-  //   {
-  //     putreg32(msg->length, BCM_BSC_DLEN(priv->base));
-  //   }
-  // else
-  //   {
-  //     /* If there is no stop condition desired, avoid sending one by
-  //     setting
-  //      * the transfer length register to one byte greater than the actual
-  //      * transfer.
-  //      * TODO: does this actually work?
-  //      */
-  //     putreg32(msg->length + 1, BCM_BSC_DLEN(priv->base));
-  //   }
+  /* Start buffer fresh for sending message */
+
+  priv->reg_buff_offset = 0;
+  msg_length = msg->length;
 
   /* Start transfer. */
 
@@ -599,17 +594,45 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop)
 
   /* Send the entire message */
 
-  for (i = 0; i < msg->length - 1; i++)
+  while (msg_length > 0)
     {
+      /* Write maximum FIFO depth or the remaining message length. */
 
-      /* While the TX FIFO cannot accept more data, wait. */
+      if (msg_length <= FIFO_DEPTH)
+        {
+          priv->rw_size = msg_length;
+        }
+      else
+        {
+          priv->rw_size = FIFO_DEPTH;
+        }
 
-      while (!(getreg32(status_reg) & BCM_BSC_S_TXD))
-        ;
+      /* Wait here for interrupt handler to signal that TX FIFO needs writing.
+       * We can then continue writing.
+       */
 
-      /* Once TX FIFO can accept more data, send a byte at a time. */
+      ret = bcm2711_i2c_semtimedwait(priv, I2C_TIMEOUT_MS);
+      if (ret < 0)
+        {
+          return ret;
+        }
 
-      putreg32(msg->buffer[i] & 0xff, fifo_reg);
+      /* The semaphore was posted without a timeout, so we have to handle some
+       * writing.
+       */
+
+      if (priv->err != 0)
+        {
+          return priv->err;
+        }
+
+      bcm2711_i2c_filltxfifo(priv);
+
+      /* The remaining message length is the total length minus how far into
+       * the message we are.
+       */
+
+      msg_length = msg->length - priv->reg_buff_offset;
     }
 
   return 0;
@@ -648,8 +671,6 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
 
   ret = nxsem_get_value(&priv->wait, &semval);
   DEBUGASSERT(ret == 0 && semval == 0);
-
-  i2cinfo("Beginning transfer logic for I2C%u\n", priv->port);
 
   /* Perform send/receive operations for each message */
 
@@ -712,7 +733,6 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
       /* If no error occurred, we are here. TODO: Something about NULL `msgs`
        * for illegal access in interrupt.
        */
-      i2cinfo("I2C%u message successful\n", priv->port);
     }
 
   /* If our last message had a stop condition, we can safely disable this I2C
