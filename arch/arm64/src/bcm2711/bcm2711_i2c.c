@@ -96,6 +96,7 @@ struct bcm2711_i2cdev_s
   struct i2c_msg_s *msgs; /* Messages to send */
   size_t reg_buff_offset; /* Offset into message buffer */
   uint8_t rw_size;        /* max(FIFO_DEPTH, remaining message size) */
+  bool done;              /* If `wait` was posted due to done condition. */
 
   int err;  /* Error status of transfers */
   int refs; /* Reference count */
@@ -159,6 +160,7 @@ static struct bcm2711_i2cdev_s g_i2c1dev = {
     .port = 1,
     .refs = 0,
     .err = 0,
+    .done = false,
 };
 
 #endif // CONFIG_BCM2711_I2C1
@@ -599,16 +601,9 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop)
 
   bcm2711_i2c_starttransfer(priv);
 
-  /* Special 0 write case, just wait for DONE signal */
-
-  if (msg->length == 0)
-    {
-      ret = bcm2711_i2c_semtimedwait(priv, I2C_TIMEOUT_MS);
-    }
-
   /* Send the entire message */
 
-  while (msg_length > 0)
+  do
     {
       /* Write maximum FIFO depth or the remaining message length. */
 
@@ -621,25 +616,9 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop)
           priv->rw_size = FIFO_DEPTH;
         }
 
-      /* Wait here for interrupt handler to signal that TX FIFO needs writing.
-       * We can then continue writing.
-       */
+      /* Write data to FIFO. */
 
-      ret = bcm2711_i2c_semtimedwait(priv, I2C_TIMEOUT_MS);
-      if (ret < 0)
-        {
-          return ret;
-        }
-
-      /* The semaphore was posted without a timeout, so we have to handle some
-       * writing.
-       */
-
-      if (priv->err != 0)
-        {
-          return priv->err;
-        }
-
+      i2cerr("Filling FIFO\n");
       bcm2711_i2c_filltxfifo(priv);
 
       /* The remaining message length is the total length minus how far into
@@ -647,7 +626,63 @@ static int bcm2711_i2c_send(struct bcm2711_i2cdev_s *priv, bool stop)
        */
 
       msg_length = msg->length - priv->reg_buff_offset;
+
+      /* Here we wait for an interrupt. There are two scenarios:
+       *
+       * 1) If there is still message data left to write AND we receive an
+       * interrupt, then we can continue on another iteration of the outer
+       * do-while loop to keep writing.
+       *
+       * 2) If there is no more message data left to write, then we need to
+       * get a DONE interrupt to indicate the end of the transfer. If we don't
+       * get a DONE interrupt, but instead get a TXW, we ignore it and wait on
+       * the semaphore again. If we never get a done interrupt we return the
+       * applicable error (timeout). If we do get a done interrupt, we'll be
+       * able to exit the waiting loop.
+       */
+
+      while (msg_length == 0)
+        {
+
+          /* Wait for interrupt (timed). */
+
+          ret = bcm2711_i2c_semtimedwait(priv, I2C_TIMEOUT_MS);
+
+          /* First check for IO error because it's more important to report
+           * that.
+           */
+
+          i2cerr("sem: %d\n", ret);
+          i2cerr("dev: %d\n", priv->err);
+
+          if (priv->err != 0)
+            {
+              return priv->err;
+            }
+
+          /* Now check if semaphore timed out. */
+
+          if (ret < 0)
+            {
+              return ret;
+            }
+
+          /* Now check if the received interrupt was a done condition.
+           * Otherwise we loop again.
+           */
+
+          if (priv->done)
+            {
+              priv->done = false;
+              break;
+            }
+        }
+
+      /* If we're here, the semaphore got posted with an interrupt and there
+       * is still data left to write. Do another iteration.
+       */
     }
+  while (msg_length > 0);
 
   return ret;
 }
@@ -870,6 +905,7 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
 
   if (status & BCM_BSC_S_TXW)
     {
+      i2cerr("Need w\n");
       post_sem = true;
     }
 
@@ -877,6 +913,8 @@ static int bcm2711_i2c_secondary_handler(struct bcm2711_i2cdev_s *priv)
 
   if (status & BCM_BSC_S_DONE)
     {
+      i2cerr("DONE");
+      priv->done = true;
       modreg32(BCM_BSC_S_DONE, BCM_BSC_S_DONE, status_addr);
       post_sem = true;
     }
