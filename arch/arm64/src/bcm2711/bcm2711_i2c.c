@@ -217,6 +217,24 @@ static struct bcm2711_i2cdev_s *g_i2c_devices[BCM_BSCS_NUM] = {
  * Private Functions
  ****************************************************************************/
 
+// TODO: remove
+static void bcm2711_i2c_print(struct bcm2711_i2cdev_s *priv)
+{
+  i2cerr("Port: %d\n", priv->port);
+  i2cerr("Err: %d\n", priv->err);
+  i2cerr("Refs: %d\n", priv->refs);
+  i2cerr("Done: %s\n", priv->done ? "true" : "false");
+  int val;
+  nxsem_get_value(&priv->wait, &val);
+  i2cerr("Semaphore: %d\n", val);
+  i2cerr("Frequency: %d\n", priv->frequency);
+  i2cerr("Cur msg: %p\n", priv->msgs);
+  if (priv->msgs != NULL)
+    {
+      i2cerr("Cur msg len: %ld\n", priv->msgs->length);
+    }
+}
+
 /****************************************************************************
  * Name: bcm2711_i2c_semtimedwait
  *
@@ -710,6 +728,9 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
 
   DEBUGASSERT(dev != NULL);
 
+  i2cerr("Device state:\n");
+  bcm2711_i2c_print(priv);
+
   /* Get exclusive access before doing a transfer */
 
   nxmutex_lock(&priv->lock);
@@ -729,6 +750,7 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
 
       priv->msgs = msgs;
       priv->err = 0; /* No errors yet */
+      priv->done = false;
 
       /* Configure I2C interface according to message. */
 
@@ -794,6 +816,10 @@ static int bcm2711_i2c_transfer(struct i2c_master_s *dev,
     {
       bcm2711_i2c_disable(priv);
     }
+
+  i2cerr("Device state:\n");
+  bcm2711_i2c_print(priv);
+  i2cerr("Return: %d\n", ret);
 
   nxmutex_unlock(&priv->lock);
   return ret;
