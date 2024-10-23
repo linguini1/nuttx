@@ -458,13 +458,12 @@ if ARCH_CHIP_GOLDFISH
 source "arch/arm64/src/goldfish/Kconfig"
 endif
 
-<<<<<<< HEAD
 if ARCH_CHIP_BCM2711
 source "arch/arm64/src/bcm2711/Kconfig"
-=======
+endif
+
 if ARCH_CHIP_ZYNQ_MPSOC
 source "arch/arm64/src/zynq-mpsoc/Kconfig"
->>>>>>> master
 endif
 
 endif # ARCH_ARM64
