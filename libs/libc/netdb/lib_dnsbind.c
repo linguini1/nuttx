@@ -1,6 +1,8 @@
 /****************************************************************************
  * libs/libc/netdb/lib_dnsbind.c
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -69,7 +71,7 @@ int dns_bind(sa_family_t family)
 
   /* Create a new socket */
 
-  sd = socket(family, SOCK_DGRAM, 0);
+  sd = socket(family, SOCK_DGRAM | SOCK_CLOEXEC, 0);
   if (sd < 0)
     {
       ret = -get_errno();

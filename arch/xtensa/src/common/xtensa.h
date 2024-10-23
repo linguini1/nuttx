@@ -103,13 +103,6 @@
 #define IDLETHREAD_STACKSIZE  ((CONFIG_IDLETHREAD_STACKSIZE + 15) & ~15)
 #define IDLETHREAD_STACKWORDS (IDLETHREAD_STACKSIZE >> 2)
 
-/* In the Xtensa model, the state is saved in stack,
- * only a reference stored in TCB.
- */
-
-#define xtensa_savestate(regs)    ((regs) = (uint32_t *)CURRENT_REGS)
-#define xtensa_restorestate(regs) (CURRENT_REGS = (regs))
-
 /* Context switching via system calls ***************************************/
 
 #define xtensa_context_restore(regs)\
@@ -241,7 +234,7 @@ uint32_t *xtensa_user(int exccause, uint32_t *regs);
 
 #ifdef CONFIG_SMP
 int xtensa_intercpu_interrupt(int tocpu, int intcode);
-void xtensa_pause_handler(void);
+void xtensa_smp_call_handler(int irq, void *context, void *arg);
 #endif
 
 /* Signals */

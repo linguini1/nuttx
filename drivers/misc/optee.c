@@ -291,24 +291,21 @@ static int optee_from_msg_param(FAR struct tee_ioctl_param *params,
   return 0;
 }
 
-static ssize_t optee_recv(FAR struct socket *psock, FAR void *msg,
-                          size_t size)
+static int optee_recv(FAR struct socket *psock, FAR void *msg, size_t size)
 {
-  size_t remain = size;
-
-  while (remain)
+  while (size > 0)
     {
-      ssize_t n = psock_recv(psock, msg, remain, 0);
+      ssize_t n = psock_recv(psock, msg, size, 0);
       if (n <= 0)
         {
-          return remain == size ? n : size - remain;
+          return n < 0 ? n : -EIO;
         }
 
-      remain -= n;
+      size -= n;
       msg = (FAR char *)msg + n;
     }
 
-  return size;
+  return 0;
 }
 
 static int optee_send_recv(FAR struct socket *psocket,
@@ -569,7 +566,7 @@ static int optee_ioctl_cancel(FAR struct socket *psocket,
 static int
 optee_ioctl_shm_alloc(FAR struct tee_ioctl_shm_alloc_data *data)
 {
-  int memfd = memfd_create(OPTEE_SERVER_PATH, O_CREAT);
+  int memfd = memfd_create(OPTEE_SERVER_PATH, O_CREAT | O_CLOEXEC);
 
   if (memfd < 0)
     {

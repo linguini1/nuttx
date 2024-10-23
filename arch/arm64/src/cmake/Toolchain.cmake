@@ -53,9 +53,21 @@ endif()
 
 add_link_options(--entry=__start)
 # override the ARCHIVE command
-set(CMAKE_C_ARCHIVE_CREATE "<CMAKE_AR> rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
-set(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
-set(CMAKE_ASM_ARCHIVE_CREATE "<CMAKE_AR> rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
+set(CMAKE_ARCHIVE_COMMAND "<CMAKE_AR> rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
+set(CMAKE_RANLIB_COMMAND "<CMAKE_RANLIB> <TARGET>")
+set(CMAKE_C_ARCHIVE_CREATE ${CMAKE_ARCHIVE_COMMAND})
+set(CMAKE_CXX_ARCHIVE_CREATE ${CMAKE_ARCHIVE_COMMAND})
+set(CMAKE_ASM_ARCHIVE_CREATE ${CMAKE_ARCHIVE_COMMAND})
+
+set(CMAKE_C_ARCHIVE_APPEND ${CMAKE_ARCHIVE_COMMAND})
+set(CMAKE_CXX_ARCHIVE_APPEND ${CMAKE_ARCHIVE_COMMAND})
+set(CMAKE_ASM_ARCHIVE_APPEND ${CMAKE_ARCHIVE_COMMAND})
+
+set(CMAKE_C_ARCHIVE_FINISH ${CMAKE_RANLIB_COMMAND})
+set(CMAKE_CXX_ARCHIVE_FINISH ${CMAKE_RANLIB_COMMAND})
+set(CMAKE_ASM_ARCHIVE_FINISH ${CMAKE_RANLIB_COMMAND})
+
+set(NO_LTO "-fno-lto")
 
 if(CONFIG_ARCH_ARMV8A)
   add_compile_options(-march=armv8-a)
@@ -95,10 +107,6 @@ if(CONFIG_STACK_CANARIES)
   add_compile_options(-fstack-protector-all)
 endif()
 
-if(CONFIG_ARCH_COVERAGE_ALL)
-  add_compile_options(-fprofile-generate -ftest-coverage)
-endif()
-
 if(CONFIG_MM_UBSAN_ALL)
   add_compile_options(${CONFIG_MM_UBSAN_OPTION})
 endif()
@@ -111,8 +119,24 @@ if(CONFIG_MM_KASAN_ALL)
   add_compile_options(-fsanitize=kernel-address)
 endif()
 
+if(CONFIG_MM_KASAN_GLOBAL)
+  add_compile_options(--param=asan-globals=1)
+endif()
+
+if(CONFIG_MM_KASAN_DISABLE_READS_CHECK)
+  add_compile_options(--param=asan-instrument-reads=0)
+endif()
+
+if(CONFIG_MM_KASAN_DISABLE_WRITES_CHECK)
+  add_compile_options(--param=asan-instrument-writes=0)
+endif()
+
 if(CONFIG_ARCH_INSTRUMENT_ALL)
   add_compile_options(-finstrument-functions)
+endif()
+
+if(CONFIG_SCHED_GPROF_ALL)
+  add_compile_options(-pg)
 endif()
 
 if(CONFIG_ARCH_FPU)
@@ -162,21 +186,18 @@ if(CONFIG_DEBUG_LINK_MAP)
 endif()
 
 if(CONFIG_DEBUG_SYMBOLS)
-  add_compile_options(-g)
+  add_compile_options(${CONFIG_DEBUG_SYMBOLS_LEVEL})
 endif()
 
 if(CONFIG_ARCH_TOOLCHAIN_GNU)
   if(NOT GCCVER)
-
     execute_process(COMMAND ${CMAKE_C_COMPILER} --version
-                    OUTPUT_VARIABLE GCC_VERSION_INFO)
-
-    string(REGEX MATCH "[0-9]+\\.[0-9]+" GCC_VERSION ${GCC_VERSION_INFO})
-    string(REGEX REPLACE "\\..*" "" GCCVER ${GCC_VERSION})
-
+                    OUTPUT_VARIABLE GCC_VERSION_OUTPUT)
+    string(REGEX MATCH "([0-9]+)\\.[0-9]+" GCC_VERSION_REGEX
+                 "${GCC_VERSION_OUTPUT}")
+    set(GCCVER ${CMAKE_MATCH_1})
   endif()
-
-  if(GCCVER EQUAL 12)
+  if(GCCVER GREATER_EQUAL 12)
     add_link_options(-Wl,--no-warn-rwx-segments)
   endif()
 endif()

@@ -19,10 +19,12 @@ Guides
   customapps.rst
   citests.rst
   zerolatencyinterrupts.rst
+  kasan.rst
   nestedinterrupts.rst
   cortexmhardfaults.rst
   coredump.rst
-  minidumpserver.rst
+  coresight.rst
+  gdbserver.rst
   gdbwithpython.rst
   ofloader.rst
   testingtcpip.rst
@@ -31,3 +33,21 @@ Guides
   stm32ccm.rst
   stackrecord.rst
   etcromfs.rst
+  thread_local_storage.rst
+  devicetree.rst
+  debuggingflash_nuttxonarm.rst
+  changing_systemclockconfig.rst
+  usingkernelthreads.rst
+  armv7m_runtimestackcheck.rst
+  disabling_stackdumpdebug.rst
+  include_files_board_h.rst
+  specialstuff_in_nuttxheaderfiles.rst
+  kernel_threads_with_custom_stacks.rst
+  versioning_and_task_names.rst
+  logging_rambuffer.rst
+  ipv6.rst
+  integrate_newlib.rst
+  protected_build.rst
+  platform_directories.rst
+  port_drivers_to_stm32f7.rst
+  semihosting.rst

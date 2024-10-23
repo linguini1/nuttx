@@ -89,6 +89,7 @@ void arm64_boot_el3_init(void)
           SCR_SMD_BIT);   /* Do not trap SMC */
   write_sysreg(reg, scr_el3);
 
+#if CONFIG_ARM64_GIC_VERSION > 2
   reg = read_sysreg(ICC_SRE_EL3);
   reg |= (ICC_SRE_ELX_DFB_BIT |   /* Disable FIQ bypass */
           ICC_SRE_ELX_DIB_BIT |   /* Disable IRQ bypass */
@@ -96,6 +97,7 @@ void arm64_boot_el3_init(void)
           ICC_SRE_EL3_EN_BIT);    /* Enables lower Exception level access to
                                    * ICC_SRE_EL1 */
   write_sysreg(reg, ICC_SRE_EL3);
+#endif
 
   ARM64_ISB();
 }
@@ -126,6 +128,12 @@ void arm64_boot_el2_init(void)
 #endif
          SCTLR_SA_BIT);       /* Enable SP alignment check */
   write_sysreg(reg, sctlr_el2);
+
+#ifdef CONFIG_ARCH_CLUSTER_PMU
+  reg = read_sysreg(actlr_el2);
+  reg |= ACTLR_CLPMU_BIT;
+  write_sysreg(reg, actlr_el2);
+#endif
 
   reg = read_sysreg(hcr_el2);
   reg |= HCR_RW_BIT;      /* EL1 Execution state is AArch64 */
@@ -200,6 +208,5 @@ void arm64_boot_el1_init(void)
 void arm64_boot_primary_c_routine(void)
 {
   arm64_chip_boot();
-  up_perf_init(NULL);
   nx_start();
 }

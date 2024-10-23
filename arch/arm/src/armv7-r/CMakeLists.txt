@@ -70,9 +70,8 @@ if(CONFIG_SMP)
     APPEND
     SRCS
     arm_cpuhead.S
-    arm_cpuindex.c
     arm_cpustart.c
-    arm_cpupause.c
+    arm_smpcall.c
     arm_cpuidlestack.c
     arm_scu.c)
 endif()

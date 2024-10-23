@@ -40,6 +40,21 @@
 
 #include "riscv_macros.S"
 
+/*
+ * The riscv_extctx.S should be placed in the chip directory, for example:
+ *   arch/risc-v/src/qemu-rv/riscv_extctx.S
+ *
+ * These macros should be provided by the chip-specific code:
+ *   * save_extctx (extended context save)
+ *   * load_extctx (extended context restore)
+ *
+ * Refer to the riscv_macros.S for implementation details.
+ */
+
+#ifdef CONFIG_ARCH_RISCV_INTXCPT_EXTENSIONS
+#  include "riscv_extctx.S"
+#endif
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -52,6 +67,14 @@
 #ifdef CONFIG_ARCH_ADDRENV
 #  ifndef CONFIG_ARCH_KERNEL_STACK
 #    error "Kernel stack is needed for handling exceptions"
+#  endif
+#endif
+
+/* System calls require the per CPU scratch area */
+
+#ifdef CONFIG_LIB_SYSCALL
+#  ifndef CONFIG_RISCV_PERCPU_SCRATCH
+#    error "CONFIG_RISCV_PERCPU_SCRATCH is needed for handling system calls"
 #  endif
 #endif
 
@@ -104,6 +127,12 @@ exception_common:
   addi       sp, sp, -XCPTCONTEXT_SIZE
   save_ctx   sp
 
+  /* Save the extended context */
+
+#ifdef CONFIG_ARCH_RISCV_INTXCPT_EXTENSIONS
+  save_extctx sp
+#endif
+
   csrr       s0, CSR_STATUS       /* s0=status */
   csrr       s1, CSR_EPC          /* s1=exception PC */
   csrr       s2, CSR_CAUSE        /* s2=cause */
@@ -147,6 +176,7 @@ exception_common:
   csrr       tp, CSR_SCRATCH      /* Load kernel TP */
   REGLOAD    tp, RISCV_PERCPU_TCB(tp)
 
+  mv         a7, sp               /* a7 = context */
   call       x1, dispatch_syscall /* Dispatch the system call */
 
 return_from_syscall:
@@ -180,7 +210,7 @@ handle_irq:
   jal        x1, riscv_dispatch_irq
 
 #else
-  /* Reserve some space for CURRENT_REGS if interrupt stack disabled */
+  /* Reserve some space for current_regs if interrupt stack disabled */
 
   addi       sp, sp, -XCPTCONTEXT_SIZE
 
@@ -220,13 +250,19 @@ return_from_exception:
   and        s0, s0, s1
   bnez       s0, 1f
 
-  /* Set the next task's kernel stack to the scratch area */
+  /* Set the unwound kernel stack to the scratch area */
 
-  jal        x1, riscv_current_ksp
+  addi       a0, sp, XCPTCONTEXT_SIZE
   csrr       s0, CSR_SCRATCH
   REGSTORE   a0, RISCV_PERCPU_KSP(s0)
 
 1:
+#endif
+
+  /* Restore the extended context */
+
+#ifdef CONFIG_ARCH_RISCV_INTXCPT_EXTENSIONS
+  load_extctx sp
 #endif
 
   load_ctx   sp
@@ -236,6 +272,42 @@ return_from_exception:
   /* Return from exception */
 
   ERET
+
+/****************************************************************************
+ * Function: riscv_jump_to_user
+ *
+ * Description:
+ *  Routine to jump to user space, called when a user process is started and
+ *  the kernel is ready to give control to the user task in user space.
+ *
+ * riscv_jump_to_user(entry, a0, a1, a2, sp, regs)
+ *     entry:  process entry point
+ *     a0:     parameter 0 for process
+ *     a1:     parameter 1 for process
+ *     a2:     parameter 2 for process
+ *     sp:     user stack pointer
+ *     regs:   integer register save area to use
+ *
+ ****************************************************************************/
+
+  .section EXCEPTION_SECTION
+  .global riscv_jump_to_user
+
+riscv_jump_to_user:
+
+  csrc     CSR_STATUS, STATUS_IE
+  mv       sp, a5
+  REGSTORE a0, REG_EPC(sp)
+  REGSTORE a1, REG_A0(sp)
+  REGSTORE a2, REG_A1(sp)
+  REGSTORE a3, REG_A2(sp)
+  REGSTORE a4, REG_SP(sp)
+  csrr     a0, CSR_STATUS
+  li       a1, ~STATUS_PPP
+  and      a0, a0, a1
+  REGSTORE a0, REG_INT_CTX(sp)
+  mv       a0, sp
+  tail return_from_exception
 
 /*****************************************************************************
  *  Name: g_intstackalloc and g_intstacktop

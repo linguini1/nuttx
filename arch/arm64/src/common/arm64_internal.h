@@ -84,13 +84,6 @@
 #  define CONFIG_ARCH_INTERRUPTSTACK 0
 #endif
 
-/* If the floating point unit is present and enabled, then save the
- * floating point registers as well as normal ARM registers.
- */
-
-#define arm64_savestate(regs) (regs = (uint64_t *)CURRENT_REGS)
-#define arm64_restorestate(regs) (CURRENT_REGS = regs)
-
 /* This is the value used to mark the stack for subsequent stack monitoring
  * logic.
  */
@@ -125,9 +118,6 @@
       sys_call1(SYS_restore_context, (uintptr_t)restoreregs); \
     } \
   while (1)
-
-#define arm64_switchcontext(saveregs, restoreregs) \
-  sys_call2(SYS_switch_context, (uintptr_t)saveregs, (uintptr_t)restoreregs)
 
 /****************************************************************************
  * Public Types
@@ -270,6 +260,8 @@ EXTERN uint8_t g_idle_topstack[];   /* End+1 of heap */
  ****************************************************************************/
 
 void arm64_new_task(struct tcb_s *tak_new);
+void arm64_jump_to_user(uint64_t entry, uint64_t x0, uint64_t x1,
+                        uint64_t sp_el0, uint64_t *regs) noreturn_function;
 
 /* Low level initialization provided by chip logic */
 
@@ -310,8 +302,7 @@ void arm64_pginitialize(void);
 #  define arm64_pginitialize()
 #endif /* CONFIG_LEGACY_PAGING */
 
-uint64_t * arm64_syscall_switch(uint64_t *regs);
-int arm64_syscall(uint64_t *regs);
+uint64_t *arm64_syscall(uint64_t *regs);
 
 /* Low level serial output **************************************************/
 

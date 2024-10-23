@@ -164,14 +164,13 @@ config ESPRESSIF_SIMPLE_BOOT
 config ESPRESSIF_BOOTLOADER_MCUBOOT
 	bool "Enable MCUboot-bootable format"
 	select ESPRESSIF_HAVE_OTA_PARTITION
-	depends on ESPRESSIF_ESP32C3
 	---help---
 		Enables the Espressif port of MCUboot to be used as 2nd stage bootloader.
 
 config ESPRESSIF_MCUBOOT_VERSION
 	string "MCUboot version"
 	depends on ESPRESSIF_BOOTLOADER_MCUBOOT
-	default "aa7e2b1faae623dbe01bbc6094e71ab44ec9d80a"
+	default "12906fdeff4d46752fe3c7f211a7a2fbbc8b7318"
 
 choice ESPRESSIF_ESPTOOL_TARGET_SLOT
 	prompt "Target slot for image flashing"
@@ -443,6 +442,12 @@ config ESP_RMT
 		format, RMT can be extended to a versatile and general-purpose
 		transceiver, transmitting or receiving many other types of signals.
 
+config ESPRESSIF_TEMP
+	bool "Internal Temperature Sensor"
+	default n
+	---help---
+		A built-in sensor used to measure the chip's internal temperature.
+
 config ESP_WIRELESS
 	bool
 	default n
@@ -460,6 +465,14 @@ config ESPRESSIF_WIFI
 	---help---
 		Enable Wi-Fi support
 
+config ESPRESSIF_BLE
+	bool "BLE"
+	depends on ESPRESSIF_ESP32C3
+	default n
+	select ESP_WIRELESS
+	---help---
+		Enable BLE support
+
 config ESP_COEX_SW_COEXIST_ENABLE
 	bool "Software WiFi/Bluetooth/IEEE 802.15.4 coexistence"
 	depends on (ESPRESSIF_WIFI && ESPRESSIF_BLE) || \
@@ -473,6 +486,13 @@ config ESP_COEX_SW_COEXIST_ENABLE
 		If only Bluetooth is used, it is recommended to disable this option to reduce binary file
 		size.
 
+menuconfig ESPRESSIF_WIFI_BT_COEXIST
+	bool "Wi-Fi and BT coexist"
+	default y if ESPRESSIF_WIFI && ESPRESSIF_BLE
+	default n
+	depends on ESPRESSIF_WIFI && ESPRESSIF_BLE
+	select ESPRESSIF_WIFI_STA_DISCONNECT_PM
+
 config ESP_MCPWM
 	bool "Motor Control PWM (MCPWM)"
 	default n
@@ -480,6 +500,223 @@ config ESP_MCPWM
 	---help---
 		Enable support for timer capture and motor control using
 		the Motor Control PWM peripheral.
+
+config ESP_PCNT
+	bool "Pulse Counter (PCNT / QE) Module"
+	default n
+	depends on ESPRESSIF_ESP32H2 || ESPRESSIF_ESP32C6
+	---help---
+		Pulse Counter is currently used to implement Quadrature
+		Encoder.
+
+menu "Pulse Counter (PCNT) Configuration"
+	depends on ESP_PCNT
+
+config ESP_PCNT_AS_QE
+	bool
+	default n
+
+config ESP_PCNT_U0
+	bool "Enable PCNT Unit 0"
+	default n
+
+if ESP_PCNT_U0
+
+config ESP_PCNT_U0_QE
+	bool "Use this PCNT Unit as Quadrature Encoder"
+	default y
+	select ESP_PCNT_AS_QE
+
+config ESP_PCNT_U0_CH0_EDGE_PIN
+	int "PCNT_U0 CH0 Edge/Pulse Pin Number"
+	default 0
+	range -1 39
+
+config ESP_PCNT_U0_CH0_LEVEL_PIN
+	int "PCNT_U0 CH0 Level/Control Pin Number"
+	default 4
+	range -1 39
+	depends on !ESP_PCNT_U0_QE
+
+config ESP_PCNT_U0_CH1_EDGE_PIN
+	int "PCNT_U0 CH1 Edge/Pulse Pin Number"
+	default 0
+	range -1 39
+	depends on !ESP_PCNT_U0_QE
+
+config ESP_PCNT_U0_CH1_LEVEL_PIN
+	int "PCNT_U0 CH1 Level/Control Pin Number"
+	default 4
+	range -1 39
+
+config ESP_PCNT_U0_FILTER_EN
+	bool "Enable Glitch Filter for this PCNT Unit"
+	default n
+
+if ESP_PCNT_U0_FILTER_EN
+
+config ESP_PCNT_U0_FILTER_THRES
+	int "PCNT_U0 Filter Threshold value"
+	default 5
+	---help---
+		If a pulse is shorter than this number of APB_CLK clock cycles
+		then it will not be considered as a valid pulse.
+
+endif # ESP_PCNT_U0_FILTER_EN
+
+endif # ESP_PCNT_U0
+
+config ESP_PCNT_U1
+	bool "Enable PCNT Unit 1"
+	default n
+
+if ESP_PCNT_U1
+
+config ESP_PCNT_U1_QE
+	bool "Use this PCNT Unit as Quadrature Encoder"
+	default y
+	select ESP_PCNT_AS_QE
+
+config ESP_PCNT_U1_CH0_EDGE_PIN
+	int "PCNT_U1 CH0 Edge/Pulse Pin Number"
+	default 0
+	range -1 39
+
+config ESP_PCNT_U1_CH0_LEVEL_PIN
+	int "PCNT_U1 CH0 Level/Control Pin Number"
+	default 4
+	range -1 39
+	depends on !ESP_PCNT_U1_QE
+
+config ESP_PCNT_U1_CH1_EDGE_PIN
+	int "PCNT_U1 CH1 Edge/Pulse Pin Number"
+	default 0
+	range -1 39
+	depends on !ESP_PCNT_U1_QE
+
+config ESP_PCNT_U1_CH1_LEVEL_PIN
+	int "PCNT_U1 CH1 Level/Control Pin Number"
+	default 4
+	range -1 39
+
+config ESP_PCNT_U1_FILTER_EN
+	bool "Enable Glitch Filter for this PCNT Unit"
+	default n
+
+if ESP_PCNT_U1_FILTER_EN
+
+config ESP_PCNT_U1_FILTER_THRES
+	int "PCNT_U1 Filter Threshold value"
+	default 5
+	---help---
+		If a pulse is shorter than this number of APB_CLK clock cycles
+		then it will not be considered as a valid pulse.
+
+endif # ESP_PCNT_U1_FILTER_EN
+
+endif # ESP_PCNT_U1
+
+config ESP_PCNT_U2
+	bool "Enable PCNT Unit 2"
+	default n
+
+if ESP_PCNT_U2
+
+config ESP_PCNT_U2_QE
+	bool "Use this PCNT Unit as Quadrature Encoder"
+	default y
+	select ESP_PCNT_AS_QE
+
+config ESP_PCNT_U2_CH0_EDGE_PIN
+	int "PCNT_U2 CH0 Edge/Pulse Pin Number"
+	default 0
+	range -1 39
+
+config ESP_PCNT_U2_CH0_LEVEL_PIN
+	int "PCNT_U2 CH0 Level/Control Pin Number"
+	default 4
+	range -1 39
+	depends on !ESP_PCNT_U2_QE
+
+config ESP_PCNT_U2_CH1_EDGE_PIN
+	int "PCNT_U2 CH1 Edge/Pulse Pin Number"
+	default 0
+	range -1 39
+	depends on !ESP_PCNT_U2_QE
+
+config ESP_PCNT_U2_CH1_LEVEL_PIN
+	int "PCNT_U2 CH1 Level/Control Pin Number"
+	default 4
+	range -1 39
+
+config ESP_PCNT_U2_FILTER_EN
+	bool "Enable Glitch Filter for this PCNT Unit"
+	default n
+
+if ESP_PCNT_U2_FILTER_EN
+
+config ESP_PCNT_U2_FILTER_THRES
+	int "PCNT_U2 Filter Threshold value"
+	default 5
+	---help---
+		If a pulse is shorter than this number of APB_CLK clock cycles
+		then it will not be considered as a valid pulse.
+
+endif # ESP_PCNT_U2_FILTER_EN
+
+endif # ESP_PCNT_U2
+
+config ESP_PCNT_U3
+	bool "Enable PCNT Unit 3"
+	default n
+
+if ESP_PCNT_U3
+
+config ESP_PCNT_U3_QE
+	bool "Use this PCNT Unit as Quadrature Encoder"
+	default y
+	select ESP_PCNT_AS_QE
+
+config ESP_PCNT_U3_CH0_EDGE_PIN
+	int "PCNT_U3 CH0 Edge/Pulse Pin Number"
+	default 0
+	range -1 39
+
+config ESP_PCNT_U3_CH0_LEVEL_PIN
+	int "PCNT_U3 CH0 Level/Control Pin Number"
+	default 4
+	range -1 39
+	depends on !ESP_PCNT_U3_QE
+
+config ESP_PCNT_U3_CH1_EDGE_PIN
+	int "PCNT_U3 CH1 Edge/Pulse Pin Number"
+	default 0
+	range -1 39
+	depends on !ESP_PCNT_U3_QE
+
+config ESP_PCNT_U3_CH1_LEVEL_PIN
+	int "PCNT_U3 CH1 Level/Control Pin Number"
+	default 4
+	range -1 39
+
+config ESP_PCNT_U3_FILTER_EN
+	bool "Enable Glitch Filter for this PCNT Unit"
+	default n
+
+if ESP_PCNT_U3_FILTER_EN
+
+config ESP_PCNT_U3_FILTER_THRES
+	int "PCNT_U3 Filter Threshold value"
+	default 5
+	---help---
+		If a pulse is shorter than this number of APB_CLK clock cycles
+		then it will not be considered as a valid pulse.
+
+endif # ESP_PCNT_U3_FILTER_EN
+
+endif # ESP_PCNT_U3
+
+endmenu # ESP_PCNT
 
 endmenu # Peripheral Support
 
@@ -711,6 +948,30 @@ endchoice # ESP_POWER_SAVE_MODE
 
 endmenu # ESPRESSIF_WIFI
 
+menu "BLE Configuration"
+	depends on ESPRESSIF_BLE
+
+config ESPRESSIF_BLE_TTY_NAME
+	string "BLE TTY device name"
+	default "/dev/ttyHCI0"
+	depends on UART_BTH4
+
+config ESPRESSIF_BLE_TASK_STACK_SIZE
+	int "Controller task stack size"
+	default 4096
+
+config ESPRESSIF_BLE_TASK_PRIORITY
+	int "Controller task priority"
+	default 253
+
+config ESPRESSIF_BLE_INTERRUPT_SAVE_STATUS
+	int "Number of interrupt save status"
+	default 3
+	---help---
+		Number of interrupt save status variables to keep track. Increase it if any related bug is found.
+
+endmenu # BLE Configuration
+
 menu "UART Configuration"
 	depends on ESPRESSIF_UART
 
@@ -902,6 +1163,29 @@ config ESPRESSIF_SPI_UDCS
 
 if ESPRESSIF_SPI2
 
+config ESPRESSIF_SPI2_DMA
+	bool "SPI2 use GDMA"
+	default n
+	depends on ESPRESSIF_DMA
+	---help---
+		Enable support for transfers using the GDMA engine.
+
+config ESPRESSIF_SPI2_DMADESC_NUM
+	int "SPI2 Master GDMA maximum number of descriptors"
+	default 2
+	depends on ESPRESSIF_SPI2_DMA
+	---help---
+		Configure the maximum number of out-link/in-link descriptors to
+		be chained for a GDMA transfer.
+
+config ESPRESSIF_SPI2_DMATHRESHOLD
+	int "SPI2 GDMA threshold"
+	default 64
+	depends on ESPRESSIF_SPI2_DMA
+	---help---
+		When SPI GDMA is enabled, GDMA transfers whose size are below the
+		defined threshold will be performed by polling logic.
+
 config ESPRESSIF_SPI2_SLAVE
 	bool "SPI2 Slave mode"
 	default n
@@ -919,22 +1203,27 @@ config ESPRESSIF_SPI2_SLAVE_BUFSIZE
 
 config ESPRESSIF_SPI2_CSPIN
 	int "SPI2 CS Pin"
-	default 10
+	default 10 if ARCH_CHIP_ESP32C3_GENERIC
+	default 16 if ARCH_CHIP_ESP32C6
+	default 1 if ARCH_CHIP_ESP32H2
 	range 0 21
 
 config ESPRESSIF_SPI2_CLKPIN
 	int "SPI2 CLK Pin"
-	default 6
+	default 6 if !ARCH_CHIP_ESP32H2
+	default 4 if ARCH_CHIP_ESP32H2
 	range 0 21
 
 config ESPRESSIF_SPI2_MOSIPIN
 	int "SPI2 MOSI Pin"
-	default 7
+	default 7 if !ARCH_CHIP_ESP32H2
+	default 5 if ARCH_CHIP_ESP32H2
 	range 0 21
 
 config ESPRESSIF_SPI2_MISOPIN
 	int "SPI2 MISO Pin"
-	default 2
+	default 2 if !ARCH_CHIP_ESP32H2
+	default 0 if ARCH_CHIP_ESP32H2
 	range 0 21
 
 endif # ESPRESSIF_SPI2
@@ -949,6 +1238,19 @@ config ESPRESSIF_SPI_TEST_MODE
 		peripheral without any external connection.
 
 endmenu # SPI configuration
+
+menu "Interrupt Configuration"
+
+config ESPRESSIF_IRAM_ISR_DEBUG
+	bool "Enable debugging of the IRAM-enabled interrupts"
+	default n
+	---help---
+		This option enables keeping track of the IRAM-enabled interrupts by
+		registering its execution when non-IRAM interrupts are disabled. It
+		keeps track of the IRQ executed and register how many times since
+		boot it was executed. Generally used for testing.
+
+endmenu
 
 menu "SPI Flash Configuration"
 
@@ -1281,8 +1583,104 @@ config ESPRESSIF_I2CTIMEOMS
 	default 500
 
 endmenu # I2C configuration
+
 menu "MCPWM Configuration"
 	depends on ESP_MCPWM
+
+config ESP_MCPWM_MOTOR
+	bool "MCPWM Motor Support"
+	default n
+
+menu "MCPWM Motor Configuration"
+	depends on ESP_MCPWM_MOTOR
+
+config ESP_MCPWM_MOTOR_BDC
+	bool "Brushed DC Motor Control"
+	depends on ESP_MCPWM
+	depends on ESP_MCPWM_MOTOR
+	select MOTOR
+	select MOTOR_UPPER
+	select MOTOR_UPPER_HAVE_SPEED
+	default n
+	---help---
+		Enables the use of the MCPWM submodule for control of brushed DC
+		motor.
+
+if ESP_MCPWM_MOTOR_BDC
+
+config ESP_MCPWM_MOTOR_CH0
+	bool "Motor Control Channel 0"
+	default n
+	---help---
+		Enables motor control on channel 0.
+
+if ESP_MCPWM_MOTOR_CH0
+
+config ESP_MCPWM_MOTOR_CH0_PWMA_GPIO
+	int "Output Pin PWM_A"
+	default 20 if ESPRESSIF_ESP32C6
+	default 10 if ESPRESSIF_ESP32H2
+	---help---
+		Output pin assigned to channel 0 PWM output PWM_A.
+
+config ESP_MCPWM_MOTOR_CH0_PWMB_GPIO
+	int "Output Pin PWM_B"
+	default 21 if ESPRESSIF_ESP32C6
+	default 11 if ESPRESSIF_ESP32H2
+	---help---
+		Output pin assigned to channel 0 PWM output PWM_B.
+
+config ESP_MCPWM_MOTOR_CH0_PWM_FREQ
+	int "PWM output frequency for channel 0 [Hz]"
+	default 1000
+	---help---
+		Select PWM frequency for channel 0.
+		Minimum is 25 Hz and maximum is 3000 Hz.
+
+config ESP_MCPMW_MOTOR_CH0_FAULT
+	bool "Enable fault for channel 0"
+	default n
+	---help---
+		Enables the use of a fault pin to quickly stop the motor when
+		a GPIO pin pulled high.
+
+if ESP_MCPMW_MOTOR_CH0_FAULT
+
+config ESP_MCPMW_MOTOR_CH0_FAULT_GPIO
+	int "GPIO Pin for fault detection"
+	default 9
+	---help---
+		Input pin assigned to channel 0 fault indicator.
+
+endif # ESP_MCPMW_MOTOR_CH0_FAULT
+
+endif # ESP_MCPWM_MOTOR_CH0
+
+config ESP_MCPWM_MOTOR_CH1
+	bool "Motor Control Channel 1"
+	default n
+	---help---
+		Enables motor control on channel 1.
+
+if ESP_MCPWM_MOTOR_CH1
+
+config ESP_MCPWM_MOTOR_CH1_PWMA_GPIO
+	int "Output Pin CH1 PWM_A"
+	default 15
+	---help---
+		Output pin assigned to channel 1 PWM output PWM_A.
+
+config ESP_MCPWM_MOTOR_CH1_PWMB_GPIO
+	int "Output Pin CH1 PWM_B"
+	default 16
+	---help---
+		Output pin assigned to channel 1 PWM output PWM_B.
+
+endif # ESP_MCPWM_MOTOR_CH1
+
+endif # ESP_MCPWM_MOTOR_BDC
+
+endmenu # MCPWM Motor Settings
 
 config ESP_MCPWM_CAPTURE
 	bool "MCPWM Capture Submodule"
@@ -1343,6 +1741,15 @@ config ESP_MCPWM_CAPTURE_CH2_GPIO
 endif # ESP_MCPWM_CAPTURE_CH2
 
 endif # ESP_MCPWM_CAPTURE
+
+config ESP_MCPWM_TEST_LOOPBACK
+	bool "MCPWM loopback test mode"
+	depends on EXPERIMENTAL
+	default n
+	---help---
+		This enables a lower-half driver-specific loopback test
+		mode that attaches a capture device to the PWM output on
+		motor tests.
 
 endmenu # MCPWM Configuration
 
@@ -1407,5 +1814,49 @@ config ESPRESSIF_BROWNOUT_DET_LVL
 	default 7 if ESPRESSIF_BROWNOUT_DET_LVL_SEL_7
 
 endmenu # ESPRESSIF_BROWNOUT_DET
+
+menu "Internal Temperature Sensor Configuration"
+	depends on ESPRESSIF_TEMP
+
+config ESPRESSIF_TEMP_UORB
+	bool "Internal Temperature Sensor UORB Interface"
+	default n
+	---help---
+		Enables work with the UORB or Character Device interface.
+		If not set, the Character Device is used by default.
+
+config ESPRESSIF_TEMP_PATH
+	string "Internal Temperature Sensor Path"
+	depends on !ESPRESSIF_TEMP_UORB
+	default "dev/temp"
+
+config ESPRESSIF_TEMP_PATH_DEVNO
+	int "Internal Temperature Sensor Path Device Number"
+	depends on ESPRESSIF_TEMP_UORB
+	default 0
+
+config ESPRESSIF_TEMP_UORB_POLL
+	bool "Enables polling sensor data"
+	depends on ESPRESSIF_TEMP_UORB
+	default n
+	---help---
+		Enables polling of sensor.
+
+config ESPRESSIF_TEMP_UORB_POLL_INTERVAL
+	int "Polling interval in microseconds, default 1 sec"
+	depends on ESPRESSIF_TEMP_UORB_POLL
+	default 1000000
+	range 0 4294967295
+	---help---
+		The interval until a new sensor measurement will be triggered.
+
+config ESPRESSIF_TEMP_THREAD_STACKSIZE
+	int "Worker thread stack size"
+	depends on ESPRESSIF_TEMP_UORB_POLL
+	default 1024
+	---help---
+		The stack size for the worker thread.
+
+endmenu # ESPRESSIF_TEMP
 
 endif # ARCH_CHIP_ESPRESSIF

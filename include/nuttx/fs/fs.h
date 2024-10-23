@@ -1,6 +1,8 @@
 /****************************************************************************
  * include/nuttx/fs/fs.h
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -35,12 +37,13 @@
 #include <time.h>
 #include <dirent.h>
 
+#include <nuttx/atomic.h>
 #include <nuttx/mutex.h>
 #include <nuttx/semaphore.h>
-#include <nuttx/spinlock.h>
 #include <nuttx/mm/map.h>
 #include <nuttx/spawn.h>
 #include <nuttx/queue.h>
+#include <nuttx/irq.h>
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -106,34 +109,35 @@
  *   Bit 4:   Set if inode has been unlinked and is pending removal.
  */
 
-#define FSNODEFLAG_TYPE_MASK        0x0000000f /* Isolates type field      */
-#define   FSNODEFLAG_TYPE_PSEUDODIR 0x00000000 /*   Pseudo dir (default)   */
-#define   FSNODEFLAG_TYPE_DRIVER    0x00000001 /*   Character driver       */
-#define   FSNODEFLAG_TYPE_BLOCK     0x00000002 /*   Block driver           */
-#define   FSNODEFLAG_TYPE_MOUNTPT   0x00000003 /*   Mount point            */
-#define   FSNODEFLAG_TYPE_NAMEDSEM  0x00000004 /*   Named semaphore        */
-#define   FSNODEFLAG_TYPE_MQUEUE    0x00000005 /*   Message Queue          */
-#define   FSNODEFLAG_TYPE_SHM       0x00000006 /*   Shared memory region   */
-#define   FSNODEFLAG_TYPE_MTD       0x00000007 /*   Named MTD driver       */
-#define   FSNODEFLAG_TYPE_SOFTLINK  0x00000008 /*   Soft link              */
-#define   FSNODEFLAG_TYPE_SOCKET    0x00000009 /*   Socket                 */
-#define   FSNODEFLAG_TYPE_PIPE      0x0000000a /*   Pipe                   */
-#define FSNODEFLAG_DELETED          0x00000010 /* Unlinked                 */
+#define FSNODEFLAG_TYPE_MASK         0x0000000f /* Isolates type field      */
+#define   FSNODEFLAG_TYPE_PSEUDODIR  0x00000000 /*   Pseudo dir (default)   */
+#define   FSNODEFLAG_TYPE_DRIVER     0x00000001 /*   Character driver       */
+#define   FSNODEFLAG_TYPE_BLOCK      0x00000002 /*   Block driver           */
+#define   FSNODEFLAG_TYPE_MOUNTPT    0x00000003 /*   Mount point            */
+#define   FSNODEFLAG_TYPE_NAMEDSEM   0x00000004 /*   Named semaphore        */
+#define   FSNODEFLAG_TYPE_MQUEUE     0x00000005 /*   Message Queue          */
+#define   FSNODEFLAG_TYPE_SHM        0x00000006 /*   Shared memory region   */
+#define   FSNODEFLAG_TYPE_MTD        0x00000007 /*   Named MTD driver       */
+#define   FSNODEFLAG_TYPE_SOFTLINK   0x00000008 /*   Soft link              */
+#define   FSNODEFLAG_TYPE_SOCKET     0x00000009 /*   Socket                 */
+#define   FSNODEFLAG_TYPE_PIPE       0x0000000a /*   Pipe                   */
+#define   FSNODEFLAG_TYPE_NAMEDEVENT 0x0000000b /*   Named event group      */
 
 #define INODE_IS_TYPE(i,t) \
   (((i)->i_flags & FSNODEFLAG_TYPE_MASK) == (t))
 
-#define INODE_IS_PSEUDODIR(i) INODE_IS_TYPE(i,FSNODEFLAG_TYPE_PSEUDODIR)
-#define INODE_IS_DRIVER(i)    INODE_IS_TYPE(i,FSNODEFLAG_TYPE_DRIVER)
-#define INODE_IS_BLOCK(i)     INODE_IS_TYPE(i,FSNODEFLAG_TYPE_BLOCK)
-#define INODE_IS_MOUNTPT(i)   INODE_IS_TYPE(i,FSNODEFLAG_TYPE_MOUNTPT)
-#define INODE_IS_NAMEDSEM(i)  INODE_IS_TYPE(i,FSNODEFLAG_TYPE_NAMEDSEM)
-#define INODE_IS_MQUEUE(i)    INODE_IS_TYPE(i,FSNODEFLAG_TYPE_MQUEUE)
-#define INODE_IS_SHM(i)       INODE_IS_TYPE(i,FSNODEFLAG_TYPE_SHM)
-#define INODE_IS_MTD(i)       INODE_IS_TYPE(i,FSNODEFLAG_TYPE_MTD)
-#define INODE_IS_SOFTLINK(i)  INODE_IS_TYPE(i,FSNODEFLAG_TYPE_SOFTLINK)
-#define INODE_IS_SOCKET(i)    INODE_IS_TYPE(i,FSNODEFLAG_TYPE_SOCKET)
-#define INODE_IS_PIPE(i)      INODE_IS_TYPE(i,FSNODEFLAG_TYPE_PIPE)
+#define INODE_IS_PSEUDODIR(i)  INODE_IS_TYPE(i,FSNODEFLAG_TYPE_PSEUDODIR)
+#define INODE_IS_DRIVER(i)     INODE_IS_TYPE(i,FSNODEFLAG_TYPE_DRIVER)
+#define INODE_IS_BLOCK(i)      INODE_IS_TYPE(i,FSNODEFLAG_TYPE_BLOCK)
+#define INODE_IS_MOUNTPT(i)    INODE_IS_TYPE(i,FSNODEFLAG_TYPE_MOUNTPT)
+#define INODE_IS_NAMEDSEM(i)   INODE_IS_TYPE(i,FSNODEFLAG_TYPE_NAMEDSEM)
+#define INODE_IS_MQUEUE(i)     INODE_IS_TYPE(i,FSNODEFLAG_TYPE_MQUEUE)
+#define INODE_IS_SHM(i)        INODE_IS_TYPE(i,FSNODEFLAG_TYPE_SHM)
+#define INODE_IS_MTD(i)        INODE_IS_TYPE(i,FSNODEFLAG_TYPE_MTD)
+#define INODE_IS_SOFTLINK(i)   INODE_IS_TYPE(i,FSNODEFLAG_TYPE_SOFTLINK)
+#define INODE_IS_SOCKET(i)     INODE_IS_TYPE(i,FSNODEFLAG_TYPE_SOCKET)
+#define INODE_IS_PIPE(i)       INODE_IS_TYPE(i,FSNODEFLAG_TYPE_PIPE)
+#define INODE_IS_NAMEDEVENT(i) INODE_IS_TYPE(i,FSNODEFLAG_TYPE_NAMEDEVENT)
 
 #define INODE_GET_TYPE(i)     ((i)->i_flags & FSNODEFLAG_TYPE_MASK)
 #define INODE_SET_TYPE(i,t) \
@@ -143,16 +147,17 @@
     } \
   while (0)
 
-#define INODE_SET_DRIVER(i)   INODE_SET_TYPE(i,FSNODEFLAG_TYPE_DRIVER)
-#define INODE_SET_BLOCK(i)    INODE_SET_TYPE(i,FSNODEFLAG_TYPE_BLOCK)
-#define INODE_SET_MOUNTPT(i)  INODE_SET_TYPE(i,FSNODEFLAG_TYPE_MOUNTPT)
-#define INODE_SET_NAMEDSEM(i) INODE_SET_TYPE(i,FSNODEFLAG_TYPE_NAMEDSEM)
-#define INODE_SET_MQUEUE(i)   INODE_SET_TYPE(i,FSNODEFLAG_TYPE_MQUEUE)
-#define INODE_SET_SHM(i)      INODE_SET_TYPE(i,FSNODEFLAG_TYPE_SHM)
-#define INODE_SET_MTD(i)      INODE_SET_TYPE(i,FSNODEFLAG_TYPE_MTD)
-#define INODE_SET_SOFTLINK(i) INODE_SET_TYPE(i,FSNODEFLAG_TYPE_SOFTLINK)
-#define INODE_SET_SOCKET(i)   INODE_SET_TYPE(i,FSNODEFLAG_TYPE_SOCKET)
-#define INODE_SET_PIPE(i)     INODE_SET_TYPE(i,FSNODEFLAG_TYPE_PIPE)
+#define INODE_SET_DRIVER(i)     INODE_SET_TYPE(i,FSNODEFLAG_TYPE_DRIVER)
+#define INODE_SET_BLOCK(i)      INODE_SET_TYPE(i,FSNODEFLAG_TYPE_BLOCK)
+#define INODE_SET_MOUNTPT(i)    INODE_SET_TYPE(i,FSNODEFLAG_TYPE_MOUNTPT)
+#define INODE_SET_NAMEDSEM(i)   INODE_SET_TYPE(i,FSNODEFLAG_TYPE_NAMEDSEM)
+#define INODE_SET_MQUEUE(i)     INODE_SET_TYPE(i,FSNODEFLAG_TYPE_MQUEUE)
+#define INODE_SET_SHM(i)        INODE_SET_TYPE(i,FSNODEFLAG_TYPE_SHM)
+#define INODE_SET_MTD(i)        INODE_SET_TYPE(i,FSNODEFLAG_TYPE_MTD)
+#define INODE_SET_SOFTLINK(i)   INODE_SET_TYPE(i,FSNODEFLAG_TYPE_SOFTLINK)
+#define INODE_SET_SOCKET(i)     INODE_SET_TYPE(i,FSNODEFLAG_TYPE_SOCKET)
+#define INODE_SET_PIPE(i)       INODE_SET_TYPE(i,FSNODEFLAG_TYPE_PIPE)
+#define INODE_SET_NAMEDEVENT(i) INODE_SET_TYPE(i,FSNODEFLAG_TYPE_NAMEDEVENT)
 
 /* The status change flags.
  * These should be or-ed together to figure out what want to change.
@@ -163,6 +168,7 @@
 #define CH_STAT_GID        (1 << 2)
 #define CH_STAT_ATIME      (1 << 3)
 #define CH_STAT_MTIME      (1 << 4)
+#define CH_STAT_SIZE       (1 << 7)
 
 /****************************************************************************
  * Public Type Definitions
@@ -225,10 +231,11 @@ struct file_operations
                        FAR struct mm_map_entry_s *map);
   CODE int     (*truncate)(FAR struct file *filep, off_t length);
 
-  /* The two structures need not be common after this point */
-
   CODE int     (*poll)(FAR struct file *filep, FAR struct pollfd *fds,
                        bool setup);
+
+  /* The two structures need not be common after this point */
+
 #ifndef CONFIG_DISABLE_PSEUDOFS_OPERATIONS
   CODE int     (*unlink)(FAR struct inode *inode);
 #endif
@@ -397,6 +404,9 @@ union inode_ops_u
 #ifdef CONFIG_FS_NAMED_SEMAPHORES
   FAR struct nsem_inode_s              *i_nsem;   /* Named semaphore */
 #endif
+#ifdef CONFIG_FS_NAMED_EVENTS
+  FAR struct nevent_inode_s            *i_nevent; /* Named event */
+#endif
 #ifdef CONFIG_PSEUDOFS_SOFTLINKS
   FAR char                             *i_link;   /* Full path to link target */
 #endif
@@ -409,7 +419,7 @@ struct inode
   FAR struct inode *i_parent;   /* Link to parent level inode */
   FAR struct inode *i_peer;     /* Link to same level inode */
   FAR struct inode *i_child;    /* Link to lower level inode */
-  int16_t           i_crefs;    /* References to inode */
+  atomic_short      i_crefs;    /* References to inode */
   uint16_t          i_flags;    /* Flags for inode */
   union inode_ops_u u;          /* Inode operations */
   ino_t             i_ino;      /* Inode serial number */
@@ -465,6 +475,9 @@ typedef struct cookie_io_functions_t
 struct file
 {
   int               f_oflags;   /* Open mode flags */
+#ifdef CONFIG_FS_REFCOUNT
+  int               f_refs;     /* Reference count */
+#endif
   off_t             f_pos;      /* File position */
   FAR struct inode *f_inode;    /* Driver or file system interface */
   FAR void         *f_priv;     /* Per file driver private data */
@@ -479,6 +492,10 @@ struct file
 #if CONFIG_FS_BACKTRACE > 0
   FAR void         *f_backtrace[CONFIG_FS_BACKTRACE]; /* Backtrace to while file opens */
 #endif
+
+#if CONFIG_FS_LOCK_BUCKET_SIZE > 0
+  bool              locked; /* Filelock state: false - unlocked, true - locked */
+#endif
 };
 
 /* This defines a two layer array of files indexed by the file descriptor.
@@ -490,8 +507,8 @@ struct file
 
 struct filelist
 {
-  spinlock_t        fl_lock;    /* Manage access to the file list */
   uint8_t           fl_rows;    /* The number of rows of fl_files array */
+  uint8_t           fl_crefs;   /* The references to filelist */
   FAR struct file **fl_files;   /* The pointer of two layer file descriptors array */
 
   /* Pre-allocated files to avoid allocator access during thread creation
@@ -501,7 +518,7 @@ struct filelist
    */
 
   FAR struct file  *fl_prefile;
-  FAR struct file   fl_prefiles[CONFIG_NFILE_DESCRIPTORS_PER_BLOCK];
+  struct file       fl_prefiles[CONFIG_NFILE_DESCRIPTORS_PER_BLOCK];
 };
 
 /* The following structure defines the list of files used for standard C I/O.
@@ -869,17 +886,31 @@ void files_initlist(FAR struct filelist *list);
  *
  ****************************************************************************/
 
+#ifdef CONFIG_SCHED_DUMP_ON_EXIT
 void files_dumplist(FAR struct filelist *list);
+#else
+#  define files_dumplist(l)
+#endif
 
 /****************************************************************************
- * Name: files_releaselist
+ * Name: files_getlist
  *
  * Description:
- *   Release a reference to the file list
+ *   Get the list of files by tcb.
  *
  ****************************************************************************/
 
-void files_releaselist(FAR struct filelist *list);
+FAR struct filelist *files_getlist(FAR struct tcb_s *tcb);
+
+/****************************************************************************
+ * Name: files_putlist
+ *
+ * Description:
+ *   Release the list of files.
+ *
+ ****************************************************************************/
+
+void files_putlist(FAR struct filelist * list);
 
 /****************************************************************************
  * Name: files_countlist
@@ -1136,6 +1167,41 @@ int nx_open(FAR const char *path, int oflags, ...);
  ****************************************************************************/
 
 int fs_getfilep(int fd, FAR struct file **filep);
+
+/****************************************************************************
+ * Name: fs_reffilep
+ *
+ * Description:
+ *   To specify filep increase the reference count.
+ *
+ * Input Parameters:
+ *   None.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+void fs_reffilep(FAR struct file *filep);
+
+/****************************************************************************
+ * Name: fs_putfilep
+ *
+ * Description:
+ *   Release reference counts for files, less than or equal to 0 and close
+ *   the file
+ *
+ * Input Parameters:
+ *   filep  - The caller provided location in which to return the 'struct
+ *            file' instance.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_FS_REFCOUNT
+int fs_putfilep(FAR struct file *filep);
+#else
+#  define fs_putfilep(f)
+#endif
 
 /****************************************************************************
  * Name: file_close

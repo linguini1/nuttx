@@ -91,10 +91,6 @@ ifneq ($(CONFIG_STACK_USAGE_WARNING),0)
   ARCHOPTIMIZATION += -Wstack-usage=$(CONFIG_STACK_USAGE_WARNING)
 endif
 
-ifeq ($(CONFIG_ARCH_COVERAGE_ALL),y)
-  ARCHOPTIMIZATION += -fprofile-generate -ftest-coverage
-endif
-
 # Instrumentation options
 
 ifeq ($(CONFIG_ARCH_INSTRUMENT_ALL),y)
@@ -113,6 +109,12 @@ ARCHCXXFLAGS += -Wall -Wshadow -Wundef -Wno-attributes -Wno-unknown-pragmas
 
 ifneq ($(CONFIG_LIBCXXTOOLCHAIN),y)
   ARCHCXXFLAGS += -nostdinc++
+endif
+
+ifeq ($(CONFIG_ARCH_TOOLCHAIN_GNU),y)
+  ifeq ($(GCCVER),)
+    export GCCVER = $(shell $(CXX) --version | grep ++ | sed -E 's/.* ([0-9]+\.[0-9]+).*/\1/' | cut -d'.' -f1)
+  endif
 endif
 
 ifneq ($(CONFIG_ARCH_TOOLCHAIN_CLANG),y)
@@ -156,7 +158,7 @@ ifeq ($(CONFIG_DEBUG_LINK_WHOLE_ARCHIVE),y)
 endif
 
 ifeq ($(CONFIG_DEBUG_SYMBOLS),y)
-  ARCHOPTIMIZATION += -g
+  ARCHOPTIMIZATION += $(CONFIG_DEBUG_SYMBOLS_LEVEL)
 endif
 
 # Default toolchain
@@ -195,6 +197,19 @@ ifeq ($(CONFIG_LIBSUPCXX),y)
   EXTRA_LIBS += $(wildcard $(shell $(CC) $(ARCHCPUFLAGS) --print-file-name=libsupc++.a))
 endif
 
-ifeq ($(CONFIG_ARCH_COVERAGE),y)
+ifeq ($(CONFIG_SCHED_GCOV),y)
   EXTRA_LIBS += $(wildcard $(shell $(CC) $(ARCHCPUFLAGS) --print-file-name=libgcov.a))
 endif
+
+# Loadable module definitions
+
+CMODULEFLAGS = $(CFLAGS) -fvisibility=hidden -mtext-section-literals
+LDMODULEFLAGS = -r -T $(call CONVERT_PATH,$(TOPDIR)/libs/libc/modlib/gnu-elf.ld)
+
+# ELF module definitions
+
+CELFFLAGS = $(CFLAGS) -fvisibility=hidden -mtext-section-literals
+CXXELFFLAGS = $(CXXFLAGS) -fvisibility=hidden -mtext-section-literals
+
+LDELFFLAGS = -r -e main
+LDELFFLAGS += -T $(call CONVERT_PATH,$(TOPDIR)$(DELIM)libs$(DELIM)libc$(DELIM)modlib$(DELIM)gnu-elf.ld)

@@ -314,7 +314,7 @@ config ARCH_BOARD_ESP32_2432S028
 	depends on ARCH_CHIP_ESP32WROVER
 	---help---
 	ESP32-2432S028 is an ESP32 board with LCD Display, LED RGB and SD Cards.
-	
+
 config ARCH_BOARD_LILYGO_TBEAM_LORA_GPS
 	bool "LilyGO TBeam V1.1 LoRa/GPS"
 	depends on ARCH_CHIP_ESP32WROOM32
@@ -463,6 +463,14 @@ config ARCH_BOARD_ESP32S3_LCD_EV
 			1. ESP32-S3-LCD-EV-Board with 480x480 LCD
 			2. ESP32-S3-LCD-EV-Board with 800x480 LCD
 
+config ARCH_BOARD_ESP32S3_LHCBIT
+	bool "ESP32-S3 LHCBit"
+	depends on ARCH_CHIP_ESP32S3WROOM1N16R8
+	select ARCH_HAVE_BUTTONS
+	select ARCH_HAVE_IRQBUTTONS if ESP32S3_GPIO_IRQ
+	---help---
+		The ESP32-S3 LHCBit features the ESP32-S3 CPU with dual Xtensa LX7 cores.
+
 config ARCH_BOARD_ESP32S3_BOX
 	bool "Espressif ESP32-S3-BOX"
 	depends on ARCH_CHIP_ESP32S3WROOM2N16R8V || ARCH_CHIP_ESP32S3WROOM2N32R8V || ARCH_CHIP_ESP32S3CUSTOM
@@ -476,6 +484,21 @@ config ARCH_BOARD_ESP32S3_BOX
 		Leveraging the multi-functional accessories and reliable examples from the repo’s,
 		these development boards cater to both prototyping new projects and building complex
 		IoT systems, providing a perfect balance of form and function.
+
+config ARCH_BOARD_ESP32S3_KORVO_2
+	bool "Espressif ESP32-S3-Korvo-2 Board"
+	depends on ARCH_CHIP_ESP32S3WROOM1N16R8 || ARCH_CHIP_ESP32S3WROOM1N8R8
+	select ARCH_HAVE_LEDS
+	select ARCH_HAVE_BUTTONS
+	select ARCH_HAVE_IRQBUTTONS if ESP32S3_GPIO_IRQ
+	---help---
+		The ESP32-S3-Korvo-2 is a multimedia development board based on the ESP32-S3 chip.
+		It is equipped with a two-microphone array which is suitable for voice recognition
+		and near/far-field voice wake-up applications. The board integrates multiple
+		peripherals such as LCD, camera, and microSD card. It also supports JPEG video
+		stream processing. With all of its outstanding features, the board is an ideal
+		choice for the development of low-cost and low-power network-connected audio and
+		video products.
 
 config ARCH_BOARD_ESP32S3_MEADOW
 	bool "WildernessLabs ESP32S3-Meadow Board"
@@ -1084,6 +1107,15 @@ config ARCH_BOARD_MISOC_VERILATOR
 	---help---
 		This configuration is port to NuttX running on Verilator.
 
+config ARCH_BOARD_MIZAR32A
+	bool "Mizar32-A"
+	depends on ARCH_CHIP_AT32UC3A0512
+	select ARCH_HAVE_LEDS
+	---help---
+		This is a port of NuttX for the Mizar32-A board designed by SimpleMachines,
+		Italy. The board is based on the AT32UC3A0512 MCU and uses avr32-gcc
+		version 4.4.7 for its build on GNU/Linux.
+
 config ARCH_BOARD_MOTEINO_MEGA
 	bool "LowPowerLab MoteinoMEGA"
 	depends on ARCH_CHIP_ATMEGA1284P
@@ -1492,36 +1524,35 @@ config ARCH_BOARD_NUCLEO_F429ZI
 	---help---
 		STMicro Nucleo-F429zi board based on the STMicro STM32F429ZIT6 MCU.
 
-config ARCH_BOARD_NUCLEO_144
-	bool "STMicro NUCLEO-144"
-	depends on ARCH_CHIP_STM32F722ZE || ARCH_CHIP_STM32F746ZG || ARCH_CHIP_STM32F767ZI
+config ARCH_BOARD_NUCLEO_F722ZE
+	bool "STMicro NUCLEO-F722ZE"
+	depends on ARCH_CHIP_STM32F722ZE
 	select ARCH_HAVE_LEDS
 	select ARCH_HAVE_BUTTONS
 	select ARCH_HAVE_IRQBUTTONS
 	---help---
-		STMicro Nucleo-144 development board featuring STMicroelectronics
-		F2, F3, F4, F7 and L4 MCU families.  The board is a "Hardware pattern"
-		that can be populated with the 144 pin package of the following MCUs:
+		STMicro Nucleo F722ZE board based on STM32F722ZET6,
+		a 216MHz Cortex-M7, w/FPU, 512KiB Flash memory and 256KiB SRAM.
 
-			Target STM32    Order code
-			STM32F207ZGT6   NUCLEO-F207ZG
-			STM32F303ZET6   NUCLEO-F303ZE
-			STM32F429ZIT6   NUCLEO-F429ZI
-			STM32F446ZET6   NUCLEO-F446ZE
-			STM32F722ZET6   NUCLEO-F722ZE
-			STM32F746ZGT6   NUCLEO-F746ZG
-			STM32F767ZIT6   NUCLEO-F767ZI
-			STM32L496ZGT6   NUCLEO-L496ZG
-			STM32L496ZGT6P  NUCLEO-L496ZG-P
+config ARCH_BOARD_NUCLEO_F746ZG
+	bool "STMicro NUCLEO-F746ZG"
+	depends on ARCH_CHIP_STM32F746ZG
+	select ARCH_HAVE_LEDS
+	select ARCH_HAVE_BUTTONS
+	select ARCH_HAVE_IRQBUTTONS
+	---help---
+		STMicro Nucleo F746ZG board based on STM32F746ZGT6
+		a 216MHz Cortex-M7, w/FPU, 1024KiB Flash memory and 320KiB SRAM.
 
-		Supported in this configuration are:
-
-			NUCLEO-F722ZE - STM32F722ZET6 a 216MHz Cortex-M7, w/FPU -
-				512KiB Flash memory and 256KiB SRAM.
-			NUCLEO-F746ZG - STM32F746ZGT6 a 216MHz Cortex-M7, w/FPU -
-				1024KiB Flash memory and 320KiB SRAM.
-			NUCLEO-F767ZI - STM32F767ZIT6 a 216MHz Cortex-M7, w/DPFPU -
-				2048KiB Flash memory and 512KiB SRAM.
+config ARCH_BOARD_NUCLEO_F767ZI
+	bool "STMicro NUCLEO-F767ZI"
+	depends on ARCH_CHIP_STM32F767ZI
+	select ARCH_HAVE_LEDS
+	select ARCH_HAVE_BUTTONS
+	select ARCH_HAVE_IRQBUTTONS
+	---help---
+		STMicro Nucleo F767ZI board based on STM32F767ZIT6,
+		a 216MHz Cortex-M7, w/DPFPU 2048KiB Flash memory and 512KiB SRAM.
 
 config ARCH_BOARD_NUCLEO_L073RZ
 	bool "STM32L073RZU6 Nucleo L073RZ"
@@ -1990,6 +2021,7 @@ config ARCH_BOARD_RV32M1_VEGA
 config ARCH_BOARD_QEMU_RV_VIRT
 	bool "QEMU RV Virt"
 	depends on ARCH_CHIP_QEMU_RV
+	select ARCH_HAVE_LEDS
 	---help---
 		This is the board configuration for the port of NuttX to the
 		QEMU RV32 Virt board. This board features the QEMU RV32 CPU.
@@ -2100,6 +2132,22 @@ config ARCH_BOARD_MR_CANHUBK3
 		This options selects support for NuttX on the NXP MR-CANHUBK3 board
 		featuring the S32K344 Cortex-M7.
 
+config ARCH_BOARD_MPS2_AN500
+	bool "Arm MPS2 AN500"
+	depends on ARCH_CHIP_MPS2_AN500
+	select ARCH_HAVE_IRQBUTTONS
+	---help---
+		This options selects support for NuttX on the MPS2 AN500
+		board featuring the Cortex-M7.
+
+config ARCH_BOARD_MPS2_AN521
+	bool "Arm MPS2 AN521"
+	depends on ARCH_CHIP_MPS2_AN521
+	select ARCH_HAVE_IRQBUTTONS
+	---help---
+		This options selects support for NuttX on the MPS2 AN521
+		board featuring the Cortex-M33.
+
 config ARCH_BOARD_MPS3_AN547
 	bool "Arm MPS3 AN547"
 	depends on ARCH_CHIP_MPS3_AN547
@@ -2198,6 +2246,15 @@ config ARCH_BOARD_IMX93_EVK
 	---help---
 		This options selects support for NuttX on the NXP i.MX93 CPUs EVK
 		board with ARM Cortex-A55.
+
+config ARCH_BOARD_ZCU111
+	bool "XilinX ZCU111 development board"
+	depends on ARCH_CHIP_ZYNQ_MPSOC
+	select ARCH_HAVE_LEDS
+	select ARCH_HAVE_IRQBUTTONS
+	---help---
+		This options selects support for NuttX on XilinX ZCU111 board
+		based on XCZU28DR SoC with ARM Cortex-A53
 
 config ARCH_BOARD_SAMA5D2_XULT
 	bool "Atmel SAMA5D2 Xplained Ultra development board"
@@ -2549,6 +2606,12 @@ config ARCH_BOARD_STM32F4_DISCOVERY
 	select ARCH_HAVE_IRQBUTTONS
 	---help---
 		STMicro STM32F4-Discovery board based on the STMicro STM32F407VGT6 MCU.
+
+config ARCH_BOARD_CSK6011A_NANO
+	bool "Listenai csk6011a-nano board"
+	depends on ARCH_CHIP_CSK6
+	---help---
+		Listenai csk6011a-nano board based on the listenai csk6011a MCU.
 
 config ARCH_BOARD_STM32F411E_DISCO
 	bool "STMicro STM32F411E-Discovery board"
@@ -3215,7 +3278,9 @@ config ARCH_BOARD
 	default "esp32s3-eye"               if ARCH_BOARD_ESP32S3_EYE
 	default "esp32s3-meadow"            if ARCH_BOARD_ESP32S3_MEADOW
 	default "esp32s3-lcd-ev"            if ARCH_BOARD_ESP32S3_LCD_EV
+	default "esp32s3-lhcbit"            if ARCH_BOARD_ESP32S3_LHCBIT
 	default "esp32s3-box"               if ARCH_BOARD_ESP32S3_BOX
+	default "esp32s3-korvo-2"           if ARCH_BOARD_ESP32S3_KORVO_2
 	default "esp32c6-devkitc"           if ARCH_BOARD_ESP32C6_DEVKITC
 	default "esp32c6-devkitm"           if ARCH_BOARD_ESP32C6_DEVKITM
 	default "esp32h2-devkit"            if ARCH_BOARD_ESP32H2_DEVKIT
@@ -3278,6 +3343,7 @@ config ARCH_BOARD
 	default "micropendous3"             if ARCH_BOARD_MICROPENDOUS3
 	default "mirtoo"                    if ARCH_BOARD_MIRTOO
 	default "misoc"                     if ARCH_BOARD_MISOC_QEMU || ARCH_BOARD_MISOC_VERILATOR
+	default "mizar32a"                  if ARCH_BOARD_MIZAR32A
 	default "moteino-mega"              if ARCH_BOARD_MOTEINO_MEGA
 	default "ne64badge"                 if ARCH_BOARD_NE64BADGE
 	default "nrf52-feather"             if ARCH_BOARD_NRF52_FEATHER
@@ -3295,7 +3361,9 @@ config ARCH_BOARD
 	default "thingy91-nrf52"            if ARCH_BOARD_THINGY91_NRF52
 	default "nrf9160-dk-nrf52"          if ARCH_BOARD_NRF9160_DK_NRF52
 	default "ntosd-dm320"               if ARCH_BOARD_NTOSD_DM320
-	default "nucleo-144"                if ARCH_BOARD_NUCLEO_144
+	default "nucleo-f722ze"             if ARCH_BOARD_NUCLEO_F722ZE
+	default "nucleo-f746zg"             if ARCH_BOARD_NUCLEO_F746ZG
+	default "nucleo-f767zi"             if ARCH_BOARD_NUCLEO_F767ZI
 	default "nucleo-f072rb"             if ARCH_BOARD_NUCLEO_F072RB
 	default "nucleo-f091rc"             if ARCH_BOARD_NUCLEO_F091RC
 	default "nucleo-f103rb"             if ARCH_BOARD_NUCLEO_F103RB
@@ -3378,6 +3446,8 @@ config ARCH_BOARD
 	default "s32k148evb"                if ARCH_BOARD_S32K148EVB
 	default "s32k344evb"                if ARCH_BOARD_S32K344EVB
 	default "mr-canhubk3"               if ARCH_BOARD_MR_CANHUBK3
+	default "mps2-an500"                if ARCH_BOARD_MPS2_AN500
+	default "mps2-an521"                if ARCH_BOARD_MPS2_AN521
 	default "mps3-an547"                if ARCH_BOARD_MPS3_AN547
 	default "rv32m1-vega"               if ARCH_BOARD_RV32M1_VEGA
 	default "rv-virt"                   if ARCH_BOARD_QEMU_RV_VIRT
@@ -3396,6 +3466,7 @@ config ARCH_BOARD
 	default "fvp-armv8r-aarch32"        if ARCH_BOARD_FVP_ARMV8R_AARCH32
 	default "imx8qm-mek"                if ARCH_BOARD_IMX8QM_MEK
 	default "imx93-evk"                 if ARCH_BOARD_IMX93_EVK
+	default "zcu111"                    if ARCH_BOARD_ZCU111
 	default "sama5d2-xult"              if ARCH_BOARD_SAMA5D2_XULT
 	default "giant-board"               if ARCH_BOARD_GIANT_BOARD
 	default "jupiter-nano"              if ARCH_BOARD_JUPITER_NANO
@@ -3495,6 +3566,7 @@ config ARCH_BOARD
 	default "hpm6360evk"                if ARCH_BOARD_HPM6360EVK
 	default "hpm6750evk2"               if ARCH_BOARD_HPM6750EVK2
 	default "at32f437-mini"             if ARCH_BOARD_AT32F437_MINI
+	default "csk6011a-nano"             if ARCH_BOARD_CSK6011A_NANO
 
 comment "Common Board Options"
 
@@ -3593,6 +3665,12 @@ endif
 if ARCH_BOARD_TC397
 source "boards/tricore/tc3xx/tc397/Kconfig"
 endif
+if ARCH_BOARD_MPS2_AN500
+source "boards/arm/mps/mps2-an500/Kconfig"
+endif
+if ARCH_BOARD_MPS2_AN521
+source "boards/arm/mps/mps2-an521/Kconfig"
+endif
 if ARCH_BOARD_MPS3_AN547
 source "boards/arm/mps/mps3-an547/Kconfig"
 endif
@@ -3619,6 +3697,9 @@ source "boards/arm64/imx8/imx8qm-mek/Kconfig"
 endif
 if ARCH_BOARD_IMX93_EVK
 source "boards/arm64/imx9/imx93-evk/Kconfig"
+endif
+if ARCH_BOARD_ZCU111
+source "boards/arm64/zynq-mpsoc/zcu111/Kconfig"
 endif
 if ARCH_BOARD_IMXRT1020_EVK
 source "boards/arm/imxrt/imxrt1020-evk/Kconfig"
@@ -3932,8 +4013,14 @@ endif
 if ARCH_BOARD_STM32F072_DISCOVERY
 source "boards/arm/stm32f0l0g0/stm32f072-discovery/Kconfig"
 endif
-if ARCH_BOARD_NUCLEO_144
-source "boards/arm/stm32f7/nucleo-144/Kconfig"
+if ARCH_BOARD_NUCLEO_F722ZE
+source "boards/arm/stm32f7/nucleo-f722ze/Kconfig"
+endif
+if ARCH_BOARD_NUCLEO_F746ZG
+source "boards/arm/stm32f7/nucleo-f746zg/Kconfig"
+endif
+if ARCH_BOARD_NUCLEO_F767ZI
+source "boards/arm/stm32f7/nucleo-f767zi/Kconfig"
 endif
 if ARCH_BOARD_STM32F746_WS
 source "boards/arm/stm32f7/stm32f746-ws/Kconfig"
@@ -4226,6 +4313,9 @@ endif
 if ARCH_BOARD_AVR32DEV1
 source "boards/avr/at32uc3/avr32dev1/Kconfig"
 endif
+if ARCH_BOARD_MIZAR32A
+source "boards/avr/at32uc3/mizar32a/Kconfig"
+endif
 if ARCH_BOARD_MEGA1284P_XPLAINED
 source "boards/avr/atmega/mega1284p-xplained/Kconfig"
 endif
@@ -4355,8 +4445,14 @@ endif
 if ARCH_BOARD_ESP32S3_LCD_EV
 source "boards/xtensa/esp32s3/esp32s3-lcd-ev/Kconfig"
 endif
+if ARCH_BOARD_ESP32S3_LHCBIT
+source "boards/xtensa/esp32s3/esp32s3-lhcbit/Kconfig"
+endif
 if ARCH_BOARD_ESP32S3_BOX
 source "boards/xtensa/esp32s3/esp32s3-box/Kconfig"
+endif
+if ARCH_BOARD_ESP32S3_KORVO_2
+source "boards/xtensa/esp32s3/esp32s3-korvo-2/Kconfig"
 endif
 #if ARCH_BOARD_ESP32C6_DEVKITC
 #source "boards/risc-v/esp32c6/esp32c6-devkitc/Kconfig"
@@ -4478,6 +4574,9 @@ endif
 if ARCH_BOARD_AT32F437_MINI
 source "boards/arm/at32/at32f437-mini/Kconfig"
 endif
+if ARCH_BOARD_CSK6011A_NANO
+source "boards/arm/csk6/csk6011a-nano/Kconfig"
+endif
 
 comment "Board-Common Options"
 
@@ -4514,6 +4613,9 @@ source "boards/arm/samv7/common/Kconfig"
 endif
 if ARCH_CHIP_STM32
 source "boards/arm/stm32/common/Kconfig"
+endif
+if ARCH_CHIP_STM32F7
+source "boards/arm/stm32f7/common/Kconfig"
 endif
 if ARCH_CHIP_STM32F0L0G0
 source "boards/arm/stm32f0l0g0/common/Kconfig"
@@ -4552,14 +4654,14 @@ config BOARD_CRASHDUMP
 config BOARD_COREDUMP_SYSLOG
 	bool "Enable Core dump to syslog"
 	default n
-	depends on ELF_COREDUMP
+	depends on COREDUMP
 	---help---
 		Enable put coredump to syslog when crash.
 
 config BOARD_COREDUMP_BLKDEV
 	bool "Enable Core Dump to block device"
 	default n
-	depends on ELF_COREDUMP
+	depends on COREDUMP
 	---help---
 		Enable save coredump at block device when crash.
 
@@ -4583,6 +4685,13 @@ config BOARD_COREDUMP_COMPRESSION
 	depends on BOARD_COREDUMP_SYSLOG || BOARD_COREDUMP_BLKDEV
 	---help---
 		Enable LZF compression algorithm for core dump content
+
+config BOARD_COREDUMP_BASE64STREAM
+	bool "Enable base64 encoding for output stream"
+	default n
+	depends on BOARD_COREDUMP_SYSLOG
+	---help---
+		Enable based64 encoded stream instead of default hexstream.
 
 config BOARD_ENTROPY_POOL
 	bool "Enable Board level storing of entropy pool structure"
@@ -4757,12 +4866,11 @@ config BOARDCTL_USBDEVCTRL
 	---help---
 		Enables support for the BOARDIOC_USBDEV_CONTROL boardctl() command.
 
-config BOARDCTL_TESTSET
-	bool "Architecture-specific test/set operation"
+config BOARDCTL_SPINLOCK
+	bool "spinlock specific operation"
 	default n
 	---help---
 		Enables support for the BOARDIOC_SPINLOCK boardctl() command.
-		Architecture specific logic must provide up_testset() interface.
 
 config BOARDCTL_IRQ_AFFINITY
 	bool "Set an IRQ affinity to CPUs by software"
@@ -4770,6 +4878,14 @@ config BOARDCTL_IRQ_AFFINITY
 	depends on SMP
 	---help---
 		Enables support for Set an IRQ affinity to CPUs by software.
+
+config BOARDCTL_START_CPU
+	bool "Start slave cpu"
+	default n
+	---help---
+		Enables support for the BOARDIOC_START_CPU boardctl() command.
+		Architecture specific logic must provide the board_start_cpu()
+		interface.
 
 config BOARDCTL_IOCTL
 	bool "Board-specific boardctl() commands"
@@ -4799,6 +4915,5 @@ config BOARD_MEMORY_RANGE
 		Memory range of board. format: <start>,<end>,<flags>,....
 		start: start address of memory range
 		end: end address of memory range
-		flags: Readable 0x1, writable 0x2, executable 0x4
-		example:0x1000,0x2000,0x1,0x2000,0x3000,0x3,0x3000,0x4000,0x7
-
+		flags: Executable 0x1, Writable 0x2, Readable 0x4
+		example:{0x1000,0x2000,0x4},{0x2000,0x3000,0x6},{0x3000,0x4000,0x7} ... {0x0,0x0,0x0}

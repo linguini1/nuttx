@@ -413,7 +413,7 @@ void up_disable_irq(int irq)
 
       /* If a different cpu requested, send an irq request */
 
-      if (cpu != (int8_t)up_cpu_index())
+      if (cpu != (int8_t)this_cpu())
         {
           up_send_irqreq(1, irq, cpu);
           return;
@@ -462,7 +462,7 @@ void up_enable_irq(int irq)
   if (irq >= CXD56_IRQ_EXTINT)
     {
 #ifdef CONFIG_SMP
-      int cpu = up_cpu_index();
+      int cpu = this_cpu();
 
       /* Set the caller cpu for this irq */
 
@@ -470,7 +470,7 @@ void up_enable_irq(int irq)
 
       /* EXTINT needs to be handled on CPU0 to avoid deadlock */
 
-      if (irq > CXD56_IRQ_EXTINT && irq != CXD56_IRQ_SW_INT && 0 != cpu)
+      if (irq > CXD56_IRQ_EXTINT && irq != CXD56_IRQ_SMP_CALL && 0 != cpu)
         {
           up_send_irqreq(0, irq, 0);
           return;

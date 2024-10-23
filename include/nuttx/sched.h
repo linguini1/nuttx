@@ -1,6 +1,8 @@
 /****************************************************************************
  * include/nuttx/sched.h
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -70,6 +72,32 @@
 
 #ifndef CONFIG_SCHED_SPORADIC_MAXREPL
 #  define CONFIG_SCHED_SPORADIC_MAXREPL 3
+#endif
+
+/* Scheduling monitor */
+
+#ifndef CONFIG_SCHED_CRITMONITOR_MAXTIME_THREAD
+#  define CONFIG_SCHED_CRITMONITOR_MAXTIME_THREAD -1
+#endif
+
+#ifndef CONFIG_SCHED_CRITMONITOR_MAXTIME_WQUEUE
+#  define CONFIG_SCHED_CRITMONITOR_MAXTIME_WQUEUE -1
+#endif
+
+#ifndef CONFIG_SCHED_CRITMONITOR_MAXTIME_PREEMPTION
+#  define CONFIG_SCHED_CRITMONITOR_MAXTIME_PREEMPTION -1
+#endif
+
+#ifndef CONFIG_SCHED_CRITMONITOR_MAXTIME_CSECTION
+#  define CONFIG_SCHED_CRITMONITOR_MAXTIME_CSECTION -1
+#endif
+
+#ifndef CONFIG_SCHED_CRITMONITOR_MAXTIME_IRQ
+#  define CONFIG_SCHED_CRITMONITOR_MAXTIME_IRQ -1
+#endif
+
+#ifndef CONFIG_SCHED_CRITMONITOR_MAXTIME_WDOG
+#  define CONFIG_SCHED_CRITMONITOR_MAXTIME_WDOG -1
 #endif
 
 /* Task Management Definitions **********************************************/
@@ -196,15 +224,30 @@
 
 #define get_current_mm()             (get_group_mm(nxsched_self()->group))
 
+/* Get task name from tcb */
+
+#if CONFIG_TASK_NAME_SIZE > 0
+#  define get_task_name(tcb)         ((tcb)->name)
+#else
+#  define get_task_name(tcb)         "<noname>"
+#endif
+
 /* These are macros to access the current CPU and the current task on a CPU.
  * These macros are intended to support a future SMP implementation.
  */
 
 #ifdef CONFIG_SMP
-#  define this_cpu()                 up_cpu_index()
+#  define this_cpu()                 up_this_cpu()
 #else
 #  define this_cpu()                 (0)
 #endif
+
+/* Task Switching Interfaces (non-standard).
+ * These two macros can be called in interrupt context.
+ */
+
+#define nxsched_lock_irq() (up_interrupt_context() ? OK : sched_lock())
+#define nxsched_unlock_irq() (up_interrupt_context() ? OK : sched_unlock())
 
 /****************************************************************************
  * Public Type Definitions
@@ -263,6 +306,7 @@ typedef enum tstate_e tstate_t;
 /* The following is the form of a thread start-up function */
 
 typedef CODE void (*start_t)(void);
+typedef CODE void (*sig_deliver_t)(FAR struct tcb_s *tcb);
 
 /* This is the entry point into the main thread of the task or into a created
  * pthread within the task.
@@ -654,14 +698,24 @@ struct tcb_s
 
   /* Pre-emption monitor support ********************************************/
 
-#ifdef CONFIG_SCHED_CRITMONITOR
-  clock_t premp_start;                   /* Time when preemption disabled   */
-  clock_t premp_max;                     /* Max time preemption disabled    */
-  clock_t crit_start;                    /* Time critical section entered   */
-  clock_t crit_max;                      /* Max time in critical section    */
+#if CONFIG_SCHED_CRITMONITOR_MAXTIME_THREAD >= 0
   clock_t run_start;                     /* Time when thread begin run      */
   clock_t run_max;                       /* Max time thread run             */
   clock_t run_time;                      /* Total time thread run           */
+#endif
+
+#if CONFIG_SCHED_CRITMONITOR_MAXTIME_PREEMPTION >= 0
+  clock_t premp_start;                   /* Time when preemption disabled   */
+  clock_t premp_max;                     /* Max time preemption disabled    */
+  void   *premp_caller;                  /* Caller of preemption disabled   */
+  void   *premp_max_caller;              /* Caller of max preemption        */
+#endif
+
+#if CONFIG_SCHED_CRITMONITOR_MAXTIME_CSECTION >= 0
+  clock_t crit_start;                    /* Time critical section entered   */
+  clock_t crit_max;                      /* Max time in critical section    */
+  void   *crit_caller;                   /* Caller of critical section      */
+  void   *crit_max_caller;               /* Caller of max critical section  */
 #endif
 
   /* State save areas *******************************************************/
@@ -670,6 +724,11 @@ struct tcb_s
 
   struct xcptcontext xcp;                /* Interrupt register save area    */
 
+  /* The following function pointer is non-zero if there are pending signals
+   * to be processed.
+   */
+
+  sig_deliver_t sigdeliver;
 #if CONFIG_TASK_NAME_SIZE > 0
   char name[CONFIG_TASK_NAME_SIZE + 1];  /* Task name (with NUL terminator) */
 #endif
@@ -759,10 +818,8 @@ begin_packed_struct struct tcbinfo_s
   uint16_t regs_num;                     /* Num of general regs             */
 
   /* Offset pointer of xcp.regs, order in GDB org.gnu.gdb.xxx feature.
-   * Please refer:
-   * https://sourceware.org/gdb/current/onlinedocs/gdb/ARM-Features.html
-   * https://sourceware.org/gdb/current/onlinedocs/gdb/RISC_002dV-Features
-   * -.html
+   * Refer to the link of `reg_off` below for more information.
+   *
    * value UINT16_MAX: This register was not provided by NuttX
    */
 
@@ -772,7 +829,7 @@ begin_packed_struct struct tcbinfo_s
     uint8_t             u[8];
     FAR const uint16_t *p;
   }
-  end_packed_struct reg_off;
+  end_packed_struct reg_off; /* Refer to https://sourceware.org/gdb/current/onlinedocs/gdb.html/Standard-Target-Features.html */
 } end_packed_struct;
 
 /* This is the callback type used by nxsched_foreach() */
@@ -781,7 +838,7 @@ typedef CODE void (*nxsched_foreach_t)(FAR struct tcb_s *tcb, FAR void *arg);
 
 /* This is the callback type used by nxsched_smp_call() */
 
-#ifdef CONFIG_SMP_CALL
+#ifdef CONFIG_SMP
 typedef CODE int (*nxsched_smp_call_t)(FAR void *arg);
 #endif
 
@@ -801,12 +858,15 @@ extern "C"
 #define EXTERN extern
 #endif
 
-#ifdef CONFIG_SCHED_CRITMONITOR
 /* Maximum time with pre-emption disabled or within critical section. */
 
+#if CONFIG_SCHED_CRITMONITOR_MAXTIME_PREEMPTION >= 0
 EXTERN clock_t g_premp_max[CONFIG_SMP_NCPUS];
+#endif /* CONFIG_SCHED_CRITMONITOR_MAXTIME_PREEMPTION  >= 0 */
+
+#if CONFIG_SCHED_CRITMONITOR_MAXTIME_CSECTION >= 0
 EXTERN clock_t g_crit_max[CONFIG_SMP_NCPUS];
-#endif /* CONFIG_SCHED_CRITMONITOR */
+#endif /* CONFIG_SCHED_CRITMONITOR_MAXTIME_CSECTION >= 0 */
 
 EXTERN const struct tcbinfo_s g_tcbinfo;
 
@@ -1150,7 +1210,7 @@ pid_t nxtask_start_fork(FAR struct task_tcb_s *child);
 void nxtask_abort_fork(FAR struct task_tcb_s *child, int errcode);
 
 /****************************************************************************
- * Name: group_argvstr
+ * Name: nxtask_argvstr
  *
  * Description:
  *   Safely read the contents of a task's argument vector, into a a safe
@@ -1166,7 +1226,7 @@ void nxtask_abort_fork(FAR struct task_tcb_s *child, int errcode);
  *
  ****************************************************************************/
 
-size_t group_argvstr(FAR struct tcb_s *tcb, FAR char *args, size_t size);
+size_t nxtask_argvstr(FAR struct tcb_s *tcb, FAR char *args, size_t size);
 
 /****************************************************************************
  * Name: group_exitinfo
@@ -1619,13 +1679,13 @@ size_t nxsched_collect_deadlock(FAR pid_t *pid, size_t count);
  *
  ****************************************************************************/
 
-#ifdef CONFIG_DUMP_ON_EXIT
+#ifdef CONFIG_SCHED_DUMP_ON_EXIT
 void nxsched_dumponexit(void);
 #else
 #  define nxsched_dumponexit()
-#endif /* CONFIG_DUMP_ON_EXIT */
+#endif /* CONFIG_SCHED_DUMP_ON_EXIT */
 
-#ifdef CONFIG_SMP_CALL
+#ifdef CONFIG_SMP
 /****************************************************************************
  * Name: nxsched_smp_call_handler
  *

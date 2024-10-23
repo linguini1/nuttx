@@ -858,15 +858,10 @@ static void esp_thread_semphr_free(void *semphr)
 
 static void esp_update_time(struct timespec *timespec, uint32_t ticks)
 {
-  uint32_t tmp;
+  struct timespec ts;
 
-  tmp = TICK2SEC(ticks);
-  timespec->tv_sec += tmp;
-
-  ticks -= SEC2TICK(tmp);
-  tmp = TICK2NSEC(ticks);
-
-  timespec->tv_nsec += tmp;
+  clock_ticks2time(&ts, ticks);
+  clock_timespec_add(timespec, &ts, timespec);
 }
 
 /****************************************************************************
@@ -932,7 +927,7 @@ static void esp_set_isr(int32_t n, void *f, void *arg)
 
   if (g_wifi_irq_bind)
     {
-      return ;
+      return;
     }
 
   adapter = kmm_malloc(sizeof(struct irq_adpt));

@@ -137,6 +137,13 @@ You can scan for all I2C devices using the following command::
 
     nsh> i2c dev 0x00 0x7f
 
+mcuboot_nsh
+--------------------
+
+This configuration is the same as the ``nsh`` configuration, but it generates the application
+image in a format that can be used by MCUboot. It also makes the ``make bootloader`` command to
+build the MCUboot bootloader image using the Espressif HAL.
+
 nsh
 ---
 
@@ -207,7 +214,7 @@ spi
 --------
 
 This configuration enables the support for the SPI driver.
-You can test it by connecting MOSI and MISO pins which are GPIO7 and GPIO2
+You can test it by connecting MOSI and MISO pins which are GPIO5 and GPIO0
 by default to each other and running the ``spi`` example::
 
     nsh> spi exch -b 2 "AB"

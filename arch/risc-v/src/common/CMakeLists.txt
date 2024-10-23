@@ -25,14 +25,17 @@ list(APPEND SRCS riscv_saveusercontext.S)
 list(APPEND SRCS riscv_allocateheap.c riscv_cpuidlestack.c)
 list(APPEND SRCS riscv_cpuinfo.c riscv_createstack.c riscv_doirq.c
      riscv_exception.c)
-list(APPEND SRCS riscv_exit.c riscv_getintstack.c riscv_getnewintctx.c
-     riscv_idle.c)
+list(APPEND SRCS riscv_exit.c riscv_getintstack.c riscv_getnewintctx.c)
 list(APPEND SRCS riscv_initialize.c riscv_initialstate.c riscv_modifyreg32.c)
 list(APPEND SRCS riscv_mtimer.c riscv_nputs.c riscv_registerdump.c)
 list(APPEND SRCS riscv_releasestack.c riscv_schedulesigaction.c
      riscv_sigdeliver.c)
 list(APPEND SRCS riscv_stackframe.c riscv_tcbinfo.c riscv_swint.c)
 list(APPEND SRCS riscv_switchcontext.c riscv_usestack.c)
+
+if(NOT CONFIG_ARCH_IDLE_CUSTOM)
+  list(APPEND SRCS riscv_idle.c)
+endif()
 
 if(NOT CONFIG_ALARM_ARCH)
   if(NOT CONFIG_TIMER_ARCH)
@@ -41,11 +44,19 @@ if(NOT CONFIG_ALARM_ARCH)
 endif()
 
 if(CONFIG_SMP)
-  list(APPEND SRCS riscv_cpuindex.c riscv_cpupause.c riscv_cpustart.c)
+  list(APPEND SRCS riscv_smpcall.c riscv_cpustart.c)
+endif()
+
+if(CONFIG_ARCH_HAVE_MULTICPU)
+  list(APPEND SRCS riscv_cpuindex.c)
 endif()
 
 if(CONFIG_RISCV_MISALIGNED_HANDLER)
   list(APPEND SRCS riscv_misaligned.c)
+endif()
+
+if(CONFIG_ARCH_HAVE_DEBUG)
+  list(APPEND SRCS riscv_debug.c)
 endif()
 
 if(NOT CONFIG_BUILD_FLAT)
@@ -80,8 +91,12 @@ if(CONFIG_ARCH_RV_ISA_V)
   list(APPEND SRCS riscv_vpu.S)
 endif()
 
-if(CONFIG_ARCH_RV_ISA_A)
-  list(APPEND SRCS riscv_testset.S)
+if(CONFIG_ARCH_RV_HAVE_APLIC)
+  list(APPEND SRCS riscv_aplic.c)
+endif()
+
+if(CONFIG_ARCH_RV_HAVE_IMSIC)
+  list(APPEND SRCS riscv_imsic.c)
 endif()
 
 if(CONFIG_RISCV_SEMIHOSTING_HOSTFS)
@@ -97,7 +112,7 @@ if(CONFIG_ARCH_USE_MMU)
 endif()
 
 if(CONFIG_ARCH_KERNEL_STACK)
-  list(APPEND SRCS riscv_addrenv_kstack.c riscv_ksp.c)
+  list(APPEND SRCS riscv_addrenv_kstack.c)
 endif()
 
 if(CONFIG_ARCH_ADDRENV)

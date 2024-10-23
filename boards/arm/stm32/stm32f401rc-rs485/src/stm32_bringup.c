@@ -63,8 +63,24 @@
 #include "stm32_hcsr04.h"
 #endif
 
+#ifdef CONFIG_LCD_MAX7219
+#include "stm32_max7219_matrix.h"
+#endif
+
+#ifdef CONFIG_CL_MFRC522
+#include "stm32_mfrc522.h"
+#endif
+
 #ifdef CONFIG_STEPPER_DRV8825
 #include "stm32_drv8266.h"
+#endif
+
+#ifdef CONFIG_SENSORS_BMP280
+#include "stm32_bmp280.h"
+#endif
+
+#ifdef CONFIG_LCD_BACKPACK
+#include "stm32_lcd_backpack.h"
 #endif
 
 /****************************************************************************
@@ -205,6 +221,17 @@ int stm32_bringup(void)
     }
 #endif
 
+#ifdef CONFIG_LCD_MAX7219
+  /* Configure and initialize the MAX7219 driver */
+
+  ret = board_max7219_matrix_initialize(1);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, \
+       "ERROR: board_max7219_matrix_initialize failed: %d\n", ret);
+    }
+#endif
+
 #ifdef CONFIG_VIDEO_FB
   /* Initialize and register the framebuffer driver */
 
@@ -268,6 +295,36 @@ int stm32_bringup(void)
   if (ret < 0)
     {
       syslog(LOG_ERR, "ERROR: board_drv8825_initialize failed: %d\n", ret);
+    }
+#endif
+
+#ifdef CONFIG_CL_MFRC522
+  ret = stm32_mfrc522initialize("/dev/rfid0");
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: stm32_mfrc522initialize() failed: %d\n", ret);
+    }
+#endif
+
+#ifdef CONFIG_SENSORS_BMP280
+  /* Initialize the BMP280 pressure sensor. */
+
+  ret = board_bmp280_initialize(0, 1);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "Failed to initialize BMP280, error %d\n", ret);
+      return ret;
+    }
+#endif
+
+#ifdef CONFIG_LCD_BACKPACK
+  /* slcd:0, i2c:1, rows=2, cols=16 */
+
+  ret = board_lcd_backpack_init(0, 1, 2, 16);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "Failed to initialize PCF8574 LCD, error %d\n", ret);
+      return ret;
     }
 #endif
 

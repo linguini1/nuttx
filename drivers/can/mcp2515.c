@@ -45,6 +45,10 @@
 #include <nuttx/can/can.h>
 #include <nuttx/can/mcp2515.h>
 
+#ifdef CONFIG_CAN_TIMESTAMP
+#include <time.h>
+#endif
+
 #include "mcp2515.h"
 
 #if defined(CONFIG_CAN) && defined(CONFIG_CAN_MCP2515)
@@ -2031,7 +2035,7 @@ static void mcp2515_error(FAR struct can_dev_s *dev, uint8_t status,
 #ifdef CONFIG_CAN_EXTID
       hdr.ch_extid  = 0;
 #endif
-      hdr.ch_unused = 0;
+      hdr.ch_tcf    = 0;
 
       /* And provide the error report to the upper half logic */
 
@@ -2063,10 +2067,19 @@ static void mcp2515_error(FAR struct can_dev_s *dev, uint8_t status,
 
 static void mcp2515_receive(FAR struct can_dev_s *dev, uint8_t offset)
 {
+#ifdef CONFIG_CAN_TIMESTAMP
+  clock_t clkval;
+  struct timespec ts;
+#endif
   FAR struct mcp2515_can_s *priv;
   struct can_hdr_s hdr;
   int ret;
   uint8_t regval;
+
+#ifdef CONFIG_CAN_TIMESTAMP
+  clkval = up_perf_gettime();
+  up_perf_convert(clkval, &ts);
+#endif
 
   DEBUGASSERT(dev);
   priv = dev->cd_priv;
@@ -2141,7 +2154,7 @@ static void mcp2515_receive(FAR struct can_dev_s *dev, uint8_t offset)
 #ifdef CONFIG_CAN_ERRORS
   hdr.ch_error  = 0; /* Error reporting not supported */
 #endif
-  hdr.ch_unused = 0;
+  hdr.ch_tcf    = 0;
 
   /* Extract the RTR bit */
 
@@ -2152,6 +2165,11 @@ static void mcp2515_receive(FAR struct can_dev_s *dev, uint8_t offset)
 
   regval = RXREGVAL(MCP2515_RXB0DLC);
   hdr.ch_dlc = (regval & RXBDLC_DLC_MASK) >> RXBDLC_DLC_SHIFT;
+
+#ifdef CONFIG_CAN_TIMESTAMP
+    hdr.ch_ts.tv_sec = ts.tv_sec;
+    hdr.ch_ts.tv_usec = ts.tv_nsec / 1000u;
+#endif
 
   /* Save the message data */
 

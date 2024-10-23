@@ -36,18 +36,38 @@
 #include <nuttx/net/tun.h>
 #include <nuttx/net/telnet.h>
 #include <nuttx/note/note_driver.h>
+#include <nuttx/pci/pci.h>
 #include <nuttx/power/pm.h>
 #include <nuttx/power/regulator.h>
+#include <nuttx/reset/reset-controller.h>
 #include <nuttx/segger/rtt.h>
 #include <nuttx/sensors/sensor.h>
 #include <nuttx/serial/pty.h>
+#include <nuttx/serial/uart_hostfs.h>
 #include <nuttx/serial/uart_ram.h>
 #include <nuttx/syslog/syslog.h>
 #include <nuttx/syslog/syslog_console.h>
+#include <nuttx/thermal.h>
 #include <nuttx/trace.h>
 #include <nuttx/usrsock/usrsock_rpmsg.h>
+#include <nuttx/vhost/vhost.h>
 #include <nuttx/virtio/virtio.h>
 #include <nuttx/drivers/optee.h>
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* Check if only one console device is selected.
+ * If you get this errro, search your .config file for CONSOLE_XXX_CONSOLE
+ * options and remove what is not needed.
+ */
+
+#if (defined(CONFIG_LWL_CONSOLE) + defined(CONFIG_SERIAL_CONSOLE) + \
+     defined(CONFIG_CDCACM_CONSOLE) + defined(CONFIG_PL2303_CONSOLE) + \
+     defined(CONFIG_SERIAL_RTT_CONSOLE) + defined(CONFIG_RPMSG_UART_CONSOLE)) > 1
+#  error More than one console driver selected. Check your configuration !
+#endif
 
 /****************************************************************************
  * Public Functions
@@ -114,6 +134,10 @@ void drivers_initialize(void)
   devzero_register();   /* Standard /dev/zero */
 #endif
 
+#ifdef CONFIG_DEV_MEM
+  devmem_register();
+#endif
+
 #if defined(CONFIG_DEV_LOOP)
   loop_register();      /* Standard /dev/loop */
 #endif
@@ -134,6 +158,10 @@ void drivers_initialize(void)
   regulator_rpmsg_server_init();
 #endif
 
+#if defined(CONFIG_RESET_RPMSG)
+  reset_rpmsg_server_init();
+#endif
+
   /* Initialize the serial device driver */
 
 #ifdef CONFIG_RPMSG_UART
@@ -152,6 +180,10 @@ void drivers_initialize(void)
   lwlconsole_init();
 #elif defined(CONFIG_CONSOLE_SYSLOG)
   syslog_console_init();
+#endif
+
+#ifdef CONFIG_UART_HOSTFS
+  uart_hostfs_init();
 #endif
 
 #ifdef CONFIG_PSEUDOTERM_SUSV1
@@ -234,12 +266,24 @@ void drivers_initialize(void)
   mtd_loop_register();
 #endif
 
+#if defined(CONFIG_PCI) && !defined(CONFIG_PCI_LATE_DRIVERS_REGISTER)
+  pci_register_drivers();
+#endif
+
 #ifdef CONFIG_DRIVERS_VIRTIO
   virtio_register_drivers();
 #endif
 
+#ifdef CONFIG_DRIVERS_VHOST
+  vhost_register_drivers();
+#endif
+
 #ifndef CONFIG_DEV_OPTEE_NONE
   optee_register();
+#endif
+
+#ifdef CONFIG_THERMAL
+  thermal_init();
 #endif
 
   drivers_trace_end();

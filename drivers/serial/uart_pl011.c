@@ -661,7 +661,19 @@ static void pl011_send(FAR struct uart_dev_s *dev, int ch)
   FAR struct pl011_uart_port_s  *sport  = dev->priv;
   FAR const struct pl011_config *config = &sport->config;
 
+  while (!pl011_irq_tx_ready(sport));
+
   config->uart->dr = ch;
+}
+
+static void pl011_putc(struct uart_dev_s *dev, int ch)
+{
+  irqstate_t flags;
+
+  flags = spin_lock_irqsave(NULL);
+  while (!pl011_txempty(dev));
+  pl011_send(dev, ch);
+  spin_unlock_irqrestore(NULL, flags);
 }
 
 /***************************************************************************
@@ -984,6 +996,7 @@ static int pl011_setup(FAR struct uart_dev_s *dev)
     }
 
   up_irq_restore(i_flags);
+  pl011_enable(sport);
 
   return 0;
 }
@@ -1052,16 +1065,7 @@ int up_putc(int ch)
 {
   FAR struct uart_dev_s *dev = &CONSOLE_DEV;
 
-  /* Check for LF */
-
-  if (ch == '\n')
-    {
-      /* Add CR */
-
-      pl011_send(dev, '\r');
-    }
-
-  pl011_send(dev, ch);
+  pl011_putc(dev, ch);
 
   return ch;
 }

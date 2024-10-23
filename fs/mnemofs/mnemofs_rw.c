@@ -53,6 +53,8 @@
  * Included Files
  ****************************************************************************/
 
+#include <sys/param.h>
+
 #include "mnemofs.h"
 
 /****************************************************************************
@@ -85,28 +87,95 @@
 
 int mfs_isbadblk(FAR const struct mfs_sb_s * const sb, mfs_t blk)
 {
+  if (predict_false(blk > MFS_NBLKS(sb)))
+    {
+      return -EINVAL;
+    }
+
   return MTD_ISBAD(MFS_MTD(sb), blk);
 }
 
 int mfs_markbadblk(FAR const struct mfs_sb_s * const sb, mfs_t blk)
 {
-  return MTD_ISBAD(MFS_MTD(sb), blk);
+  if (predict_false(blk > MFS_NBLKS(sb)))
+    {
+      return -EINVAL;
+    }
+
+  return MTD_MARKBAD(MFS_MTD(sb), blk);
+}
+
+/* NOTE: These functions do not update the block allocator's state nor do
+ * they enforce it.
+ */
+
+ssize_t mfs_write_page(FAR const struct mfs_sb_s * const sb,
+                       FAR const char *data, const mfs_t datalen,
+                       const off_t page, const mfs_t pgoff)
+{
+  int ret = OK;
+
+  if (predict_false(page > MFS_NPGS(sb) || pgoff >= MFS_PGSZ(sb)))
+    {
+      return -EINVAL;
+    }
+
+  memcpy(MFS_RWBUF(sb) + pgoff, data, MIN(datalen, MFS_PGSZ(sb) - pgoff));
+
+  ret = MTD_BWRITE(MFS_MTD(sb), page, 1, MFS_RWBUF(sb));
+  if (predict_false(ret < 0))
+    {
+      goto errout_with_reset;
+    }
+
+errout_with_reset:
+  memset(MFS_RWBUF(sb), 0, MFS_PGSZ(sb));
+
+  return ret;
 }
 
 ssize_t mfs_read_page(FAR const struct mfs_sb_s * const sb,
                       FAR char *data, const mfs_t datalen, const off_t page,
                       const mfs_t pgoff)
 {
-  return OK;
+  int ret = OK;
+
+  if (predict_false(page > MFS_NPGS(sb) || pgoff >= MFS_PGSZ(sb)))
+    {
+      return -EINVAL;
+    }
+
+  ret = MTD_BREAD(MFS_MTD(sb), page, 1, MFS_RWBUF(sb));
+  if (predict_false(ret < 0))
+    {
+      goto errout_with_reset;
+    }
+
+  memcpy(data, MFS_RWBUF(sb) + pgoff, MIN(datalen, MFS_PGSZ(sb) - pgoff));
+
+errout_with_reset:
+  memset(MFS_RWBUF(sb), 0, MFS_PGSZ(sb));
+
+  return ret;
 }
 
 int mfs_erase_blk(FAR const struct mfs_sb_s * const sb, const off_t blk)
 {
+  if (predict_false(blk > MFS_NBLKS(sb)))
+    {
+      return -EINVAL;
+    }
+
   return MTD_ERASE(MFS_MTD(sb), blk, 1);
 }
 
 int mfs_erase_nblks(FAR const struct mfs_sb_s * const sb, const off_t blk,
                     const size_t n)
 {
+  if (predict_false(blk + n > MFS_NBLKS(sb)))
+    {
+      return -EINVAL;
+    }
+
   return MTD_ERASE(MFS_MTD(sb), blk, n);
 }

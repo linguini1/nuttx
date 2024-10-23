@@ -23,6 +23,10 @@ ifeq ($(CONFIG_FS_LITTLEFS),y)
 
 CSRCS += lfs_vfs.c
 
+ifeq ($(CONFIG_TRACE_LITTLEFS_FS),y)
+littlefs/lfs_vfs.c_CFLAGS += -finstrument-functions
+endif
+
 DEPPATH += --dep-path littlefs
 VPATH += :littlefs
 
@@ -52,6 +56,7 @@ $(LITTLEFS_TARBALL):
 	$(Q) mv littlefs/littlefs-$(LITTLEFS_VERSION) littlefs/littlefs
 	$(Q) git apply littlefs/lfs_util.patch
 	$(Q) git apply littlefs/lfs_getpath.patch
+	$(Q) git apply littlefs/lfs_getsetattr.patch
 	$(Q) touch littlefs/.littlefsunpack
 
 # Download and unpack tarball if no git repo found

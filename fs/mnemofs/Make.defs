@@ -53,9 +53,11 @@ ifeq ($(CONFIG_FS_MNEMOFS),y)
 # Add the mnemofs C files to the build
 
 CSRCS += mnemofs_blkalloc.c
+CSRCS += mnemofs_ctz.c
 CSRCS += mnemofs_fsobj.c
 CSRCS += mnemofs_journal.c
 CSRCS += mnemofs_lru.c
+CSRCS += mnemofs_master.c
 CSRCS += mnemofs_rw.c
 CSRCS += mnemofs_util.c
 CSRCS += mnemofs.c

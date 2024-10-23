@@ -1,6 +1,8 @@
 /****************************************************************************
  * libs/libc/libc.h
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -52,8 +54,6 @@
 #ifndef CONFIG_LIBC_HOMEDIR
 #  define CONFIG_LIBC_HOMEDIR "/"
 #endif
-
-#define LIB_BUFLEN_UNKNOWN INT_MAX
 
 #if ((!defined(CONFIG_LIBC_PREVENT_MEMCHR_USER) && !defined(__KERNEL__))  || \
      (!defined(CONFIG_LIBC_PREVENT_MEMCHR_KERNEL) && defined(__KERNEL__)))

@@ -18,6 +18,8 @@
 #
 ############################################################################
 
+STORAGETMP = $(if $(wildcard $(NXTMPDIR)/.*),y,)
+
 # The start-up, "head", file. May be either a .S or a .c file.
 
 HEAD_ASRC   = esp_head.S
@@ -77,6 +79,10 @@ ifeq ($(CONFIG_ESPRESSIF_LEDC),y)
 	CHIP_CSRCS += esp_ledc.c
 endif
 
+ifeq ($(CONFIG_ESP_PCNT_AS_QE),y)
+	CHIP_CSRCS += esp_qencoder.c
+endif
+
 ifeq ($(CONFIG_ESPRESSIF_USBSERIAL),y)
 	CHIP_CSRCS += esp_usbserial.c
 endif
@@ -86,6 +92,10 @@ ifeq ($(CONFIG_ESP_RMT),y)
 	ifeq ($(CONFIG_WS2812_NON_SPI_DRIVER),y)
 		CHIP_CSRCS += esp_ws2812.c
 	endif
+endif
+
+ifeq ($(CONFIG_ESPRESSIF_TEMP),y)
+	CHIP_CSRCS += esp_temperature_sensor.c
 endif
 
 ifeq ($(CONFIG_ESPRESSIF_I2C),y)
@@ -110,8 +120,8 @@ ifeq ($(CONFIG_ESP_WIRELESS),y)
 	ifeq ($(CONFIG_ESPRESSIF_WIFI),y)
 		CHIP_CSRCS += esp_wifi_init.c
 		CHIP_CSRCS += esp_wlan.c
-		CHIP_CSRCS += esp_wifi_utils.c
 	endif
+	CHIP_CSRCS += esp_wifi_utils.c
 endif
 
 ifeq ($(CONFIG_ESP_MCPWM),y)
@@ -126,7 +136,7 @@ endif
 
 ESP_HAL_3RDPARTY_REPO   = esp-hal-3rdparty
 ifndef ESP_HAL_3RDPARTY_VERSION
-	ESP_HAL_3RDPARTY_VERSION = 9bc2c73838d497b7742f37e9b5099d6c49081fce
+	ESP_HAL_3RDPARTY_VERSION = ca869dd97ed2c01187b85b759c0d6edb27c12c21
 endif
 
 ifndef ESP_HAL_3RDPARTY_URL
@@ -140,14 +150,25 @@ endif
 	GIT_DEPTH_PARAMETER = --depth=$(GIT_DEPTH)
 endif
 
+ifeq ($(STORAGETMP),y)
+define CLONE_ESP_HAL_3RDPARTY_REPO
+	$(call CHECK_COMMITSHA, $(NXTMPDIR)/$(ESP_HAL_3RDPARTY_REPO),$(ESP_HAL_3RDPARTY_VERSION))
+	$(call CLONE, $(ESP_HAL_3RDPARTY_URL),chip/$(ESP_HAL_3RDPARTY_REPO),$(NXTMPDIR)/$(ESP_HAL_3RDPARTY_REPO))
+endef
+else
+define CLONE_ESP_HAL_3RDPARTY_REPO
+	$(call CLONE, $(ESP_HAL_3RDPARTY_URL),chip/$(ESP_HAL_3RDPARTY_REPO))
+endef
+endif
+
 chip/$(ESP_HAL_3RDPARTY_REPO):
 	$(Q) echo "Cloning Espressif HAL for 3rd Party Platforms"
-	$(Q) git clone --quiet $(ESP_HAL_3RDPARTY_URL) chip/$(ESP_HAL_3RDPARTY_REPO)
+	$(Q) $(call CLONE_ESP_HAL_3RDPARTY_REPO)
 	$(Q) echo "Espressif HAL for 3rd Party Platforms: ${ESP_HAL_3RDPARTY_VERSION}"
 	$(Q) git -C chip/$(ESP_HAL_3RDPARTY_REPO) checkout --quiet $(ESP_HAL_3RDPARTY_VERSION)
 ifeq ($(CONFIG_ESP_WIRELESS),y)
 	$(Q) echo "Espressif HAL for 3rd Party Platforms: initializing submodules..."
-	$(Q) git -C chip/$(ESP_HAL_3RDPARTY_REPO) submodule --quiet update --init $(GIT_DEPTH_PARAMETER) components/mbedtls/mbedtls components/esp_phy/lib components/esp_wifi/lib components/esp_coex/lib
+	$(Q) git -C chip/$(ESP_HAL_3RDPARTY_REPO) submodule --quiet update --init $(GIT_DEPTH_PARAMETER) components/mbedtls/mbedtls components/esp_phy/lib components/esp_wifi/lib components/bt/controller/lib_esp32c3_family components/esp_coex/lib
 	$(Q) git -C chip/$(ESP_HAL_3RDPARTY_REPO)/components/mbedtls/mbedtls reset --quiet --hard
 	$(Q) echo "Applying patches..."
 	$(Q) cd chip/$(ESP_HAL_3RDPARTY_REPO)/components/mbedtls/mbedtls && git apply ../../../nuttx/patches/components/mbedtls/mbedtls/*.patch
@@ -157,7 +178,7 @@ include common$(DELIM)espressif$(DELIM)Bootloader.mk
 
 # Silent preprocessor warnings
 
-CFLAGS += -Wno-undef -Wno-unused-variable
+CFLAGS += -Wno-undef -Wno-unused-variable -fno-jump-tables -fno-tree-switch-conversion
 
 # Remove quotes from CONFIG_ESPRESSIF_CHIP_SERIES configuration
 

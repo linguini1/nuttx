@@ -36,4 +36,27 @@ ifeq ($(filter $(CONFIG_ESPRESSIF_SIMPLE_BOOT) \
 CHIP_CSRCS += esp_loader.c
 endif
 
+ifeq ($(CONFIG_ESPRESSIF_TEMP),y)
+CHIP_CSRCS += esp_temperature_sensor.c
+endif
+
+ifeq ($(CONFIG_ESPRESSIF_SPIFLASH),y)
+CHIP_CSRCS += esp_spiflash.c
+ifeq ($(CONFIG_ESPRESSIF_MTD),y)
+CHIP_CSRCS += esp_spiflash_mtd.c
+endif
+endif
+
+ifeq ($(CONFIG_ESPRESSIF_WIRELESS),y)
+CHIP_CSRCS += esp_wireless.c
+ifeq ($(CONFIG_ESPRESSIF_WIFI),y)
+CHIP_CSRCS += esp_wifi_utils.c
+CHIP_CSRCS += esp_wlan.c
+endif
+endif
+
+ifeq ($(CONFIG_ESPRESSIF_WIRELESS),y)
+include common$(DELIM)espressif$(DELIM)Wireless.mk
+endif
+
 INCLUDES += ${INCDIR_PREFIX}$(ARCH_SRCDIR)$(DELIM)common$(DELIM)espressif$(DELIM)platform_include

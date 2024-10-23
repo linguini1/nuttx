@@ -96,11 +96,6 @@
 
 #define INTSTACK_SIZE (CONFIG_ARCH_INTERRUPTSTACK & ~STACK_ALIGN_MASK)
 
-/* Macros to handle saving and restoring interrupt state. */
-
-#define arm_savestate(regs)    (regs = (uint32_t *)CURRENT_REGS)
-#define arm_restorestate(regs) (CURRENT_REGS = regs)
-
 /* Toolchain dependent, linker defined section addresses */
 
 #if defined(__ICCARM__)
@@ -158,14 +153,6 @@
 extern void arm_fullcontextrestore(uint32_t *restoreregs);
 #endif
 
-#ifndef arm_switchcontext
-#  define arm_switchcontext(saveregs, restoreregs) \
-    sys_call2(SYS_switch_context, (uintptr_t)saveregs, (uintptr_t)restoreregs);
-#else
-extern void arm_switchcontext(uint32_t **saveregs,
-                              uint32_t *restoreregs);
-#endif
-
 /* Redefine the linker symbols as armlink style */
 
 #ifdef CONFIG_ARM_TOOLCHAIN_ARMCLANG
@@ -218,7 +205,7 @@ extern void arm_switchcontext(uint32_t **saveregs,
   ({ \
     uint64_t __mpidr = GET_MPIDR(); \
     __mpidr &= ~(MPIDR_AFFLVL_MASK << MPIDR_AFF ## aff_level ## _SHIFT); \
-    __mpidr |= (cpu << MPIDR_AFF ## aff_level ## _SHIFT); \
+    __mpidr |= (core << MPIDR_AFF ## aff_level ## _SHIFT); \
     __mpidr &= MPIDR_ID_MASK; \
     __mpidr; \
   })
@@ -536,6 +523,10 @@ int arm_gen_nonsecurefault(int irq, uint32_t *regs);
 
 #if defined(CONFIG_ARMV7M_STACKCHECK) || defined(CONFIG_ARMV8M_STACKCHECK)
 void arm_stack_check_init(void) noinstrument_function;
+#endif
+
+#ifdef CONFIG_ARM_COREDUMP_REGION
+  void arm_coredump_add_region(void);
 #endif
 
 #undef EXTERN

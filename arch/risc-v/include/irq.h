@@ -567,12 +567,6 @@
 
 struct xcptcontext
 {
-  /* The following function pointer is non-NULL if there are pending signals
-   * to be processed.
-   */
-
-  void *sigdeliver; /* Actual type is sig_deliver_t */
-
   /* These additional register save locations are used to implement the
    * signal delivery trampoline.
    *
@@ -612,6 +606,15 @@ struct xcptcontext
   /* Integer register save area */
 
   uintreg_t *regs;
+#ifndef CONFIG_BUILD_FLAT
+  uintreg_t *initregs;
+#endif
+
+#ifdef CONFIG_LIB_SYSCALL
+  /* User integer registers upon system call entry */
+
+  uintreg_t *sregs;
+#endif
 
   /* FPU register save area */
 
@@ -669,9 +672,9 @@ extern "C"
 #endif
 
 /* g_current_regs[] holds a references to the current interrupt level
- * register storage structure.  It is non-NULL only during interrupt
- * processing.  Access to g_current_regs[] must be through the macro
- * CURRENT_REGS for portability.
+ * register storage structure.  If is non-NULL only during interrupt
+ * processing.  Access to g_current_regs[] must be through the
+ * [get/set]_current_regs for portability.
  */
 
 /* For the case of architectures with multiple CPUs, then there must be one
@@ -679,7 +682,6 @@ extern "C"
  */
 
 EXTERN volatile uintreg_t *g_current_regs[CONFIG_SMP_NCPUS];
-#define CURRENT_REGS (g_current_regs[up_cpu_index()])
 
 /****************************************************************************
  * Public Function Prototypes
@@ -699,27 +701,46 @@ irqstate_t up_irq_enable(void);
  * Name: up_cpu_index
  *
  * Description:
- *   Return an index in the range of 0 through (CONFIG_SMP_NCPUS-1) that
- *   corresponds to the currently executing CPU.
- *
- * Input Parameters:
- *   None
- *
- * Returned Value:
- *   An integer index in the range of 0 through (CONFIG_SMP_NCPUS-1) that
- *   corresponds to the currently executing CPU.
+ *   Return the real core number regardless CONFIG_SMP setting
  *
  ****************************************************************************/
 
-#ifdef CONFIG_SMP
-int up_cpu_index(void);
-#else
-#  define up_cpu_index() (0)
-#endif
+#ifdef CONFIG_ARCH_HAVE_MULTICPU
+int up_cpu_index(void) noinstrument_function;
+#endif /* CONFIG_ARCH_HAVE_MULTICPU */
+
+/****************************************************************************
+ * Name: up_this_cpu
+ *
+ * Description:
+ *   Return the logical core number. Default implementation is 1:1 mapping,
+ *   i.e. physical=logical.
+ *
+ ****************************************************************************/
+
+int up_this_cpu(void);
 
 /****************************************************************************
  * Inline Functions
  ****************************************************************************/
+
+static inline_function uintreg_t *up_current_regs(void)
+{
+#ifdef CONFIG_SMP
+  return (uintreg_t *)g_current_regs[up_this_cpu()];
+#else
+  return (uintreg_t *)g_current_regs[0];
+#endif
+}
+
+static inline_function void up_set_current_regs(uintreg_t *regs)
+{
+#ifdef CONFIG_SMP
+  g_current_regs[up_this_cpu()] = regs;
+#else
+  g_current_regs[0] = regs;
+#endif
+}
 
 /****************************************************************************
  * Name: up_irq_save
@@ -784,7 +805,7 @@ noinstrument_function static inline bool up_interrupt_context(void)
   irqstate_t flags = up_irq_save();
 #endif
 
-  bool ret = CURRENT_REGS != NULL;
+  bool ret = up_current_regs() != NULL;
 
 #ifdef CONFIG_SMP
   up_irq_restore(flags);
@@ -792,6 +813,13 @@ noinstrument_function static inline bool up_interrupt_context(void)
 
   return ret;
 }
+
+/****************************************************************************
+ * Name: up_getusrpc
+ ****************************************************************************/
+
+#define up_getusrpc(regs) \
+    (((uintptr_t *)((regs) ? (regs) : up_current_regs()))[REG_EPC])
 
 #undef EXTERN
 #if defined(__cplusplus)

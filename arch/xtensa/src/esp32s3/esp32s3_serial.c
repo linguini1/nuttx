@@ -537,7 +537,7 @@ static int esp32s3_attach(struct uart_dev_s *dev)
 
   /* Set up to receive peripheral interrupts on the current CPU */
 
-  priv->cpu = up_cpu_index();
+  priv->cpu = this_cpu();
   priv->cpuint = esp32s3_setup_irq(priv->cpu, priv->periph, priv->int_pri,
                                    ESP32S3_CPUINT_LEVEL);
   if (priv->cpuint < 0)
@@ -1218,15 +1218,6 @@ int up_putc(int ch)
   esp32s3_lowputc_disable_all_uart_int(CONSOLE_DEV.priv, &int_status);
 #endif
 
-  /* Check for LF */
-
-  if (ch == '\n')
-    {
-      /* Add CR */
-
-      xtensa_lowputc('\r');
-    }
-
   xtensa_lowputc((char)ch);
 
 #ifdef CONSOLE_UART
@@ -1254,15 +1245,6 @@ int up_putc(int ch)
 
   esp32s3_lowputc_disable_all_uart_int(CONSOLE_DEV.priv, &int_status);
 #endif
-
-  /* Check for LF */
-
-  if (ch == '\n')
-    {
-      /* Add CR */
-
-      xtensa_lowputc('\r');
-    }
 
   xtensa_lowputc(ch);
 

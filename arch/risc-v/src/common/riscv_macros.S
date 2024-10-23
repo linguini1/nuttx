@@ -349,7 +349,7 @@
  * Name: riscv_mhartid
  *
  * Description:
- *   Context aware way to query hart id
+ *   Context aware way to query hart id (physical core ID)
  *
  * Returned Value:
  *   Hart id

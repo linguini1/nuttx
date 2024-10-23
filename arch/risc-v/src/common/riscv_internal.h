@@ -37,7 +37,6 @@
 
 #include <nuttx/irq.h>
 
-#include "riscv_sbi.h"
 #include "riscv_common_memorymap.h"
 
 /****************************************************************************
@@ -84,13 +83,6 @@
 
 /* Interrupt Stack macros */
 #define INT_STACK_SIZE  (STACK_ALIGN_DOWN(CONFIG_ARCH_INTERRUPTSTACK))
-
-/* In the RISC-V model, the state is saved in stack,
- * only a reference stored in TCB.
- */
-
-#define riscv_savestate(regs) (regs = (uintreg_t *)CURRENT_REGS)
-#define riscv_restorestate(regs) (CURRENT_REGS = regs)
 
 /* Determine which (if any) console driver to use.  If a console is enabled
  * and no other console device is specified, then a serial console is
@@ -197,6 +189,38 @@ static inline void putreg64(uint64_t v, const volatile uintreg_t a)
      __asm__ __volatile__("csrc " __STR(reg) ", %0" :: "rK"(bits)); \
   })
 
+#define SWAP_CSR(reg, val) \
+  ({ \
+     uintptr_t regval; \
+     __asm__ __volatile__("csrrw %0, " __STR(reg) ", %1" : "=r"(regval) \
+                                                         : "rK"(val)); \
+     regval; \
+  })
+
+#define WRITE_INDIRECT_CSR_REG0(reg, val) \
+  ({ \
+     WRITE_CSR(CSR_ISELECT, reg); \
+     WRITE_CSR(CSR_IREG, val); \
+  })
+
+#define READ_INDIRECT_CSR_REG0(reg, val) \
+  ({ \
+     WRITE_CSR(CSR_ISELECT, reg); \
+     READ_CSR(CSR_IREG, val); \
+  })
+
+#define SET_INDIRECT_CSR_REG0(reg, val) \
+  ({ \
+     WRITE_CSR(CSR_ISELECT, reg); \
+     SET_CSR(CSR_IREG, val); \
+  })
+
+#define CLEAR_INDIRECT_CSR_REG0(reg, val) \
+  ({ \
+     WRITE_CSR(CSR_ISELECT, reg); \
+     CLEAR_CSR(CSR_IREG, val); \
+  })
+
 #define riscv_append_pmp_region(a, b, s) \
   riscv_config_pmp_region(riscv_next_free_pmp_region(), a, b, s)
 
@@ -290,8 +314,6 @@ static inline uintptr_t *riscv_vpuregs(struct tcb_s *tcb)
 
 static inline void riscv_savecontext(struct tcb_s *tcb)
 {
-  tcb->xcp.regs = (uintreg_t *)CURRENT_REGS;
-
 #ifdef CONFIG_ARCH_FPU
   /* Save current process FPU state to TCB */
 
@@ -307,8 +329,6 @@ static inline void riscv_savecontext(struct tcb_s *tcb)
 
 static inline void riscv_restorecontext(struct tcb_s *tcb)
 {
-  CURRENT_REGS = (uintreg_t *)tcb->xcp.regs;
-
 #ifdef CONFIG_ARCH_FPU
   /* Restore FPU state for next process */
 
@@ -321,6 +341,10 @@ static inline void riscv_restorecontext(struct tcb_s *tcb)
   riscv_restorevpu(tcb->xcp.regs, riscv_vpuregs(tcb));
 #endif
 }
+
+#ifdef CONFIG_ARCH_RISCV_INTXCPT_EXTENSIONS
+void riscv_initial_extctx_state(struct tcb_s *tcb);
+#endif
 
 /* RISC-V PMP Config ********************************************************/
 
@@ -387,14 +411,14 @@ void riscv_stack_color(void *stackbase, size_t nbytes);
 
 #ifdef CONFIG_SMP
 void riscv_cpu_boot(int cpu);
-int riscv_pause_handler(int irq, void *c, void *arg);
+int riscv_smp_call_handler(int irq, void *c, void *arg);
 #endif
 
 /****************************************************************************
  * Name: riscv_mhartid
  *
  * Description:
- *   Context aware way to query hart id
+ *   Context aware way to query hart id (physical core ID)
  *
  * Returned Value:
  *   Hart id
@@ -403,11 +427,37 @@ int riscv_pause_handler(int irq, void *c, void *arg);
 
 uintptr_t riscv_mhartid(void);
 
+/****************************************************************************
+ * Name: riscv_hartid_to_cpuid
+ *
+ * Description:
+ *   Convert physical core number to logical core number. Default
+ *   implementation is 1:1 mapping, i.e. physical=logical.
+ *
+ ****************************************************************************/
+
+int riscv_hartid_to_cpuid(int hart);
+
+/****************************************************************************
+ * Name: riscv_cpuid_to_hartid
+ *
+ * Description:
+ *   Convert logical core number to physical core number. Default
+ *   implementation is 1:1 mapping, i.e. physical=logical.
+ *
+ ****************************************************************************/
+
+int riscv_cpuid_to_hartid(int cpu);
+
 /* If kernel runs in Supervisor mode, a system call trampoline is needed */
 
 #ifdef CONFIG_ARCH_USE_S_MODE
 void *riscv_perform_syscall(uintreg_t *regs);
 #endif
+
+void riscv_jump_to_user(uintptr_t entry, uintreg_t a0, uintreg_t a1,
+                        uintreg_t a2, uintreg_t sp,
+                        uintreg_t *regs) noreturn_function;
 
 /* Context switching via system calls ***************************************/
 

@@ -1,6 +1,8 @@
 /****************************************************************************
  * include/nuttx/reset/reset.h
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -26,9 +28,9 @@
  ****************************************************************************/
 
 #include <sys/types.h>
-#include <stdatomic.h>
 #include <stdbool.h>
 
+#include <nuttx/atomic.h>
 #include <nuttx/list.h>
 
 /****************************************************************************

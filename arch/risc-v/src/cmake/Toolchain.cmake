@@ -107,11 +107,22 @@ elseif(CONFIG_LTO_FULL)
   endif()
 endif()
 
-# override the ARCHIVE command
+set(NO_LTO "-fno-lto")
 
-set(CMAKE_C_ARCHIVE_CREATE "<CMAKE_AR> rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
-set(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
-set(CMAKE_ASM_ARCHIVE_CREATE "<CMAKE_AR> rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
+# override the ARCHIVE command
+set(CMAKE_ARCHIVE_COMMAND "<CMAKE_AR> rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
+set(CMAKE_RANLIB_COMMAND "<CMAKE_RANLIB> <TARGET>")
+set(CMAKE_C_ARCHIVE_CREATE ${CMAKE_ARCHIVE_COMMAND})
+set(CMAKE_CXX_ARCHIVE_CREATE ${CMAKE_ARCHIVE_COMMAND})
+set(CMAKE_ASM_ARCHIVE_CREATE ${CMAKE_ARCHIVE_COMMAND})
+
+set(CMAKE_C_ARCHIVE_APPEND ${CMAKE_ARCHIVE_COMMAND})
+set(CMAKE_CXX_ARCHIVE_APPEND ${CMAKE_ARCHIVE_COMMAND})
+set(CMAKE_ASM_ARCHIVE_APPEND ${CMAKE_ARCHIVE_COMMAND})
+
+set(CMAKE_C_ARCHIVE_FINISH ${CMAKE_RANLIB_COMMAND})
+set(CMAKE_CXX_ARCHIVE_FINISH ${CMAKE_RANLIB_COMMAND})
+set(CMAKE_ASM_ARCHIVE_FINISH ${CMAKE_RANLIB_COMMAND})
 
 if(CONFIG_DEBUG_CUSTOMOPT)
   add_compile_options(${CONFIG_DEBUG_OPTLEVEL})
@@ -147,7 +158,7 @@ if(${CONFIG_STACK_USAGE_WARNING})
   endif()
 endif()
 
-if(CONFIG_ARCH_COVERAGE)
+if(CONFIG_SCHED_GCOV)
   add_compile_options(-fprofile-generate -ftest-coverage)
 endif()
 
@@ -211,11 +222,11 @@ if(CONFIG_DEBUG_LINK_MAP)
 endif()
 
 if(CONFIG_DEBUG_SYMBOLS)
-  add_compile_options(-g)
+  add_compile_options(${CONFIG_DEBUG_SYMBOLS_LEVEL})
 endif()
 
 # Generic GNU RVG toolchain
-if(${CONFIG_RISCV_TOOLCHAIN} STREQUAL GNU_RVG)
+if(CONFIG_RISCV_TOOLCHAIN STREQUAL GNU_RVG)
 
   set(ARCHCPUEXTFLAGS i)
 
@@ -247,14 +258,15 @@ if(${CONFIG_RISCV_TOOLCHAIN} STREQUAL GNU_RVG)
     set(ARCHCPUEXTFLAGS ${ARCHCPUEXTFLAGS}v)
   endif()
 
+  if(NOT GCCVER)
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} --version
+                    OUTPUT_VARIABLE GCC_VERSION_OUTPUT)
+    string(REGEX MATCH "([0-9]+)\\.[0-9]+" GCC_VERSION_REGEX
+                 "${GCC_VERSION_OUTPUT}")
+    set(GCCVER ${CMAKE_MATCH_1})
+  endif()
+
   if(CONFIG_ARCH_RV_ISA_ZICSR_ZIFENCEI)
-    if(NOT DEFINED GCCVER)
-      execute_process(COMMAND ${CMAKE_CXX_COMPILER} --version
-                      OUTPUT_VARIABLE GCC_VERSION_OUTPUT)
-      string(REGEX MATCH "\\+\\+.* ([0-9]+)\\.[0-9]+" GCC_VERSION_REGEX
-                   "${GCC_VERSION_OUTPUT}")
-      set(GCCVER ${CMAKE_MATCH_1})
-    endif()
     if(GCCVER GREATER_EQUAL 12 OR CONFIG_ARCH_TOOLCHAIN_CLANG)
       set(ARCHCPUEXTFLAGS ${ARCHCPUEXTFLAGS}_zicsr_zifencei)
     endif()
@@ -343,11 +355,11 @@ if(CONFIG_MM_KASAN_ALL)
 endif()
 
 if(CONFIG_MM_KASAN_DISABLE_READS_CHECK)
-  add_compile_options(--param asan-instrument-reads=0)
+  add_compile_options(--param=asan-instrument-reads=0)
 endif()
 
 if(CONFIG_MM_KASAN_DISABLE_WRITES_CHECK)
-  add_compile_options(--param asan-instrument-writes=0)
+  add_compile_options(--param=asan-instrument-writes=0)
 endif()
 
 if(CONFIG_MM_UBSAN_ALL)

@@ -68,10 +68,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#ifndef ALIGN_UP
-#  define ALIGN_UP(num, align) (((num) + ((align) - 1)) & ~((align) - 1))
-#endif
-
 /* IRQ Stack Frame Format.  Each value is a uint32_t register index */
 
 #define REG_PC              (0)  /* Return PC */
@@ -142,9 +138,13 @@
 #endif
 
 #if XCHAL_CP_NUM > 0
-  /* FPU first address must align to CP align size. */
+  /* FPU first address must align to CP align size.
+   * ESP32 3rd party redefine the ALIGN_UP, so define a new macro XALIGN_UP()
+   * instead use ALGIN_UP() in nuttx/nuttx.h
+   */
 
-#  define COMMON_CTX_REGS   ALIGN_UP(_REG_CP_START, XCHAL_TOTAL_SA_ALIGN / 4)
+#  define XALIGN_UP(x,a)    (((x) + ((a) - 1)) & ~((a) - 1))
+#  define COMMON_CTX_REGS   XALIGN_UP(_REG_CP_START, XCHAL_TOTAL_SA_ALIGN / 4)
 #  define COPROC_CTX_REGS   (XTENSA_CP_SA_SIZE / 4)
 #  define RESERVE_REGS      8
 #  define XCPTCONTEXT_REGS  (COMMON_CTX_REGS + COPROC_CTX_REGS + RESERVE_REGS)
@@ -178,12 +178,6 @@ struct xcpt_syscall_s
 
 struct xcptcontext
 {
-  /* The following function pointer is non-zero if there are pending signals
-   * to be processed.
-   */
-
-  void *sigdeliver; /* Actual type is sig_deliver_t */
-
   /* These are saved copies of registers used during signal processing.
    *
    * REVISIT:  Because there is only one copy of these save areas,
@@ -250,7 +244,7 @@ noinstrument_function static inline void xtensa_setps(uint32_t ps)
 
 /* Return the current value of the stack pointer */
 
-static inline uint32_t up_getsp(void)
+static inline_function uint32_t up_getsp(void)
 {
   register uint32_t sp;
 
@@ -367,9 +361,9 @@ extern "C"
 
 #ifndef __ASSEMBLY__
 /* g_current_regs[] holds a references to the current interrupt level
- * register storage structure.  It is non-NULL only during interrupt
- * processing.  Access to g_current_regs[] must be through the macro
- * CURRENT_REGS for portability.
+ * register storage structure.  If is non-NULL only during interrupt
+ * processing.  Access to g_current_regs[] must be through the
+ * [get/set]_current_regs for portability.
  */
 
 /* For the case of architectures with multiple CPUs, then there must be one
@@ -377,7 +371,6 @@ extern "C"
  */
 
 EXTERN volatile uint32_t *g_current_regs[CONFIG_SMP_NCPUS];
-#define CURRENT_REGS (g_current_regs[up_cpu_index()])
 #endif
 
 /****************************************************************************
@@ -412,23 +405,32 @@ irqstate_t xtensa_disable_interrupts(irqstate_t mask);
  * Name: up_cpu_index
  *
  * Description:
- *   Return an index in the range of 0 through (CONFIG_SMP_NCPUS-1) that
- *   corresponds to the currently executing CPU.
- *
- * Input Parameters:
- *   None
- *
- * Returned Value:
- *   An integer index in the range of 0 through (CONFIG_SMP_NCPUS-1) that
- *   corresponds to the currently executing CPU.
+ *   Return the real core number regardless CONFIG_SMP setting
  *
  ****************************************************************************/
 
+#ifdef CONFIG_ARCH_HAVE_MULTICPU
+int up_cpu_index(void) noinstrument_function;
+#endif /* CONFIG_ARCH_HAVE_MULTICPU */
+
+noinstrument_function static inline_function uint32_t *up_current_regs(void)
+{
 #ifdef CONFIG_SMP
-int up_cpu_index(void);
+  return (uint32_t *)g_current_regs[up_cpu_index()];
 #else
-#  define up_cpu_index() (0)
+  return (uint32_t *)g_current_regs[0];
 #endif
+}
+
+noinstrument_function
+static inline_function void up_set_current_regs(uint32_t *regs)
+{
+#ifdef CONFIG_SMP
+  g_current_regs[up_cpu_index()] = regs;
+#else
+  g_current_regs[0] = regs;
+#endif
+}
 
 /****************************************************************************
  * Name: up_interrupt_context
@@ -440,13 +442,13 @@ int up_cpu_index(void);
  ****************************************************************************/
 
 #ifndef __ASSEMBLY__
-noinstrument_function static inline bool up_interrupt_context(void)
+noinstrument_function static inline_function bool up_interrupt_context(void)
 {
 #ifdef CONFIG_SMP
   irqstate_t flags = up_irq_save();
 #endif
 
-  bool ret = CURRENT_REGS != NULL;
+  bool ret = up_current_regs() != NULL;
 
 #ifdef CONFIG_SMP
   up_irq_restore(flags);
@@ -455,6 +457,13 @@ noinstrument_function static inline bool up_interrupt_context(void)
   return ret;
 }
 #endif
+
+/****************************************************************************
+ * Name: up_getusrpc
+ ****************************************************************************/
+
+#define up_getusrpc(regs) \
+    (((uint32_t *)((regs) ? (regs) : up_current_regs()))[REG_PC])
 
 #undef EXTERN
 #ifdef __cplusplus

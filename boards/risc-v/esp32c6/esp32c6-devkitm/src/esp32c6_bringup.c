@@ -72,8 +72,12 @@
 #  include "esp_board_spidev.h"
 #endif
 
+#ifdef CONFIG_ESPRESSIF_TEMP
+#  include "espressif/esp_temperature_sensor.h"
+#endif
+
 #ifdef CONFIG_ESPRESSIF_WIFI_BT_COEXIST
-#  include "esp_coexist_internal.h"
+#  include "private/esp_coexist_internal.h"
 #endif
 
 #ifdef CONFIG_ESPRESSIF_WIFI
@@ -83,6 +87,10 @@
 #ifdef CONFIG_SPI_SLAVE_DRIVER
 #  include "espressif/esp_spi.h"
 #  include "esp_board_spislavedev.h"
+#endif
+
+#ifdef CONFIG_CL_MFRC522
+  #include "esp_board_mfrc522.h"
 #endif
 
 #include "esp32c6-devkitm.h"
@@ -251,6 +259,16 @@ int esp_bringup(void)
     }
 #endif
 
+#ifdef CONFIG_ESPRESSIF_TEMP
+  struct esp_temp_sensor_config_t cfg = TEMPERATURE_SENSOR_CONFIG(10, 50);
+  ret = esp_temperature_sensor_initialize(cfg);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "Failed to initialize temperature sensor driver: %d\n",
+             ret);
+    }
+#endif
+
 #ifdef CONFIG_ESPRESSIF_TWAI0
 
   /* Initialize TWAI and register the TWAI driver. */
@@ -321,6 +339,14 @@ int esp_bringup(void)
       syslog(LOG_ERR, "ERROR: board_ledc_setup() failed: %d\n", ret);
     }
 #endif /* CONFIG_ESPRESSIF_LEDC */
+
+#ifdef CONFIG_CL_MFRC522
+  ret = board_mfrc522_initialize("/dev/rfid0");
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: board_mfrc522_initialize() failed: %d\n", ret);
+    }
+#endif
 
   /* If we got here then perhaps not all initialization was successful, but
    * at least enough succeeded to bring-up NSH with perhaps reduced

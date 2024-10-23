@@ -45,7 +45,8 @@
 #include <nuttx/semaphore.h>
 #include <nuttx/spinlock.h>
 #include <nuttx/mqueue.h>
-#include <nuttx/mm/circbuf.h>
+#include <nuttx/circbuf.h>
+#include <nuttx/nuttx.h>
 #include <nuttx/audio/audio.h>
 #include <nuttx/audio/i2s.h>
 
@@ -111,20 +112,12 @@
 #  define I2S1_RX_ENABLED 0
 #endif
 
-#ifndef ALIGN_UP
-#  define ALIGN_UP(num, align) (((num) + ((align) - 1)) & ~((align) - 1))
-#endif
-
 /* Debug ********************************************************************/
 
 #ifdef CONFIG_DEBUG_I2S_INFO
 #  define CONFIG_ESP32S3_I2S_DUMPBUFFERS
 #else
 #  undef CONFIG_ESP32S3_I2S_DUMPBUFFERS
-#endif
-
-#ifndef CONFIG_ESP32S3_I2S_MAXINFLIGHT
-#  define CONFIG_ESP32S3_I2S_MAXINFLIGHT 4
 #endif
 
 #define I2S_GPIO_UNUSED -1      /* For signals which are not used */
@@ -3053,10 +3046,6 @@ static int i2s_dma_setup(struct esp32s3_i2s_s *priv)
   int ret;
   int i2s_dma_dev;
 
-  /* Initialize GDMA controller */
-
-  esp32s3_dma_init();
-
   if (priv->config->port == 0)
     {
       i2s_dma_dev = ESP32S3_DMA_PERIPH_I2S0;
@@ -3072,7 +3061,6 @@ static int i2s_dma_setup(struct esp32s3_i2s_s *priv)
   if (priv->dma_channel < 0)
     {
       i2serr("Failed to allocate GDMA channel\n");
-
       return ERROR;
     }
 
@@ -3080,7 +3068,7 @@ static int i2s_dma_setup(struct esp32s3_i2s_s *priv)
    * will be assigned to a different CPU interrupt.
    */
 
-  priv->cpu = up_cpu_index();
+  priv->cpu = this_cpu();
 
 #ifdef I2S_HAVE_TX
   if (priv->config->tx_en)
@@ -3171,10 +3159,6 @@ struct i2s_dev_s *esp32s3_i2sbus_initialize(int port)
         return NULL;
     }
 
-  flags = spin_lock_irqsave(&priv->slock);
-
-  i2s_configure(priv);
-
   /* Allocate buffer containers */
 
   ret = i2s_buf_initialize(priv);
@@ -3182,6 +3166,10 @@ struct i2s_dev_s *esp32s3_i2sbus_initialize(int port)
     {
       goto err;
     }
+
+  flags = spin_lock_irqsave(&priv->slock);
+
+  i2s_configure(priv);
 
   ret = i2s_dma_setup(priv);
   if (ret < 0)

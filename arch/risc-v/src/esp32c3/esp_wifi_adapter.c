@@ -74,9 +74,9 @@
 #include "esp_private/esp_clk.h"
 #include "os.h"
 #include "esp_smartconfig.h"
-#include "esp_coexist_internal.h"
+#include "private/esp_coexist_internal.h"
 #include "rom/ets_sys.h"
-#include "esp_modem_wrapper.h"
+#include "private/esp_modem_wrapper.h"
 
 #include "esp_wlan.h"
 #include "esp_wifi_adapter.h"
@@ -282,6 +282,8 @@ int32_t esp_event_post_wrapper(const char *event_base,
                                uint32_t ticks);
 static void wifi_apb80m_request_wrapper(void);
 static void wifi_apb80m_release_wrapper(void);
+static void esp_phy_enable_wrapper(void);
+static void esp_phy_disable_wrapper(void);
 static void timer_arm_wrapper(void *timer, uint32_t tmout, bool repeat);
 static void wifi_reset_mac_wrapper(void);
 static void wifi_rtc_enable_iso_wrapper(void);
@@ -327,6 +329,8 @@ static void *coex_schm_curr_phase_get_wrapper(void);
 static int coex_register_start_cb_wrapper(int (* cb)(void));
 static int coex_schm_process_restart_wrapper(void);
 static int coex_schm_register_cb_wrapper(int type, int(*cb)(int));
+static int coex_schm_flexible_period_set_wrapper(uint8_t period);
+static uint8_t coex_schm_flexible_period_get_wrapper(void);
 static void esp_empty_wrapper(void);
 
 /* Second block of functions
@@ -501,8 +505,8 @@ wifi_osi_funcs_t g_wifi_osi_funcs =
       esp_empty_wrapper,
   ._wifi_apb80m_request = wifi_apb80m_request_wrapper,
   ._wifi_apb80m_release = wifi_apb80m_release_wrapper,
-  ._phy_disable = esp_phy_disable,
-  ._phy_enable = esp_phy_enable,
+  ._phy_disable = esp_phy_disable_wrapper,
+  ._phy_enable = esp_phy_enable_wrapper,
   ._phy_update_country_info = esp_phy_update_country_info,
   ._read_mac = esp_read_mac_wrapper,
   ._timer_arm = timer_arm_wrapper,
@@ -564,6 +568,8 @@ wifi_osi_funcs_t g_wifi_osi_funcs =
   ._coex_register_start_cb = coex_register_start_cb_wrapper,
   ._coex_schm_process_restart = coex_schm_process_restart_wrapper,
   ._coex_schm_register_cb = coex_schm_register_cb_wrapper,
+  ._coex_schm_flexible_period_set = coex_schm_flexible_period_set_wrapper,
+  ._coex_schm_flexible_period_get = coex_schm_flexible_period_get_wrapper,
   ._magic = ESP_WIFI_OS_ADAPTER_MAGIC,
 };
 
@@ -1562,6 +1568,48 @@ static void IRAM_ATTR wifi_apb80m_release_wrapper(void)
 }
 
 /****************************************************************************
+ * Name: esp_phy_enable_wrapper
+ *
+ * Description:
+ *   This function enables the WiFi PHY. It first enables the PHY for the
+ *   WiFi modem, then sets the WiFi PHY enable flag to 1.
+ *
+ * Input Parameters:
+ *   None
+ *
+ * Returned Value:
+ *   None
+ *
+ ****************************************************************************/
+
+static void esp_phy_enable_wrapper(void)
+{
+  esp_phy_enable(PHY_MODEM_WIFI);
+  phy_wifi_enable_set(1);
+}
+
+/****************************************************************************
+ * Name: esp_phy_disable_wrapper
+ *
+ * Description:
+ *   This function disables the WiFi PHY. It first sets the WiFi PHY enable
+ *   flag to 0, then disables the PHY for the WiFi modem.
+ *
+ * Input Parameters:
+ *   None
+ *
+ * Returned Value:
+ *   None
+ *
+ ****************************************************************************/
+
+static void esp_phy_disable_wrapper(void)
+{
+  phy_wifi_enable_set(0);
+  esp_phy_disable(PHY_MODEM_WIFI);
+}
+
+/****************************************************************************
  * Name: timer_arm_wrapper
  *
  * Description:
@@ -2346,6 +2394,60 @@ static int coex_schm_register_cb_wrapper(int type, int(*cb)(int))
 }
 
 /****************************************************************************
+ * Name: coex_schm_flexible_period_set_wrapper
+ *
+ * Description:
+ *   This function sets the coexistence scheme flexible period. If the
+ *   coexistence power management feature is enabled
+ *   (CONFIG_ESP_COEX_POWER_MANAGEMENT), it calls the function
+ *   coex_schm_flexible_period_set with the given period and returns its
+ *   result. If the feature is not enabled, it returns 0.
+ *
+ * Input Parameters:
+ *   period - The flexible period to set.
+ *
+ * Returned Value:
+ *   ESP_OK on success, or the result of coex_schm_flexible_period_set.
+ *
+ ****************************************************************************/
+
+static int coex_schm_flexible_period_set_wrapper(uint8_t period)
+{
+#if CONFIG_ESP_COEX_POWER_MANAGEMENT
+  return coex_schm_flexible_period_set(period);
+#else
+  return 0;
+#endif
+}
+
+/****************************************************************************
+ * Name: coex_schm_flexible_period_get_wrapper
+ *
+ * Description:
+ *   This function gets the coexistence scheme flexible period. If the
+ *   coexistence power management feature is enabled
+ *   (CONFIG_ESP_COEX_POWER_MANAGEMENT), it calls the function
+ *   coex_schm_flexible_period_get and returns its result. If the feature is
+ *   not enabled, it returns 1.
+ *
+ * Input Parameters:
+ *   None
+ *
+ * Returned Value:
+ *   The coexistence scheme flexible period.
+ *
+ ****************************************************************************/
+
+static uint8_t coex_schm_flexible_period_get_wrapper(void)
+{
+#if CONFIG_ESP_COEX_POWER_MANAGEMENT
+  return coex_schm_flexible_period_get();
+#else
+  return 1;
+#endif
+}
+
+/****************************************************************************
  * Name: esp_empty_wrapper
  *
  * Description:
@@ -3042,15 +3144,10 @@ static void esp_nvs_close(uint32_t handle)
 
 static void esp_update_time(struct timespec *timespec, uint32_t ticks)
 {
-  uint32_t tmp;
+  struct timespec ts;
 
-  tmp = TICK2SEC(ticks);
-  timespec->tv_sec += tmp;
-
-  ticks -= SEC2TICK(tmp);
-  tmp = TICK2NSEC(ticks);
-
-  timespec->tv_nsec += tmp;
+  clock_ticks2time(&ts, ticks);
+  clock_timespec_add(timespec, &ts, timespec);
 }
 
 #ifdef ESP_WLAN_HAS_STA
@@ -5119,7 +5216,7 @@ int esp_wifi_softap_password(struct iwreq *iwr, bool set)
 
       if (ext->alg != IW_ENCODE_ALG_NONE)
         {
-          memcpy(wifi_cfg.sta.password, pdata, len);
+          memcpy(wifi_cfg.ap.password, pdata, len);
         }
 
       if (g_softap_started)

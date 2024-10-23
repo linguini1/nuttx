@@ -60,9 +60,9 @@
  ****************************************************************************/
 
 #if defined(CONFIG_SYSLOG_DEFAULT)
-static int syslog_default_putc(FAR struct syslog_channel_s *channel,
+static int syslog_default_putc(FAR syslog_channel_t *channel,
                                int ch);
-static ssize_t syslog_default_write(FAR struct syslog_channel_s *channel,
+static ssize_t syslog_default_write(FAR syslog_channel_t *channel,
                                     FAR const char *buffer, size_t buflen);
 #endif
 
@@ -70,7 +70,11 @@ static ssize_t syslog_default_write(FAR struct syslog_channel_s *channel,
  * Private Data
  ****************************************************************************/
 
-#if defined(CONFIG_RAMLOG_SYSLOG)
+#if defined(CONFIG_SYSLOG_DEFAULT) && defined(CONFIG_ARCH_LOWPUTC)
+static mutex_t g_lowputs_lock = NXMUTEX_INITIALIZER;
+#endif
+
+#ifdef CONFIG_RAMLOG_SYSLOG
 static const struct syslog_channel_ops_s g_ramlog_channel_ops =
 {
   ramlog_putc,
@@ -79,17 +83,19 @@ static const struct syslog_channel_ops_s g_ramlog_channel_ops =
   ramlog_write
 };
 
-static struct syslog_channel_s g_ramlog_channel =
+static syslog_channel_t g_ramlog_channel =
 {
   &g_ramlog_channel_ops
 #  ifdef CONFIG_SYSLOG_IOCTL
   , "ram"
-  , false
+#  endif
+#  ifdef CONFIG_SYSLOG_CRLF
+  , SYSLOG_CHANNEL_DISABLE_CRLF
 #  endif
 };
 #endif
 
-#if defined(CONFIG_SYSLOG_RPMSG)
+#ifdef CONFIG_SYSLOG_RPMSG
 static const struct syslog_channel_ops_s g_rpmsg_channel_ops =
 {
   syslog_rpmsg_putc,
@@ -99,17 +105,19 @@ static const struct syslog_channel_ops_s g_rpmsg_channel_ops =
   syslog_rpmsg_write
 };
 
-static struct syslog_channel_s g_rpmsg_channel =
+static syslog_channel_t g_rpmsg_channel =
 {
   &g_rpmsg_channel_ops
 #  ifdef CONFIG_SYSLOG_IOCTL
   , "rpmsg"
-  , false
+#  endif
+#  ifdef CONFIG_SYSLOG_CRLF
+  , SYSLOG_CHANNEL_DISABLE_CRLF
 #  endif
 };
 #endif
 
-#if defined(CONFIG_SYSLOG_RTT)
+#ifdef CONFIG_SYSLOG_RTT
 static const struct syslog_channel_ops_s g_rtt_channel_ops =
 {
   syslog_rtt_putc,
@@ -119,17 +127,19 @@ static const struct syslog_channel_ops_s g_rtt_channel_ops =
   syslog_rtt_write
 };
 
-static struct syslog_channel_s g_rtt_channel =
+static syslog_channel_t g_rtt_channel =
 {
   &g_rtt_channel_ops
 #  ifdef CONFIG_SYSLOG_IOCTL
   , "rtt"
-  , false
+#  endif
+#  ifdef CONFIG_SYSLOG_CRLF
+  , SYSLOG_CHANNEL_DISABLE_CRLF
 #  endif
 };
 #endif
 
-#if defined(CONFIG_SYSLOG_DEFAULT)
+#ifdef CONFIG_SYSLOG_DEFAULT
 static const struct syslog_channel_ops_s g_default_channel_ops =
 {
   syslog_default_putc,
@@ -138,12 +148,11 @@ static const struct syslog_channel_ops_s g_default_channel_ops =
   syslog_default_write
 };
 
-static struct syslog_channel_s g_default_channel =
+static syslog_channel_t g_default_channel =
 {
   &g_default_channel_ops
 #  ifdef CONFIG_SYSLOG_IOCTL
   , "default"
-  , false
 #  endif
 };
 #endif
@@ -187,22 +196,22 @@ static struct syslog_channel_s g_default_channel =
 
 /* This is the current syslog channel in use */
 
-FAR struct syslog_channel_s
-*g_syslog_channel[CONFIG_SYSLOG_MAX_CHANNELS] =
+FAR syslog_channel_t *
+#ifndef CONFIG_SYSLOG_REGISTER
+const
+#endif
+g_syslog_channel[CONFIG_SYSLOG_MAX_CHANNELS] =
 {
-#if defined(CONFIG_SYSLOG_DEFAULT)
+#ifdef CONFIG_SYSLOG_DEFAULT
   &g_default_channel,
 #endif
-
-#if defined(CONFIG_RAMLOG_SYSLOG)
+#ifdef CONFIG_RAMLOG_SYSLOG
   &g_ramlog_channel,
 #endif
-
-#if defined(CONFIG_SYSLOG_RPMSG)
+#ifdef CONFIG_SYSLOG_RPMSG
   &g_rpmsg_channel,
 #endif
-
-#if defined(CONFIG_SYSLOG_RTT)
+#ifdef CONFIG_SYSLOG_RTT
   &g_rtt_channel
 #endif
 };
@@ -220,30 +229,28 @@ FAR struct syslog_channel_s
  *
  ****************************************************************************/
 
-#if defined(CONFIG_SYSLOG_DEFAULT)
-static int syslog_default_putc(FAR struct syslog_channel_s *channel, int ch)
+#ifdef CONFIG_SYSLOG_DEFAULT
+static int syslog_default_putc(FAR syslog_channel_t *channel, int ch)
 {
   UNUSED(channel);
 
-#if defined(CONFIG_ARCH_LOWPUTC)
+#  ifdef CONFIG_ARCH_LOWPUTC
   return up_putc(ch);
-#else
+#  else
   return ch;
-#endif
+#  endif
 }
 
-static ssize_t syslog_default_write(FAR struct syslog_channel_s *channel,
+static ssize_t syslog_default_write(FAR syslog_channel_t *channel,
                                     FAR const char *buffer, size_t buflen)
 {
-#if defined(CONFIG_ARCH_LOWPUTC)
-  static mutex_t lock = NXMUTEX_INITIALIZER;
-
-  nxmutex_lock(&lock);
+#  ifdef CONFIG_ARCH_LOWPUTC
+  nxmutex_lock(&g_lowputs_lock);
 
   up_nputs(buffer, buflen);
 
-  nxmutex_unlock(&lock);
-#endif
+  nxmutex_unlock(&g_lowputs_lock);
+#  endif
 
   UNUSED(channel);
   return buflen;
@@ -270,20 +277,19 @@ static ssize_t syslog_default_write(FAR struct syslog_channel_s *channel,
  *
  ****************************************************************************/
 
-int syslog_channel(FAR struct syslog_channel_s *channel)
+#ifdef CONFIG_SYSLOG_REGISTER
+int syslog_channel_register(FAR syslog_channel_t *channel)
 {
-#if (CONFIG_SYSLOG_MAX_CHANNELS != 1)
-  int i;
-#endif
-
   DEBUGASSERT(channel != NULL);
 
   if (channel != NULL)
     {
-#if (CONFIG_SYSLOG_MAX_CHANNELS == 1)
+#if CONFIG_SYSLOG_MAX_CHANNELS == 1
       g_syslog_channel[0] = channel;
       return OK;
 #else
+      int i;
+
       for (i = 0; i < CONFIG_SYSLOG_MAX_CHANNELS; i++)
         {
           if (g_syslog_channel[i] == NULL)
@@ -311,7 +317,7 @@ int syslog_channel(FAR struct syslog_channel_s *channel)
 }
 
 /****************************************************************************
- * Name: syslog_channel_remove
+ * Name: syslog_channel_unregister
  *
  * Description:
  *   Removes an already configured SYSLOG channel from the list of used
@@ -326,7 +332,7 @@ int syslog_channel(FAR struct syslog_channel_s *channel)
  *
  ****************************************************************************/
 
-int syslog_channel_remove(FAR struct syslog_channel_s *channel)
+int syslog_channel_unregister(FAR syslog_channel_t *channel)
 {
   int i;
 
@@ -367,3 +373,4 @@ int syslog_channel_remove(FAR struct syslog_channel_s *channel)
 
   return -EINVAL;
 }
+#endif

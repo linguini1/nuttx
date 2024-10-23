@@ -81,10 +81,6 @@ ifneq ($(CONFIG_STACK_USAGE_WARNING),0)
   ARCHOPTIMIZATION += -Wstack-usage=$(CONFIG_STACK_USAGE_WARNING)
 endif
 
-ifeq ($(CONFIG_ARCH_COVERAGE_ALL),y)
-  ARCHOPTIMIZATION += -fprofile-generate -ftest-coverage
-endif
-
 ARCHCFLAGS += -fno-common
 ARCHCXXFLAGS += -fno-common
 
@@ -150,7 +146,7 @@ ifeq ($(CONFIG_DEBUG_LINK_MAP),y)
 endif
 
 ifeq ($(CONFIG_DEBUG_SYMBOLS),y)
-  ARCHOPTIMIZATION += -g
+  ARCHOPTIMIZATION += $(CONFIG_DEBUG_SYMBOLS_LEVEL)
 endif
 
 # Generic GNU RVG toolchain
@@ -213,11 +209,15 @@ ifeq ($(CONFIG_RISCV_TOOLCHAIN),GNU_RVG)
     ARCHCPUEXTFLAGS := $(ARCHCPUEXTFLAGS)v
   endif
 
+  ifeq ($(GCCVER),)
+    export GCCVER = ${shell $(CROSSDEV)gcc --version | grep gcc | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | tail -n 1 | cut -d"." -f1 }
+  endif
+
   ifeq ($(CONFIG_ARCH_RV_ISA_ZICSR_ZIFENCEI),y)
-    ifeq ($(GCCVER),)
-      export GCCVER = ${shell $(CROSSDEV)gcc --version | grep gcc | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | tail -n 1 | cut -d"." -f1 }
+    ifeq ($(shell expr "$(GCCVER)" \>= 12), 1)
+      ARCHCPUEXTFLAGS := $(ARCHCPUEXTFLAGS)_zicsr_zifencei
     endif
-    ifeq ($(shell expr $(GCCVER) \>= 12), 1)
+    ifeq ($(CONFIG_ARCH_TOOLCHAIN_CLANG),y)
       ARCHCPUEXTFLAGS := $(ARCHCPUEXTFLAGS)_zicsr_zifencei
     endif
   endif
@@ -405,9 +405,28 @@ ifeq ($(CONFIG_LIBSUPCXX),y)
   EXTRA_LIBS += $(wildcard $(shell $(CC) $(ARCHCPUFLAGS) --print-file-name=libsupc++.a))
 endif
 
-ifeq ($(CONFIG_ARCH_COVERAGE),y)
+ifeq ($(CONFIG_SCHED_GCOV),y)
   EXTRA_LIBS += $(wildcard $(shell $(CC) $(ARCHCPUFLAGS) --print-file-name=libgcov.a))
 endif
+
+# Loadable module definitions
+
+CMODULEFLAGS = $(CFLAGS) -fvisibility=hidden
+LDMODULEFLAGS = -r -T $(call CONVERT_PATH,$(TOPDIR)/libs/libc/modlib/gnu-elf.ld)
+
+# ELF module definitions
+
+CELFFLAGS = $(CFLAGS) -fvisibility=hidden
+CXXELFFLAGS = $(CXXFLAGS) -fvisibility=hidden
+
+LDELFFLAGS = -r -e main
+ifeq ($(CONFIG_ARCH_RV32),y)
+  LDELFFLAGS += --oformat elf32-littleriscv
+else
+  LDELFFLAGS += --oformat elf64-littleriscv
+endif
+
+LDELFFLAGS += -T $(call CONVERT_PATH,$(TOPDIR)/libs/libc/modlib/gnu-elf.ld)
 
 # Zig toolchain
 
@@ -420,6 +439,10 @@ include $(TOPDIR)/tools/Rust.defs
 # LDC (LLVM D Compiler) toolchain
 
 include $(TOPDIR)/tools/D.defs
+
+# Swift 6 toolchain
+
+include $(TOPDIR)/tools/Swift.defs
 
 # Shared library build flags
 

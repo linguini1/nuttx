@@ -1,7 +1,8 @@
 /****************************************************************************
  * libs/libc/stdio/lib_fgetwc.c
  *
- * Copyright © 2005-2014 Rich Felker, et al.
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2005-2014 Rich Felker, et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -69,7 +70,8 @@ wint_t fgetwc_unlocked(FAR FILE *f)
 
   while (l == -2)
     {
-      b = c = getc_unlocked(f);
+      c = getc_unlocked(f);
+      b = (char)c;
       if (c < 0)
         {
           if (!mbsinit(&st))

@@ -1,5 +1,7 @@
 *.a
 *.adb
+*.dba
+*.dbo
 *.asm
 *.bin
 *.d
@@ -12,6 +14,7 @@
 *.hex
 *.i
 *.ihx
+*.inf
 *.lib
 *.lod
 *.lst
@@ -29,6 +32,8 @@
 *.dds
 *.su
 *.pyc
+*.mapfile
+*.SystemMap
 *~
 .depend
 /.config
@@ -39,6 +44,7 @@
 /.cache
 /.clang-format
 /.gdbinit
+/.gdb_history
 /.project
 /.version
 /_SAVED_APPS_config
@@ -46,8 +52,10 @@
 /defconfig
 /Make.defs
 /nuttx
+/nuttx32
 /nuttx-*
 /nuttx.*
+/nuttx_user*
 /staging
 /tags
 /TAGS
@@ -68,3 +76,7 @@ tools/gdb/__pycache__
 .ccls-cache
 compile_commands.json
 imx9-sdimage.img
+kwarning
+SAVEMake.defs
+SAVEconfig
+.aider*

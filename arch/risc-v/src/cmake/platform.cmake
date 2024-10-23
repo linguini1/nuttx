@@ -61,7 +61,7 @@ if(CONFIG_LIBSUPCXX)
   list(APPEND EXTRA_LIB ${extra_library})
 endif()
 
-if(CONFIG_ARCH_COVERAGE)
+if(CONFIG_SCHED_GCOV)
   execute_process(
     COMMAND ${CMAKE_C_COMPILER} ${CMAKE_C_FLAG_ARGS} ${NUTTX_EXTRA_FLAGS}
             --print-file-name=libgcov.a
@@ -72,4 +72,4 @@ endif()
 
 nuttx_add_extra_library(${EXTRA_LIB})
 
-set(PREPROCES ${CMAKE_C_COMPILER} ${CMAKE_C_FLAG_ARGS} -E -P -x c)
+set(PREPROCESS ${CMAKE_C_COMPILER} ${CMAKE_C_FLAG_ARGS} -E -P -x c)

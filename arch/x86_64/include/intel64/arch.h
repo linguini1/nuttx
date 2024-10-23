@@ -208,6 +208,8 @@
 #  define X86_64_CPUID_07_AVX512VL    (1 << 31)
 #define X86_64_CPUID_XSAVE            0x0d
 #define X86_64_CPUID_TSC              0x15
+#define X86_64_CPUID_EXTINFO          0x80000001
+#  define X86_64_CPUID_EXTINFO_RDTSCP (1 << 27)
 
 /* MSR Definitions */
 
@@ -275,7 +277,7 @@
 #  define MSR_X2APIC_ICR_OTHERS        0x000c0000  /* Send to all APICs, excluding self. */
 #  define MSR_X2APIC_ICR_BUSY          0x00001000
 #  define MSR_X2APIC_ICR_FIXED         0x00000000
-#  define MSR_X2APIC_DESTINATION(d)    ((d) << 32ul)
+#  define MSR_X2APIC_DESTINATION(d)    ((d) << 32)
 #define MSR_X2APIC_LVTT         0x832
 #  define MSR_X2APIC_LVTT_X1           0x0000000B  /* divide counts by 1 */
 #  define MSR_X2APIC_LVTT_PERIODIC     0x00020000  /* Periodic */
