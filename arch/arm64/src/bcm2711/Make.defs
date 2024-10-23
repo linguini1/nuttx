@@ -25,6 +25,7 @@ include common/Make.defs
 CHIP_CSRCS += bcm2711_boot.c
 CHIP_CSRCS += bcm2711_serial.c
 CHIP_CSRCS += bcm2711_gpio.c
+CHIP_CSRCS += bcm2711_timer.c
 
 # Early boot logging
 
