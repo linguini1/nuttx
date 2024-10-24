@@ -1,9 +1,14 @@
-==========
+===============
 Raspberry Pi 4B
-==========
+===============
 
 The `Raspberry Pi 4B <https://www.raspberrypi.com/products/raspberry-pi-4-model-b/specifications/>`_ is an ARM64
 hobbyist board created by Raspberry Pi.
+
+.. figure:: raspberrypi-4b.png
+   :figwidth: 70%
+   :align: center
+   :alt: Raspberry Pi 4B board
 
 Features
 =========
@@ -19,17 +24,23 @@ Features
 - 2-lane MIPI DSI display port
 - 2-lane MIPI CSI camera port
 - 4-pole stereo audio and composite video port
-- Micro SD slot
+- Micro SD card slot
 
 ARM64 Toolchain
-==========
+===============
 
-Before building NuttX for PinePhone, download the ARM64 Toolchain for
+Before building NuttX for the Raspberry Pi 4B, download the ARM64 Toolchain for
 **AArch64 Bare-Metal Target** ``aarch64-none-elf`` from
 `Arm GNU Toolchain Downloads <https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads>`_.
 (Skip the section for Beta Releases)
 
 Add the downloaded toolchain ``gcc-arm-...-aarch64-none-elf/bin`` to the ``PATH`` Environment Variable.
+
+If you are running Arch Linux, you can also get the toolchain by installing from the AUR:
+
+.. code:: console
+
+   $ yay -S aarch64-none-elf-gcc-bin aarch64-none-elf-toolchain
 
 Check the ARM64 Toolchain:
 
@@ -71,7 +82,39 @@ repository for loading the image:
 
 You can download all of these files with the shell script in `tools/bcm2711/bootfiles.sh`.
 
-TODO: include an example for formatting SD card.
+SD Card Formatting
+------------------
+
+Here is a list of `fdisk` commands for formatting the SD card on Linux. The tutorial assumes the SD card is at
+`/dev/sda`, but you can find the location of your SD card with `lsblk`. **Make very sure you verify that the name is
+correct, or you can lose data by formatting a different device.**
+
+.. code:: console
+
+   $ sudo fdisk /dev/sda
+
+Print the partition table on the card with `p` to see what's there. If anything appears, continue to use the `d` command
+to remove all partitions.
+
+- `o` to create a new, empty DOS partition table
+- `n` to create a new partition
+- `p` to make it primary
+- Hit enter to select the default partition of "1"
+- Hit enter for the default start and end sizes, which will use the full SD card size
+- `t` to change the type of the partition (hit enter to select default of partition 1)
+- `c` as the type, which is for Windows FAT32
+- `a` to mark the partition as bootable
+- `w` to write all the changes and save
+
+Now when you run `lsblk`, you should see `/dev/sda1` (or an equivalent for your SD card). That is the new partition just
+created. Running the following command will then format the SD card to an empty FAT32 file system.
+
+.. code:: console
+
+   $ sudo mkfs.vfat /dev/sda1
+
+Once this completes, you can copy all of the aforementioned boot files, `nuttx.bin` and `config.txt` to your SD card in
+your preferred way (through a file explorer or by using `mount`).
 
 Once all the files are copied, you can then eject the SD card and insert it onto your Raspberry Pi. The default console
 is the Mini UART, which requires a `USB to TTL serial converter cable <https://www.adafruit.com/product/954>`_ to read.
@@ -90,16 +133,18 @@ onscreen:
     nsh> 
 
 Board Peripheral Support
-==================
+========================
+
+SMP is currently unsupported.
 
 NuttX for the Raspberry Pi 4 supports these on-board peripherals:
 
 ======================== =======
 Peripheral               Support
 ======================== =======
-I2C                      No 
+I2C                      Partial (able to read, that's it)
 UART                     Mini UART yes, PL011 no
-GPIO                     No
+GPIO                     Partial
 PWM                      No
 SPI                      No
 PCM                      No
