@@ -27,7 +27,15 @@
 # Post build logic for the Raspberry Pi 4B
 
 ifeq ($(CONFIG_ARCH_BOARD_RASPBERRYPI_4B),y)
+
+CONFIG_TXT = config.txt
+
 define POSTBUILD
-	$(Q)echo "Generating config.txt";
+	$(Q)echo "Generating $(CONFIG_TXT)";
+	$(Q)echo "kernel=nuttx.bin" > $(CONFIG_TXT);
+	$(Q)echo "arm64_bit=1" >> $(CONFIG_TXT);
+	$(Q)echo "core_freq_min=500" >> $(CONFIG_TXT);
+	$(if $(CONFIG_RPI4B_DEBUG_BOOT),$(Q)echo "uart_2ndstage=1" >> $(CONFIG_TXT);)
 endef
+
 endif
