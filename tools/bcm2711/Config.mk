@@ -33,7 +33,7 @@ CONFIG_TXT = config.txt
 define POSTBUILD
 	$(Q)echo "Generating $(CONFIG_TXT)";
 	$(Q)echo "kernel=nuttx.bin" > $(CONFIG_TXT);
-	$(Q)echo "arm64_bit=1" >> $(CONFIG_TXT);
+	$(Q)echo "arm_64bit=1" >> $(CONFIG_TXT);
 	$(Q)echo "core_freq_min=500" >> $(CONFIG_TXT);
 	$(if $(CONFIG_RPI4B_DEBUG_BOOT),$(Q)echo "uart_2ndstage=1" >> $(CONFIG_TXT);)
 endef
