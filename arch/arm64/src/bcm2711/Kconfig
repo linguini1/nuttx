@@ -91,6 +91,32 @@ config BCM2711_I2C_DRIVER
 
 endif # BCM2711_I2C
 
+#####################################################################
+# SPI Configuration
+#####################################################################
+
+config BCM2711_SPI
+    bool "SPI support"
+    select SPI
+    ---help---
+        Support for SPI interfaces.
+
+if BCM2711_SPI
+
+config BCM2711_SPI1
+    bool "SPI1"
+    default n
+    ---help---
+        Enable the SPI1 interface.
+
+config BCM2711_SPI2
+    bool "SPI2"
+    default n
+    ---help---
+        Enable the SPI2 interface.
+
+endif # BCM2711_SPI
+
 endmenu # Broadcom BCM2711 Peripheral Selection
 
 endif # ARCH_CHIP_BCM2711

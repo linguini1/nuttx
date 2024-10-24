@@ -35,10 +35,11 @@
 
 /* BCM2711 auxiliary register offsets. **************************************/
 
+#define BCM_AUX_IRQ_OFFSET 0x00     /* Auxiliary interrupt status */
+#define BCM_AUX_ENABLES_OFFSET 0x04 /* Auxiliary enables */
+
 /* BCM2711 mini UART register offsets. */
 
-#define BCM_AUX_IRQ_OFFSET 0x00         /* Auxiliary interrupt status */
-#define BCM_AUX_ENABLES_OFFSET 0x04     /* Auxiliary enables */
 #define BCM_AUX_MU_IO_REG_OFFSET 0x40   /* Mini UART I/O Data */
 #define BCM_AUX_MU_IER_REG_OFFSET 0x44  /* Mini UART interrupt enable */
 #define BCM_AUX_MU_IIR_REG_OFFSET 0x48  /* Mini UART interrupt identify */
@@ -51,32 +52,28 @@
 #define BCM_AUX_MU_STAT_REG_OFFSET 0x64 /* Mini UART Extra Status */
 #define BCM_AUX_MU_BAUD_REG_OFFSET 0x68 /* Mini UART Baudrate */
 
-/* BCM2711 SPI register offsets. */
+/* BCM2711 SPI registers. */
 
-#define BCM_AUX_SPI1_CNTL0_REG_OFFSET 0x80   /* SPI 1 Control register 0 */
-#define BCM_AUX_SPI1_CNTL1_REG_OFFSET 0x84   /* SPI 1 Control register 1 */
-#define BCM_AUX_SPI1_STAT_REG_OFFSET 0x88    /* SPI 1 Status */
-#define BCM_AUX_SPI1_PEEK_REG_OFFSET 0x8c    /* SPI 1 Peek */
-#define BCM_AUX_SPI1_IO_REGa_OFFSET 0xa0     /* SPI 1 Data */
-#define BCM_AUX_SPI1_IO_REGb_OFFSET 0xa4     /* SPI 1 Data */
-#define BCM_AUX_SPI1_IO_REGc_OFFSET 0xa8     /* SPI 1 Data */
-#define BCM_AUX_SPI1_IO_REGd_OFFSET 0xac     /* SPI 1 Data */
-#define BCM_AUX_SPI1_TXHOLD_REGa_OFFSET 0xb0 /* SPI 1 Extended Data */
-#define BCM_AUX_SPI1_TXHOLD_REGb_OFFSET 0xb4 /* SPI 1 Extended Data */
-#define BCM_AUX_SPI1_TXHOLD_REGc_OFFSET 0xb8 /* SPI 1 Extended Data */
-#define BCM_AUX_SPI1_TXHOLD_REGd_OFFSET 0xbc /* SPI 1 Extended Data */
-#define BCM_AUX_SPI2_CNTL0_REG_OFFSET 0xc0   /* SPI 2 Control register */
-#define BCM_AUX_SPI2_CNTL1_REG_OFFSET 0xc4   /* SPI 2 Control register 1 */
-#define BCM_AUX_SPI2_STAT_REG_OFFSET 0xc8    /* SPI 2 Status */
-#define BCM_AUX_SPI2_PEEK_REG_OFFSET 0xcc    /* SPI 2 Peek */
-#define BCM_AUX_SPI2_IO_REGa_OFFSET 0xe0     /* SPI 2 Data */
-#define BCM_AUX_SPI2_IO_REGb_OFFSET 0xe4     /* SPI 2 Data */
-#define BCM_AUX_SPI2_IO_REGc_OFFSET 0xe8     /* SPI 2 Data */
-#define BCM_AUX_SPI2_IO_REGd_OFFSET 0xec     /* SPI 2 Data */
-#define BCM_AUX_SPI2_TXHOLD_REGa_OFFSET 0xf0 /* SPI 2 Extended Data */
-#define BCM_AUX_SPI2_TXHOLD_REGb_OFFSET 0xf4 /* SPI 2 Extended Data */
-#define BCM_AUX_SPI2_TXHOLD_REGc_OFFSET 0xf8 /* SPI 2 Extended Data */
-#define BCM_AUX_SPI2_TXHOLD_REGd_OFFSET 0xfc /* SPI 2 Extended Data */
+#define BCM_AUX_SPI1_OFFSET (0x80)
+#define BCM_AUX_SPI1_BASEADDR (BCM_AUX_BASEADDR + BCM_AUX_SPI1_OFFSET)
+
+#define BCM_AUX_SPI2_OFFSET (0xc0)
+#define BCM_AUX_SPI2_BASEADDR (BCM_AUX_BASEADDR + BCM_AUX_SPI2_OFFSET)
+
+/* BCM2711 SPI register offsets (offset from SPI base register) */
+
+#define BCM_AUX_SPI_CNTL0_REG_OFFSET 0x00   /* SPI Control register 0 */
+#define BCM_AUX_SPI_CNTL1_REG_OFFSET 0x04   /* SPI Control register 1 */
+#define BCM_AUX_SPI_STAT_REG_OFFSET 0x08    /* SPI Status */
+#define BCM_AUX_SPI_PEEK_REG_OFFSET 0x0c    /* SPI Peek */
+#define BCM_AUX_SPI_IO_REGa_OFFSET 0x20     /* SPI Data */
+#define BCM_AUX_SPI_IO_REGb_OFFSET 0x24     /* SPI Data */
+#define BCM_AUX_SPI_IO_REGc_OFFSET 0x28     /* SPI Data */
+#define BCM_AUX_SPI_IO_REGd_OFFSET 0x2c     /* SPI Data */
+#define BCM_AUX_SPI_TXHOLD_REGa_OFFSET 0x30 /* SPI Extended Data */
+#define BCM_AUX_SPI_TXHOLD_REGb_OFFSET 0x34 /* SPI Extended Data */
+#define BCM_AUX_SPI_TXHOLD_REGc_OFFSET 0x38 /* SPI Extended Data */
+#define BCM_AUX_SPI_TXHOLD_REGd_OFFSET 0x3c /* SPI Extended Data */
 
 /* BCM2711 auxiliary registers. *********************************************/
 
@@ -100,30 +97,18 @@
 
 /* BCM2711 SPI registers. */
 
-#define BCM_AUX_SPI1_CNTL0_REG BCM_AUX_REG(BCM_AUX_SPI1_CNTL0_REG_OFFSET)
-#define BCM_AUX_SPI1_CNTL1_REG BCM_AUX_REG(BCM_AUX_SPI1_CNTL1_REG_OFFSET)
-#define BCM_AUX_SPI1_STAT_REG BCM_AUX_REG(BCM_AUX_SPI1_STAT_REG_OFFSET)
-#define BCM_AUX_SPI1_PEEK_REG BCM_AUX_REG(BCM_AUX_SPI1_PEEK_REG_OFFSET)
-#define BCM_AUX_SPI1_IO_REGa BCM_AUX_REG(BCM_AUX_SPI1_IO_REGa_OFFSET)
-#define BCM_AUX_SPI1_IO_REGb BCM_AUX_REG(BCM_AUX_SPI1_IO_REGb_OFFSET)
-#define BCM_AUX_SPI1_IO_REGc BCM_AUX_REG(BCM_AUX_SPI1_IO_REGc_OFFSET)
-#define BCM_AUX_SPI1_IO_REGd BCM_AUX_REG(BCM_AUX_SPI1_IO_REGd_OFFSET)
-#define BCM_AUX_SPI1_TXHOLD_REGa BCM_AUX_REG(BCM_AUX_SPI1_TXHOLD_REGa_OFFSET)
-#define BCM_AUX_SPI1_TXHOLD_REGb BCM_AUX_REG(BCM_AUX_SPI1_TXHOLD_REGb_OFFSET)
-#define BCM_AUX_SPI1_TXHOLD_REGc BCM_AUX_REG(BCM_AUX_SPI1_TXHOLD_REGc_OFFSET)
-#define BCM_AUX_SPI1_TXHOLD_REGd BCM_AUX_REG(BCM_AUX_SPI1_TXHOLD_REGd_OFFSET)
-#define BCM_AUX_SPI2_CNTL0_REG BCM_AUX_REG(BCM_AUX_SPI2_CNTL0_REG_OFFSET)
-#define BCM_AUX_SPI2_CNTL1_REG BCM_AUX_REG(BCM_AUX_SPI2_CNTL1_REG_OFFSET)
-#define BCM_AUX_SPI2_STAT_REG BCM_AUX_REG(BCM_AUX_SPI2_STAT_REG_OFFSET)
-#define BCM_AUX_SPI2_PEEK_REG BCM_AUX_REG(BCM_AUX_SPI2_PEEK_REG_OFFSET)
-#define BCM_AUX_SPI2_IO_REGa BCM_AUX_REG(BCM_AUX_SPI2_IO_REGa_OFFSET)
-#define BCM_AUX_SPI2_IO_REGb BCM_AUX_REG(BCM_AUX_SPI2_IO_REGb_OFFSET)
-#define BCM_AUX_SPI2_IO_REGc BCM_AUX_REG(BCM_AUX_SPI2_IO_REGc_OFFSET)
-#define BCM_AUX_SPI2_IO_REGd BCM_AUX_REG(BCM_AUX_SPI2_IO_REGd_OFFSET)
-#define BCM_AUX_SPI2_TXHOLD_REGa BCM_AUX_REG(BCM_AUX_SPI2_TXHOLD_REGa_OFFSET)
-#define BCM_AUX_SPI2_TXHOLD_REGb BCM_AUX_REG(BCM_AUX_SPI2_TXHOLD_REGb_OFFSET)
-#define BCM_AUX_SPI2_TXHOLD_REGc BCM_AUX_REG(BCM_AUX_SPI2_TXHOLD_REGc_OFFSET)
-#define BCM_AUX_SPI2_TXHOLD_REGd BCM_AUX_REG(BCM_AUX_SPI2_TXHOLD_REGd_OFFSET)
+#define BCM_SPI_CNTL0_REG(base) ((base) + BCM_AUX_SPI_CNTL0_REG_OFFSET)
+#define BCM_SPI_CNTL1_REG(base) ((base) + BCM_AUX_SPI_CNTL1_REG_OFFSET)
+#define BCM_SPI_STAT_REG(base) ((base) + BCM_AUX_SPI_STAT_REG_OFFSET)
+#define BCM_SPI_PEEK_REG(base) ((base) + BCM_AUX_SPI_PEEK_REG_OFFSET)
+#define BCM_SPI_IO_REGa(base) ((base) + BCM_AUX_SPI_IO_REGa_OFFSET)
+#define BCM_SPI_IO_REGb(base) ((base) + BCM_AUX_SPI_IO_REGb_OFFSET)
+#define BCM_SPI_IO_REGc(base) ((base) + BCM_AUX_SPI_IO_REGc_OFFSET)
+#define BCM_SPI_IO_REGd(base) ((base) + BCM_AUX_SPI_IO_REGd_OFFSET)
+#define BCM_SPI_TXHOLD_REGa(base) ((base) + BCM_AUX_SPI_TXHOLD_REGa_OFFSET)
+#define BCM_SPI_TXHOLD_REGb(base) ((base) + BCM_AUX_SPI_TXHOLD_REGb_OFFSET)
+#define BCM_SPI_TXHOLD_REGc(base) ((base) + BCM_AUX_SPI_TXHOLD_REGc_OFFSET)
+#define BCM_SPI_TXHOLD_REGd(base) ((base) + BCM_AUX_SPI_TXHOLD_REGd_OFFSET)
 
 /* BCM2711 auxiliary register bit definitions. */
 
@@ -199,43 +184,43 @@
 
 #define BCM_AUX_MU_BAUD_MASK (0xffff) /* Baudrate counter */
 
-#define BCM_AUX_SPI_CNTL0_SPEED (0xfff << 20)  /* SPI clock speed */
-#define BCM_AUX_SPI_CNTL0_CS (0x7 << 17)       /* SPI clock speed */
-#define BCM_AUX_SPI_CNTL0_PIMODE (1 << 16)     /* Post input mode */
-#define BCM_AUX_SPI_CNTL0_VARCS (1 << 15)      /* Variable chip select */
-#define BCM_AUX_SPI_CNTL0_VARWIDTH (1 << 14)   /* Variable width */
-#define BCM_AUX_SPI_CNTL0_DOUTHOLD (0x3 << 12) /* DOUT hold time mask */
-#define BCM_AUX_SPI_CNTL0_DOUTNONE (0 << 12)   /* No hold */
-#define BCM_AUX_SPI_CNTL0_DOUT1 (1 << 12)      /* 1 system clock hold */
-#define BCM_AUX_SPI_CNTL0_DOUT4 (2 << 12)      /* 4 system clocks hold */
-#define BCM_AUX_SPI_CNTL0_DOUT7 (3 << 12)      /* 7 system clocks hold */
-#define BCM_AUX_SPI_CNTL0_EN (1 << 11)         /* Enable SPI interface */
-#define BCM_AUX_SPI_CNTL0_INRISE (1 << 10)     /* Data clock on rising */
-#define BCM_AUX_SPI_CNTL0_FIFOCLR (1 << 9)     /* Clear FIFOs */
-#define BCM_AUX_SPI_CNTL0_OUTRISE (1 << 8)     /* Data clock on rising */
-#define BCM_AUX_SPI_CNTL0_CLKINV (1 << 7)      /* Invert SPI clock */
-#define BCM_AUX_SPI_CNTL0_SHIFTMS (1 << 6)     /* Shift out MS bit */
-#define BCM_AUX_SPI_CNTL0_SHIFTLEN (0x2f)      /* Bit shift count mask */
+#define BCM_SPI_CNTL0_SPEED (0xfff << 20)  /* SPI clock speed */
+#define BCM_SPI_CNTL0_CS (0x7 << 17)       /* SPI clock speed */
+#define BCM_SPI_CNTL0_PIMODE (1 << 16)     /* Post input mode */
+#define BCM_SPI_CNTL0_VARCS (1 << 15)      /* Variable chip select */
+#define BCM_SPI_CNTL0_VARWIDTH (1 << 14)   /* Variable width */
+#define BCM_SPI_CNTL0_DOUTHOLD (0x3 << 12) /* DOUT hold time mask */
+#define BCM_SPI_CNTL0_DOUTNONE (0 << 12)   /* No hold */
+#define BCM_SPI_CNTL0_DOUT1 (1 << 12)      /* 1 system clock hold */
+#define BCM_SPI_CNTL0_DOUT4 (2 << 12)      /* 4 system clocks hold */
+#define BCM_SPI_CNTL0_DOUT7 (3 << 12)      /* 7 system clocks hold */
+#define BCM_SPI_CNTL0_EN (1 << 11)         /* Enable SPI interface */
+#define BCM_SPI_CNTL0_INRISE (1 << 10)     /* Data clock on rising */
+#define BCM_SPI_CNTL0_FIFOCLR (1 << 9)     /* Clear FIFOs */
+#define BCM_SPI_CNTL0_OUTRISE (1 << 8)     /* Data clock on rising */
+#define BCM_SPI_CNTL0_CLKINV (1 << 7)      /* Invert SPI clock */
+#define BCM_SPI_CNTL0_SHIFTMS (1 << 6)     /* Shift out MS bit */
+#define BCM_SPI_CNTL0_SHIFTLEN (0x2f)      /* Bit shift count mask */
 
-#define BCM_AUX_SPI_CNTL1_CSHTIME (0x7 << 8)  /* CS high time */
-#define BCM_AUX_SPI_CNTL1_TXEMPTYIRQ (1 << 7) /* Int line high = 1 */
-#define BCM_AUX_SPI_CNTL1_DONEIRQ (1 << 6)    /* Interrupt while idle = 1 */
-#define BCM_AUX_SPI_CNTL1_SHIFTMS (1 << 1)    /* Shift in MS bit first */
-#define BCM_AUX_SPI_CNTL1_KEEPIN (1 << 0)     /* Do not clear RX shift reg */
+#define BCM_SPI_CNTL1_CSHTIME (0x7 << 8)  /* CS high time */
+#define BCM_SPI_CNTL1_TXEMPTYIRQ (1 << 7) /* Int line high = 1 */
+#define BCM_SPI_CNTL1_DONEIRQ (1 << 6)    /* Interrupt while idle = 1 */
+#define BCM_SPI_CNTL1_SHIFTMS (1 << 1)    /* Shift in MS bit first */
+#define BCM_SPI_CNTL1_KEEPIN (1 << 0)     /* Do not clear RX shift reg */
 
-#define BCM_AUX_SPI_STAT_TXLVL (0xf << 24) /* TX FIFO level mask */
-#define BCM_AUX_SPI_STAT_RXLVL (0xf << 16) /* RX FIFO level mask */
-#define BCM_AUX_SPI_STAT_TXFULL (1 << 10)  /* TX FIFO full */
-#define BCM_AUX_SPI_STAT_TXEMPTY (1 << 9)  /* TX FIFO empty */
-#define BCM_AUX_SPI_STAT_RXFULL (1 << 8)   /* RX FIFO empty */
-#define BCM_AUX_SPI_STAT_RXEMPTY (1 << 7)  /* RX FIFO empty */
-#define BCM_AUX_SPI_STAT_BUSY (1 << 6)     /* Module is busy */
-#define BCM_AUX_SPI_STAT_BITCOUNT (0x3f)   /* Bits to be processed */
+#define BCM_SPI_STAT_TXLVL (0xf << 24) /* TX FIFO level mask */
+#define BCM_SPI_STAT_RXLVL (0xf << 16) /* RX FIFO level mask */
+#define BCM_SPI_STAT_TXFULL (1 << 10)  /* TX FIFO full */
+#define BCM_SPI_STAT_TXEMPTY (1 << 9)  /* TX FIFO empty */
+#define BCM_SPI_STAT_RXFULL (1 << 8)   /* RX FIFO empty */
+#define BCM_SPI_STAT_RXEMPTY (1 << 7)  /* RX FIFO empty */
+#define BCM_SPI_STAT_BUSY (1 << 6)     /* Module is busy */
+#define BCM_SPI_STAT_BITCOUNT (0x3f)   /* Bits to be processed */
 
-#define BMX_AUX_SPI_PEEK_DATA (0xffff) /* Data mask */
+#define BMX_SPI_PEEK_DATA (0xffff) /* Data mask */
 
-#define BMX_AUX_SPI_IO_DATA (0xffff) /* Data mask */
+#define BMX_SPI_IO_DATA (0xffff) /* Data mask */
 
-#define BMX_AUX_SPI_TXHOLD_DATA (0xffff) /* Data mask */
+#define BMX_SPI_TXHOLD_DATA (0xffff) /* Data mask */
 
 #endif // __ARCH_ARM64_SRC_BCM2711_AUX_H
