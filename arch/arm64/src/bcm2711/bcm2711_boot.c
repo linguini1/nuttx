@@ -56,6 +56,13 @@ static const struct arm_mmu_region g_mmu_regions[] = {
     MMU_REGION_FLAT_ENTRY("DRAM0_S0", CONFIG_RAMBANK1_ADDR,
                           CONFIG_RAMBANK1_SIZE,
                           MT_NORMAL | MT_RW | MT_SECURE),
+
+  /* TODO: verify this works on the 8GB variant */
+#if defined(CONFIG_RPI4B_RAM_8GB)
+  MMU_REGION_FLAT_ENTRY("DRAM0_S1",
+                        CONFIG_RAMBANK2_ADDR, CONFIG_RAMBANK2_SIZE,
+                        MT_NORMAL | MT_RW | MT_SECURE),
+#endif /* defined(CONFIG_RPI4B_RAM_8GB) */
 };
 
 const struct arm_mmu_config g_mmu_config = {

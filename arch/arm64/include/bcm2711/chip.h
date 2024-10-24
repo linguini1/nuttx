@@ -65,24 +65,34 @@
 #define CONFIG_GICR_BASE (BCM_GIC400_BASEADDR + BCM_GIC400_RDISTOFFSET)
 #define CONFIG_GICR_OFFSET BCM_GIC400_RDISTOFFSET
 
-/* BCM2711 memory map: RAM and Device I/O */
+/* BCM2711 memory map: RAM and Device I/O
+ * TODO: verify and test against all variants (1, 2, 4 & 8GB)
+ */
 
-// TODO: verify
-#define CONFIG_RAMBANK1_ADDR      (0x00000000)
-#define CONFIG_RAMBANK1_SIZE      GB(4) - MB(64) // TODO should be configurable
+#define CONFIG_RAMBANK1_ADDR (0x000000000)
 
-// TODO: verify
-// For the 8GB version
-#define CONFIG_RAMBANK2_ADDR      0x100000000
-#define CONFIG_RAMBANK2_SIZE      GB(4)
+/* Both the 4GB and 8GB ram variants use all the size in RAMBANK1 */
 
-// TODO: for low peripheral mode this is valid, otherwise it might change
-#define CONFIG_DEVICEIO_BASEADDR  (0x0fc000000)
-#define CONFIG_DEVICEIO_SIZE      MB(64)
+#if defined(CONFIG_RPI4B_RAM_4GB) || defined(CONFIG_RPI4B_RAM_8GB)
+#define CONFIG_RAMBANK1_SIZE GB(4) - MB(64)
+#endif /* defined(CONFIG_RPI4B_RAM_4GB) || defined(CONFIG_RPI4B_RAM_8GB) */
+
+/* The 8GB version begins to use a second RAM bank.
+ * TODO: verify this works on 8GB
+ */
+
+#if defined(CONFIG_RPI4B_RAM_8GB)
+#define CONFIG_RAMBANK2_ADDR (0x100000000)
+#define CONFIG_RAMBANK2_SIZE GB(4)
+#endif /* defined(CONFIG_RPI4B_RAM_8GB) */
+
+/* TODO: for low peripheral mode this is valid, otherwise it might change */
+#define CONFIG_DEVICEIO_BASEADDR (0x0fc000000)
+#define CONFIG_DEVICEIO_SIZE MB(64)
 
 /* Raspberry Pi 4B loads NuttX at this address */
 
-#define CONFIG_LOAD_BASE          0x480000
+#define CONFIG_LOAD_BASE 0x480000
 
 #define MPID_TO_CLUSTER_ID(mpid) ((mpid) & ~0xff)
 

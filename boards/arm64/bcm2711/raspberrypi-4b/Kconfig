@@ -5,13 +5,31 @@
 
 if ARCH_BOARD_RASPBERRYPI_4B
 
-    # TODO: make this option a multi-select instead of range select
-    config RPI4B_RAM
-        int "Raspberry Pi 4B RAM size (in GB)"
-        default 4
+    choice
+        prompt "Raspberry Pi 4B RAM size"
+        default RPI4B_RAM_4GB
+
+    config RPI4B_RAM_1GB
+        bool "1GB RAM"
         ---help---
-            The size of the Raspberry Pi 4B's RAM in GB. Supports
-            1GB, 2GB, 4GB and 8GB models.
+            Support for the 1GB variant of the Raspberry Pi 4B.
+
+    config RPI4B_RAM_2GB
+        bool "2GB RAM"
+        ---help---
+            Support for the 2GB variant of the Raspberry Pi 4B.
+
+    config RPI4B_RAM_4GB
+        bool "4GB RAM"
+        ---help---
+            Support for the 4GB variant of the Raspberry Pi 4B.
+
+    config RPI4B_RAM_8GB
+        bool "8GB RAM"
+        ---help---
+            Support for the 8GB variant of the Raspberry Pi 4B.
+
+    endchoice # Raspberry Pi 4B RAM size
 
     config RPI4B_DEBUG_BOOT
         bool "Raspberry Pi 4B bootloader debug output"
