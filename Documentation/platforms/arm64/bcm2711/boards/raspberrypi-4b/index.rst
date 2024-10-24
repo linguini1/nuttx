@@ -69,6 +69,8 @@ repository for loading the image:
 - `start4db.elf <https://github.com/raspberrypi/firmware/blob/stable/boot/start4db.elf>`_
 - `start4x.elf <https://github.com/raspberrypi/firmware/blob/stable/boot/start4x.elf>`_
 
+You can download all of these files with the shell script in `tools/bcm2711/bootfiles.sh`.
+
 TODO: include an example for formatting SD card.
 
 Once all the files are copied, you can then eject the SD card and insert it onto your Raspberry Pi. The default console
