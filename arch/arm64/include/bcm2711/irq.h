@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #define NR_IRQS 216
+#define MPID_TO_CORE(mpid) (((mpid) >> MPIDR_AFF0_SHIFT) & MPIDR_AFFLVL_MASK)
 
 /* ARM_LOCAL interrupts */
 // TODO

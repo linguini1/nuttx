@@ -58,6 +58,7 @@ static const struct arm_mmu_region g_mmu_regions[] = {
                           MT_NORMAL | MT_RW | MT_SECURE),
 
   /* TODO: verify this works on the 8GB variant */
+
 #if defined(CONFIG_RPI4B_RAM_8GB)
   MMU_REGION_FLAT_ENTRY("DRAM0_S1",
                         CONFIG_RAMBANK2_ADDR, CONFIG_RAMBANK2_SIZE,
@@ -73,6 +74,39 @@ const struct arm_mmu_config g_mmu_config = {
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
+
+#ifdef CONFIG_SMP
+
+/****************************************************************************
+ * Name: arm64_get_mpid
+ *
+ * Description:
+ *   The function from cpu index to get cpu mpid which is reading
+ *   from mpidr_el1 register. Different ARM64 Core will use different
+ *   Affn define, the mpidr_el1 value is not CPU number, So we need
+ *   to change CPU number to mpid and vice versa
+ *
+ ****************************************************************************/
+
+uint64_t arm64_get_mpid(int cpu)
+{
+  return CORE_TO_MPID(cpu, 0);
+}
+
+/****************************************************************************
+ * Name: arm64_get_cpuid
+ *
+ * Description:
+ *   The function from mpid to get cpu id
+ *
+ ****************************************************************************/
+
+int arm64_get_cpuid(uint64_t mpid)
+{
+  return MPID_TO_CORE(mpid);
+}
+
+#endif /* CONFIG_SMP */
 
 /****************************************************************************
  * Name: arm64_el_init
