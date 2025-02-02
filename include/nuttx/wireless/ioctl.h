@@ -60,13 +60,31 @@
                                              /* output power (in dBm) */
 #define WLIOC_GETTXPOWER    _WLCIOC(0x0006)  /* arg: Pointer to int32_t, */
                                              /* output power (in dBm) */
+#define WLIOC_SETBANDWIDTH  _WLCIOC(0x0007)  /* arg: Pointer to uint32_t, */
+                                             /* bandwidth in Hz */
+#define WLIOC_GETBANDWIDTH  _WLCIOC(0x0008)  /* arg: Pointer to uint32_t, */
+                                             /* bandwidth in Hz */
+#define WLIOC_SETSPREAD     _WLCIOC(0x0009)  /* arg: Pointer to uint8_t, */
+                                             /* spread factor */
+#define WLIOC_GETSPREAD     _WLCIOC(0x000a)  /* arg: Pointer to uint8_t, */
+                                             /* spread factor */
+#define WLIOC_GETSNR        _WLCIOC(0x000b)  /* arg: Pointer to int8_t, */
+                                             /* signal to noise ratio */
+#define WLIOC_SETPRLEN      _WLCIOC(0x000c)  /* arg: uint16_t, */
+                                             /* preamble length */
+#define WLIOC_GETPRLEN      _WLCIOC(0x000d)  /* arg: Pointer to uint16_t, */
+                                             /* preamble length */
+#define WLIOC_SETMOD        _WLCIOC(0x000e)  /* arg: enum, */
+                                             /* modulation type */
+#define WLIOC_GETMOD        _WLCIOC(0x000f)  /* arg: char[10] pointer, */
+                                             /* modulation type */
 
 /****************************************************************************
  * Device-specific IOCTL commands
  ****************************************************************************/
 
 #define WL_FIRST            0x0001          /* First common command */
-#define WL_NCMDS            0x0006          /* Number of common commands */
+#define WL_NCMDS            0x000f          /* Number of common commands */
 
 /* User defined ioctl commands are also supported. These will be forwarded
  * by the upper-half driver to the lower-half driver via the ioctl()
