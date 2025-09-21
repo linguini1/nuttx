@@ -1,7 +1,9 @@
 /****************************************************************************
- * boards/arm64/bcm2711/raspberrypi-4b/include/board.h
+ * arch/arm64/src/bcm2711/bcm2711_sdio.h
  *
  * Author: Matteo Golin <matteo.golin@gmail.com>
+ *
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -20,27 +22,57 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM64_BCM2711_RPI4B_INCLUDE_BOARD_H
-#define __BOARDS_ARM64_BCM2711_RPI4B_INCLUDE_BOARD_H
+#ifndef __ARCH_ARM64_SRC_BCM2711_BCM2711_SDIO_H
+#define __ARCH_ARM64_SRC_BCM2711_BCM2711_SDIO_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
+#include <sys/types.h>
+#include <stdbool.h>
+
+#include "chip.h"
+#include "hardware/bcm2711_sdio.h"
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Public Function Prototypes
  ****************************************************************************/
 
-/* TODO: define all the GPIO pins properly */
+#ifndef __ASSEMBLY__
 
-#define BOARD_NGPIOOUT 1
-#define BOARD_NGPIOIN 1
-#define BOARD_NGPIOINT 0
+#undef EXTERN
+#if defined(__cplusplus)
+#define EXTERN extern "C"
+extern "C"
+{
+#else
+#define EXTERN extern
+#endif
 
-/* Micro SD card slot number to use */
+/****************************************************************************
+ * Name: bcm2711_sdio_initialize
+ *
+ * Description:
+ *   Initialize the BCM2711 SDIO peripheral for normal operation.
+ *
+ * Input Parameters:
+ *   slotno - 1 for EMMC1, 2 for EMMC2
+ *
+ * Returned Value:
+ *   A reference to an SDIO interface structure.
+ *   NULL is returned on failures.
+ *
+ ****************************************************************************/
 
-#define MICROSD_SLOTNO 0
+struct sdio_dev_s *bcm2711_sdio_initialize(int slotno);
 
-#endif /* __BOARDS_ARM64_BCM2711_RPI4B_INCLUDE_BOARD_H */
+#undef EXTERN
+#if defined(__cplusplus)
+}
+#endif
+
+#endif /* __ASSEMBLY__ */
+
+#endif /* __ARCH_ARM64_SRC_BCM2711_BCM2711_SDIO_H */
