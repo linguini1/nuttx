@@ -32,6 +32,8 @@
 #include "arm64_mmu.h"
 #include "bcm2711_boot.h"
 #include "bcm2711_serial.h"
+#include "bcm2711_mailbox.h"
+
 #include <arch/chip/chip.h>
 
 #ifdef CONFIG_SMP
@@ -71,6 +73,12 @@ const struct arm_mmu_config g_mmu_config =
   .num_regions = nitems(g_mmu_regions),
   .mmu_regions = g_mmu_regions,
 };
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+extern uint64_t _start[]; /* Kernel load address from linker script */
 
 /****************************************************************************
  * Public Functions
@@ -124,7 +132,43 @@ int arm64_get_cpuid(uint64_t mpid)
 
 void arm64_el_init(void)
 {
-  /* TODO: what goes here? */
+  /* According to the bcm2711.dtsi file in the Linux source tree [1], the CPUs
+   * on the BCM2711 use a spin-table enable method and poll the following
+   * addresses:
+   *
+   * CPU0: 0x000000d8 (BCM_MBOX_CLR06)
+   * CPU1: 0x000000e0 (BCM_MBOX_CLR08)
+   * CPU2: 0x000000e8 (BCM_MBOX_CLR10)
+   * CPU3: 0x000000f0 (BCM_MBOX_CLR12)
+   *
+   * Some kernel docs about booting [2] have a handy explanation of how this
+   * works:
+   *
+   * "polling their cpu-release-addr location, which must be contained in the
+   * reserved region ... when a read of the location pointed to by the
+   * cpu-release-addr returns a non-zero value, the CPU must jump to this
+   * value" [2]
+   *
+   * In our case, we want these CPUs to load the NuttX kernel defined by
+   * `_start`. We don't need to worry about CPU0, that one always starts.
+   * These are 64-bit words (hence skipping every second register).
+   *
+   * [1]
+   * https://github.com/raspberrypi/linux/blob/rpi-6.12.y/arch/arm/boot/dts/broadcom/bcm2711.dtsi
+   *
+   * [2] https://www.kernel.org/doc/Documentation/arm64/booting.txt
+   */
+
+#ifdef CONFIG_SMP
+
+  for (uint8_t cpu = 0; cpu < CONFIG_SMP_NCPUS; cpu++) {
+      putreg64((uint64_t)_start, BCM_SPINTBL_CPU(cpu));
+  }
+
+  UP_DSB(); /* Sync writes */
+  UP_SEV(); /* Notify all cores of change */
+
+#endif /* CONFIG_SMP */
 }
 
 /****************************************************************************
