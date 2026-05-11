@@ -20,6 +20,63 @@ config BCM2711_LOW_PERIPHERAL
 		Use the Broadcom BCM2711 in low peripheral addressing mode.
 
 #####################################################################
+# UART Configuration
+#####################################################################
+
+config BCM2711_UART0
+	bool "UART0"
+	default n
+	select UART_PL011
+	select UART0_SERIALDRIVER
+	select ARCH_HAVE_SERIAL_TERMIOS
+	---help---
+		Enable the UART0 interface.
+
+config BCM2711_UART1
+	bool "UART1 (Mini UART)"
+	default y
+	select UART0_SERIALDRIVER
+	select ARCH_HAVE_SERIAL_TERMIOS
+	---help---
+		Enable the UART1 (Mini UART) interface.
+
+config BCM2711_UART2
+	bool "UART2"
+	default n
+	select UART_PL011
+	select UART2_SERIALDRIVER
+	select ARCH_HAVE_SERIAL_TERMIOS
+	---help---
+		Enable the UART2 interface.
+
+config BCM2711_UART3
+	bool "UART3"
+	default n
+	select UART_PL011
+	select UART3_SERIALDRIVER
+	select ARCH_HAVE_SERIAL_TERMIOS
+	---help---
+		Enable the UART3 interface.
+
+config BCM2711_UART4
+	bool "UART4"
+	default n
+	select UART_PL011
+	select UART4_SERIALDRIVER
+	select ARCH_HAVE_SERIAL_TERMIOS
+	---help---
+		Enable the UART4 interface.
+
+config BCM2711_UART5
+	bool "UART5"
+	default n
+	select UART_PL011
+	select UART5_SERIALDRIVER
+	select ARCH_HAVE_SERIAL_TERMIOS
+	---help---
+		Enable the UART5 interface.
+
+#####################################################################
 # I2C Configuration (master)
 #####################################################################
 

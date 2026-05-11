@@ -24,16 +24,17 @@
  * Included Files
  ***************************************************************************/
 
-#include <nuttx/arch.h>
 #include <nuttx/config.h>
-#include <nuttx/serial/serial.h>
+#include <nuttx/debug.h>
 
 #include <assert.h>
-#include <nuttx/debug.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <nuttx/arch.h>
+#include <nuttx/serial/serial.h>
+#include <nuttx/serial/uart_pl011.h>
 #include <nuttx/fs/ioctl.h>
 
 #include "bcm2711_gpio.h"
@@ -44,34 +45,51 @@
  * Pre-processor Definitions
  ***************************************************************************/
 
-/* Mini UART settings. */
+/* UART console settings */
 
-#ifndef CONFIG_MINIUART_BAUD
-#define CONFIG_MINIUART_BAUD 115200
+#if defined(CONFIG_UART0_SERIAL_CONSOLE)
+  #define CONSOLE_DEV g_uart0
+#elif defined(CONFIG_UART1_SERIAL_CONSOLE)
+  #define CONSOLE_DEV g_uart1 // TODO: name this miniuart?
+#elif defined(CONFIG_UART2_SERIAL_CONSOLE)
+  #define CONSOLE_DEV g_uart2
+#elif defined(CONFIG_UART3_SERIAL_CONSOLE)
+  #define CONSOLE_DEV g_uart3
+#elif defined(CONFIG_UART4_SERIAL_CONSOLE)
+  #define CONSOLE_DEV g_uart4
+#elif defined(CONFIG_UART5_SERIAL_CONSOLE)
+  #define CONSOLE_DEV g_uart5
 #endif
 
-#ifndef CONFIG_MINIUART_BITS
-#define CONFIG_MINIUART_BITS 8
+/* UART device aliases */
+
+#if defined(CONFIG_UART0_SERIAL_CONSOLE)
+  #define TTYS0_DEV g_uart0
 #endif
 
-#ifndef CONFIG_MINIUART_PARITY
-#define CONFIG_MINIUART_PARITY 0
+#if defined(CONFIG_UART1_SERIAL_CONSOLE)
+  #define TTYS1_DEV g_uart1
 #endif
 
-#ifndef CONFIG_MINIUART_RXBUFSIZE
-#define CONFIG_MINIUART_RXBUFSIZE 256
+#if defined(CONFIG_UART2_SERIAL_CONSOLE)
+  #define TTYS2_DEV g_uart2
 #endif
 
-#ifndef CONFIG_MINIUART_TXBUFSIZE
-#define CONFIG_MINIUART_TXBUFSIZE 256
+#if defined(CONFIG_UART3_SERIAL_CONSOLE)
+  #define TTYS3_DEV g_uart3
 #endif
 
-#define CONSOLE_DEV g_miniuartport /* Mini UART is console */
-#define TTYS0_DEV g_miniuartport   /* Mini UART is ttys0 */
+#if defined(CONFIG_UART4_SERIAL_CONSOLE)
+  #define TTYS4_DEV g_uart4
+#endif
+
+#if defined(CONFIG_UART5_SERIAL_CONSOLE)
+  #define TTYS5_DEV g_uart5
+#endif
 
 /* System clock frequency for Mini UART in Hz */
 
-#define SYSTEM_CLOCK_FREQUENCY 500000000
+#define SYSTEM_CLOCK_FREQUENCY (500000000)
 
 /* Baud rate calculation */
 
@@ -109,6 +127,8 @@ struct bcm2711_uart_port_s
  * Private Function Prototypes
  ***************************************************************************/
 
+#ifdef CONFIG_UART1_SERIALDRIVER
+
 /* Mini UART helper functions */
 
 static void bcm2711_miniuart_wait_send(struct uart_dev_s *dev, char c);
@@ -130,12 +150,15 @@ static void bcm2711_miniuart_send(struct uart_dev_s *dev, int c);
 static void bcm2711_miniuart_txint(struct uart_dev_s *dev, bool enable);
 static bool bcm2711_miniuart_txready(struct uart_dev_s *dev);
 static bool bcm2711_miniuart_txempty(struct uart_dev_s *dev);
+#endif /* CONFIG_UART1_SERIALDRIVER */
 
 /***************************************************************************
  * Private Data
  ***************************************************************************/
 
-/* UART operations for serial driver */
+#ifdef CONFIG_UART1_SERIALDRIVER
+
+/* Mini UART operations */
 
 static const struct uart_ops_s g_miniuart_ops =
 {
@@ -158,40 +181,200 @@ static const struct uart_ops_s g_miniuart_ops =
 
 /* Mini UART I/O Buffers (Console) */
 
-static char g_miniuartrxbuffer[CONFIG_MINIUART_RXBUFSIZE];
-static char g_miniuarttxbuffer[CONFIG_MINIUART_TXBUFSIZE];
+static char g_uart1_rxbuffer[CONFIG_UART1_RXBUFSIZE];
+static char g_uart1_txbuffer[CONFIG_UART1_TXBUFSIZE];
 
 static struct bcm2711_miniuart_port_s g_miniuartpriv =
 {
     .config =
         {
-            .baud_rate = CONFIG_MINIUART_BAUD,
-            .parity = CONFIG_MINIUART_PARITY,
-            .data_bits = CONFIG_MINIUART_BITS,
+            .baud_rate = CONFIG_UART1_BAUD,
+            .parity = CONFIG_UART1_PARITY,
+            .data_bits = CONFIG_UART1_BITS,
         },
 };
 
-static struct uart_dev_s g_miniuartport =
+static struct uart_dev_s g_uart1 =
 {
     .recv =
         {
-            .size = CONFIG_MINIUART_RXBUFSIZE,
-            .buffer = g_miniuartrxbuffer,
+            .size = CONFIG_UART1_RXBUFSIZE,
+            .buffer = g_uart1_rxbuffer,
         },
 
     .xmit =
         {
-            .size = CONFIG_MINIUART_TXBUFSIZE,
-            .buffer = g_miniuarttxbuffer,
+            .size = CONFIG_UART1_TXBUFSIZE,
+            .buffer = g_uart1_txbuffer,
         },
 
     .ops = &g_miniuart_ops,
     .priv = &g_miniuartpriv,
 };
+#endif /* UART1 (Mini UART) */
+
+/* PL011 UART interfaces */
+
+#ifdef CONFIG_UART0_SERIALDRIVER
+static char g_uart0_rx_buf[CONFIG_UART0_RXBUFSIZE];
+static char g_uart0_tx_buf[CONFIG_UART0_TXBUFSIZE];
+
+static struct pl011_uart_port_s g_uart0 =
+{
+  .config =
+    {
+      .baseaddr = (void *)UART0_BASEADDR,
+      .baud_rate = CONFIG_UART0_BAUD,
+      .irq_num = UART0_IRQ,
+      .sbsa = false,
+      .sys_clk_freq = UART0_CLK_FREQ,
+    },
+
+  .uart =
+    {
+      .recv =
+        {
+          .buffer = g_uart0_rx_buf,
+          .size = CONFIG_UART0_RXBUFSIZE,
+        },
+      .xmit =
+        {
+          .buffer = g_uart0_tx_buf,
+          .size = CONFIG_UART0_TXBUFSIZE,
+        },
+    },
+};
+#endif
+
+#ifdef CONFIG_UART2_SERIALDRIVER
+static char g_uart2_rx_buf[CONFIG_UART2_RXBUFSIZE];
+static char g_uart2_tx_buf[CONFIG_UART2_TXBUFSIZE];
+
+static struct pl011_uart_port_s g_uart2 =
+{
+  .config =
+    {
+      .baseaddr = (void *)UART2_BASEADDR,
+      .baud_rate = CONFIG_UART2_BAUD,
+      .irq_num = UART2_IRQ,
+      .sbsa = false,
+      .sys_clk_freq = UART2_CLK_FREQ,
+    },
+
+  .uart =
+    {
+      .recv =
+        {
+          .buffer = g_uart2_rx_buf,
+          .size = CONFIG_UART2_RXBUFSIZE,
+        },
+      .xmit =
+        {
+          .buffer = g_uart2_tx_buf,
+          .size = CONFIG_UART2_TXBUFSIZE,
+        },
+    },
+};
+#endif
+
+#ifdef CONFIG_UART3_SERIALDRIVER
+static char g_uart3_rx_buf[CONFIG_UART3_RXBUFSIZE];
+static char g_uart3_tx_buf[CONFIG_UART3_TXBUFSIZE];
+
+static struct pl011_uart_port_s g_uart3 =
+{
+  .config =
+    {
+      .baseaddr = (void *)UART3_BASEADDR,
+      .baud_rate = CONFIG_UART3_BAUD,
+      .irq_num = UART3_IRQ,
+      .sbsa = false,
+      .sys_clk_freq = UART3_CLK_FREQ,
+    },
+
+  .uart =
+    {
+      .recv =
+        {
+          .buffer = g_uart3_rx_buf,
+          .size = CONFIG_UART3_RXBUFSIZE,
+        },
+      .xmit =
+        {
+          .buffer = g_uart3_tx_buf,
+          .size = CONFIG_UART3_TXBUFSIZE,
+        },
+    },
+};
+#endif
+
+#ifdef CONFIG_UART4_SERIALDRIVER
+static char g_uart4_rx_buf[CONFIG_UART4_RXBUFSIZE];
+static char g_uart4_tx_buf[CONFIG_UART4_TXBUFSIZE];
+
+static struct pl011_uart_port_s g_uart4 =
+{
+  .config =
+    {
+      .baseaddr = (void *)UART4_BASEADDR,
+      .baud_rate = CONFIG_UART4_BAUD,
+      .irq_num = UART4_IRQ,
+      .sbsa = false,
+      .sys_clk_freq = UART4_CLK_FREQ,
+    },
+
+  .uart =
+    {
+      .recv =
+        {
+          .buffer = g_uart4_rx_buf,
+          .size = CONFIG_UART4_RXBUFSIZE,
+        },
+      .xmit =
+        {
+          .buffer = g_uart4_tx_buf,
+          .size = CONFIG_UART4_TXBUFSIZE,
+        },
+    },
+};
+#endif
+
+#ifdef CONFIG_UART5_SERIALDRIVER
+static char g_uart5_rx_buf[CONFIG_UART5_RXBUFSIZE];
+static char g_uart5_tx_buf[CONFIG_UART5_TXBUFSIZE];
+
+static struct pl011_uart_port_s g_uart5 =
+{
+  .config =
+    {
+      .baseaddr = (void *)UART5_BASEADDR,
+      .baud_rate = CONFIG_UART5_BAUD,
+      .irq_num = UART5_IRQ,
+      .sbsa = false,
+      .sys_clk_freq = UART5_CLK_FREQ,
+    },
+
+  .uart =
+    {
+      .recv =
+        {
+          .buffer = g_uart5_rx_buf,
+          .size = CONFIG_UART5_RXBUFSIZE,
+        },
+      .xmit =
+        {
+          .buffer = g_uart5_tx_buf,
+          .size = CONFIG_UART5_TXBUFSIZE,
+        },
+    },
+};
+#endif
 
 /***************************************************************************
  * Private Functions
  ***************************************************************************/
+
+#ifdef CONFIG_UART1_SERIALDRIVER
 
 /***************************************************************************
  * Name: bcm2711_miniuart_txint
@@ -698,6 +881,8 @@ static int bcm2711_miniuart_irq_handler(int irq, void *context, void *arg)
 
   return ret;
 }
+
+#endif /* CONFIG_UART1_SERIALDRIVER */
 
 /***************************************************************************
  * Public Functions
