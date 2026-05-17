@@ -50,7 +50,7 @@
 #if defined(CONFIG_UART0_SERIAL_CONSOLE)
   #define CONSOLE_DEV g_uart0
 #elif defined(CONFIG_UART1_SERIAL_CONSOLE)
-  #define CONSOLE_DEV g_uart1 // TODO: name this miniuart?
+  #define CONSOLE_DEV g_uart1
 #elif defined(CONFIG_UART2_SERIAL_CONSOLE)
   #define CONSOLE_DEV g_uart2
 #elif defined(CONFIG_UART3_SERIAL_CONSOLE)
@@ -903,8 +903,13 @@ static int bcm2711_miniuart_irq_handler(int irq, void *context, void *arg)
 
 void arm64_earlyserialinit(void)
 {
-#ifdef CONSOLE_DEV
+#if defined(CONSOLE_DEV)
+#if defined(CONFIG_UART1_SERIAL_CONSOLE)
   bcm2711_miniuart_setup(&CONSOLE_DEV);
+#else
+  pl011_dev_init(&CONSOLE_DEV);
+  CONSOLE_DEV.uart.ops->setup(&CONSOLE_DEV.uart);
+#endif /* CONFIG_UART1_SERIAL_CONSOLE */
 #endif
 }
 
@@ -922,7 +927,8 @@ void arm64_earlyserialinit(void)
 
 void up_putc(int ch)
 {
-#ifdef CONSOLE_DEV
+#if defined(CONSOLE_DEV)
+#if defined(CONFIG_UART1_SERIAL_CONSOLE)
   struct uart_dev_s *dev = &CONSOLE_DEV;
 
   /* Check for LF */
@@ -935,6 +941,9 @@ void up_putc(int ch)
     }
 
   bcm2711_miniuart_wait_send(dev, ch);
+#else
+  pl011_putc(&CONSOLE_DEV.uart, ch);
+#endif /* CONFIG_UART1_SERIAL_CONSOLE */
 #endif /* CONSOLE_DEV */
 }
 
@@ -952,17 +961,71 @@ void up_putc(int ch)
 
 void arm64_serialinit(void)
 {
+  int ret;
+
 #if defined(CONSOLE_DEV)
 
   /* Mark the console. */
 
+#ifdef CONFIG_UART1_SERIAL_CONSOLE
   CONSOLE_DEV.isconsole = 1;
-
-  int ret;
   ret = uart_register("/dev/console", &CONSOLE_DEV);
+#else
+  CONSOLE_DEV.uart.isconsole = 1;
+  ret = uart_register("/dev/console", &CONSOLE_DEV.uart);
+#endif
+
   if (ret < 0)
     {
       _err("Could not register /dev/console, ret=%d\n", ret);
     }
-#endif /* defined(CONSOLE_DEV) */
+#endif /* CONSOLE_DEV */
+
+#ifdef TTYS0_DEV
+  ret = uart_register("/dev/ttyS0", &TTYS0_DEV.uart);
+  if (ret < 0)
+    {
+      _err("Could not register /dev/ttyS0, ret=%d\n", ret);
+    }
+#endif
+
+#ifdef TTYS1_DEV
+  ret = uart_register("/dev/ttyS1", &TTYS1_DEV);
+  if (ret < 0)
+    {
+      _err("Could not register /dev/ttyS1, ret=%d\n", ret);
+    }
+#endif
+
+#ifdef TTYS2_DEV
+  ret = uart_register("/dev/ttyS2", &TTYS2_DEV.uart);
+  if (ret < 0)
+    {
+      _err("Could not register /dev/ttyS2, ret=%d\n", ret);
+    }
+#endif
+
+#ifdef TTYS3_DEV
+  ret = uart_register("/dev/ttyS3", &TTYS3_DEV.uart);
+  if (ret < 0)
+    {
+      _err("Could not register /dev/ttyS3, ret=%d\n", ret);
+    }
+#endif
+
+#ifdef TTYS4_DEV
+  ret = uart_register("/dev/ttyS4", &TTYS4_DEV.uart);
+  if (ret < 0)
+    {
+      _err("Could not register /dev/ttyS4, ret=%d\n", ret);
+    }
+#endif
+
+#ifdef TTYS5_DEV
+  ret = uart_register("/dev/ttyS5", &TTYS5_DEV.uart);
+  if (ret < 0)
+    {
+      _err("Could not register /dev/ttyS5, ret=%d\n", ret);
+    }
+#endif
 }
