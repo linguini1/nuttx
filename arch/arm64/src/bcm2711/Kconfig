@@ -35,7 +35,7 @@ config BCM2711_UART0
 config BCM2711_UART1
 	bool "UART1 (Mini UART)"
 	default y
-	select UART0_SERIALDRIVER
+	select UART1_SERIALDRIVER
 	select ARCH_HAVE_SERIAL_TERMIOS
 	---help---
 		Enable the UART1 (Mini UART) interface.

@@ -63,27 +63,27 @@
 
 /* UART device aliases */
 
-#if defined(CONFIG_UART0_SERIAL_CONSOLE)
+#if defined(CONFIG_UART0_SERIALDRIVER)
   #define TTYS0_DEV g_uart0
 #endif
 
-#if defined(CONFIG_UART1_SERIAL_CONSOLE)
+#if defined(CONFIG_UART1_SERIALDRIVER)
   #define TTYS1_DEV g_uart1
 #endif
 
-#if defined(CONFIG_UART2_SERIAL_CONSOLE)
+#if defined(CONFIG_UART2_SERIALDRIVER)
   #define TTYS2_DEV g_uart2
 #endif
 
-#if defined(CONFIG_UART3_SERIAL_CONSOLE)
+#if defined(CONFIG_UART3_SERIALDRIVER)
   #define TTYS3_DEV g_uart3
 #endif
 
-#if defined(CONFIG_UART4_SERIAL_CONSOLE)
+#if defined(CONFIG_UART4_SERIALDRIVER)
   #define TTYS4_DEV g_uart4
 #endif
 
-#if defined(CONFIG_UART5_SERIAL_CONSOLE)
+#if defined(CONFIG_UART5_SERIALDRIVER)
   #define TTYS5_DEV g_uart5
 #endif
 
@@ -131,7 +131,10 @@ struct bcm2711_uart_port_s
 
 /* Mini UART helper functions */
 
+#if defined(CONSOLE_DEV) && defined(CONFIG_UART1_SERIAL_CONSOLE)
 static void bcm2711_miniuart_wait_send(struct uart_dev_s *dev, char c);
+#endif
+
 static int bcm2711_miniuart_irq_handler(int irq, void *context, void *arg);
 
 /* Mini UART operations */
@@ -223,11 +226,11 @@ static struct pl011_uart_port_s g_uart0 =
 {
   .config =
     {
-      .baseaddr = (void *)UART0_BASEADDR,
+      .baseaddr = (void *)BCM_UART0_BASEADDR,
       .baud_rate = CONFIG_UART0_BAUD,
       .irq_num = UART0_IRQ,
       .sbsa = false,
-      .sys_clk_freq = UART0_CLK_FREQ,
+      .sys_clk_freq = SYSTEM_CLOCK_FREQUENCY,
     },
 
   .uart =
@@ -254,11 +257,11 @@ static struct pl011_uart_port_s g_uart2 =
 {
   .config =
     {
-      .baseaddr = (void *)UART2_BASEADDR,
+      .baseaddr = (void *)BCM_UART2_BASEADDR,
       .baud_rate = CONFIG_UART2_BAUD,
       .irq_num = UART2_IRQ,
       .sbsa = false,
-      .sys_clk_freq = UART2_CLK_FREQ,
+      .sys_clk_freq = SYSTEM_CLOCK_FREQUENCY,
     },
 
   .uart =
@@ -285,11 +288,11 @@ static struct pl011_uart_port_s g_uart3 =
 {
   .config =
     {
-      .baseaddr = (void *)UART3_BASEADDR,
+      .baseaddr = (void *)BCM_UART3_BASEADDR,
       .baud_rate = CONFIG_UART3_BAUD,
       .irq_num = UART3_IRQ,
       .sbsa = false,
-      .sys_clk_freq = UART3_CLK_FREQ,
+      .sys_clk_freq = SYSTEM_CLOCK_FREQUENCY,
     },
 
   .uart =
@@ -316,11 +319,11 @@ static struct pl011_uart_port_s g_uart4 =
 {
   .config =
     {
-      .baseaddr = (void *)UART4_BASEADDR,
+      .baseaddr = (void *)BCM_UART4_BASEADDR,
       .baud_rate = CONFIG_UART4_BAUD,
       .irq_num = UART4_IRQ,
       .sbsa = false,
-      .sys_clk_freq = UART4_CLK_FREQ,
+      .sys_clk_freq = SYSTEM_CLOCK_FREQUENCY,
     },
 
   .uart =
@@ -347,11 +350,11 @@ static struct pl011_uart_port_s g_uart5 =
 {
   .config =
     {
-      .baseaddr = (void *)UART5_BASEADDR,
+      .baseaddr = (void *)BCM_UART5_BASEADDR,
       .baud_rate = CONFIG_UART5_BAUD,
-      .irq_num = UART5_IRQ,
+      .irq_num = BCM_IRQ_VC_PL011UART,
       .sbsa = false,
-      .sys_clk_freq = UART5_CLK_FREQ,
+      .sys_clk_freq = SYSTEM_CLOCK_FREQUENCY,
     },
 
   .uart =
@@ -619,6 +622,7 @@ static bool bcm2711_miniuart_rxavailable(struct uart_dev_s *dev)
  *
  ***************************************************************************/
 
+#if defined(CONSOLE_DEV) && defined(CONFIG_UART1_SERIAL_CONSOLE)
 static void bcm2711_miniuart_wait_send(struct uart_dev_s *dev, char c)
 {
   while (!bcm2711_miniuart_txready(dev))
@@ -630,6 +634,7 @@ static void bcm2711_miniuart_wait_send(struct uart_dev_s *dev, char c)
 
   bcm2711_miniuart_send(dev, c);
 }
+#endif
 
 /***************************************************************************
  * Name: bcm2711_miniuart_send
@@ -982,6 +987,7 @@ void arm64_serialinit(void)
 #endif /* CONSOLE_DEV */
 
 #ifdef TTYS0_DEV
+  pl011_dev_init(&TTYS0_DEV);
   ret = uart_register("/dev/ttyS0", &TTYS0_DEV.uart);
   if (ret < 0)
     {
@@ -998,6 +1004,7 @@ void arm64_serialinit(void)
 #endif
 
 #ifdef TTYS2_DEV
+  pl011_dev_init(&TTYS2_DEV);
   ret = uart_register("/dev/ttyS2", &TTYS2_DEV.uart);
   if (ret < 0)
     {
@@ -1006,6 +1013,7 @@ void arm64_serialinit(void)
 #endif
 
 #ifdef TTYS3_DEV
+  pl011_dev_init(&TTYS3_DEV);
   ret = uart_register("/dev/ttyS3", &TTYS3_DEV.uart);
   if (ret < 0)
     {
@@ -1014,6 +1022,7 @@ void arm64_serialinit(void)
 #endif
 
 #ifdef TTYS4_DEV
+  pl011_dev_init(&TTYS4_DEV);
   ret = uart_register("/dev/ttyS4", &TTYS4_DEV.uart);
   if (ret < 0)
     {
@@ -1022,6 +1031,19 @@ void arm64_serialinit(void)
 #endif
 
 #ifdef TTYS5_DEV
+
+  pl011_dev_init(&TTYS5_DEV);
+
+  /* Turn off pull-up/pull-down resistors. */
+
+  bcm2711_gpio_set_pulls(12, false, false);
+  bcm2711_gpio_set_pulls(13, false, false);
+
+  /* Use alternative function 5 (UART1). */
+
+  bcm2711_gpio_set_func(12, BCM_GPIO_FUNC4);
+  bcm2711_gpio_set_func(13, BCM_GPIO_FUNC4);
+
   ret = uart_register("/dev/ttyS5", &TTYS5_DEV.uart);
   if (ret < 0)
     {
