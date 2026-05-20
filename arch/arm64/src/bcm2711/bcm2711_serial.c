@@ -39,6 +39,7 @@
 
 #include "bcm2711_gpio.h"
 #include "bcm2711_serial.h"
+#include "bcm2711_mailbox.h"
 #include "hardware/bcm2711_aux.h"
 
 /***************************************************************************
@@ -90,6 +91,10 @@
 /* System clock frequency for Mini UART in Hz */
 
 #define SYSTEM_CLOCK_FREQUENCY (500000000)
+
+/* Typical PL011 clock frequency */
+
+#define PL011_CLOCK_FREQUENCY (48000000)
 
 /* Baud rate calculation */
 
@@ -189,30 +194,30 @@ static char g_uart1_txbuffer[CONFIG_UART1_TXBUFSIZE];
 
 static struct bcm2711_miniuart_port_s g_miniuartpriv =
 {
-    .config =
-        {
-            .baud_rate = CONFIG_UART1_BAUD,
-            .parity = CONFIG_UART1_PARITY,
-            .data_bits = CONFIG_UART1_BITS,
-        },
+  .config =
+    {
+      .baud_rate = CONFIG_UART1_BAUD,
+      .parity = CONFIG_UART1_PARITY,
+      .data_bits = CONFIG_UART1_BITS,
+    },
 };
 
 static struct uart_dev_s g_uart1 =
 {
-    .recv =
-        {
-            .size = CONFIG_UART1_RXBUFSIZE,
-            .buffer = g_uart1_rxbuffer,
-        },
+  .recv =
+    {
+      .size = CONFIG_UART1_RXBUFSIZE,
+      .buffer = g_uart1_rxbuffer,
+    },
 
-    .xmit =
-        {
-            .size = CONFIG_UART1_TXBUFSIZE,
-            .buffer = g_uart1_txbuffer,
-        },
+  .xmit =
+    {
+      .size = CONFIG_UART1_TXBUFSIZE,
+      .buffer = g_uart1_txbuffer,
+    },
 
-    .ops = &g_miniuart_ops,
-    .priv = &g_miniuartpriv,
+  .ops = &g_miniuart_ops,
+  .priv = &g_miniuartpriv,
 };
 #endif /* UART1 (Mini UART) */
 
@@ -230,7 +235,7 @@ static struct pl011_uart_port_s g_uart0 =
       .baud_rate = CONFIG_UART0_BAUD,
       .irq_num = UART0_IRQ,
       .sbsa = false,
-      .sys_clk_freq = SYSTEM_CLOCK_FREQUENCY,
+      .sys_clk_freq = PL011_CLOCK_FREQUENCY,
     },
 
   .uart =
@@ -261,7 +266,7 @@ static struct pl011_uart_port_s g_uart2 =
       .baud_rate = CONFIG_UART2_BAUD,
       .irq_num = UART2_IRQ,
       .sbsa = false,
-      .sys_clk_freq = SYSTEM_CLOCK_FREQUENCY,
+      .sys_clk_freq = PL011_CLOCK_FREQUENCY,
     },
 
   .uart =
@@ -292,7 +297,7 @@ static struct pl011_uart_port_s g_uart3 =
       .baud_rate = CONFIG_UART3_BAUD,
       .irq_num = UART3_IRQ,
       .sbsa = false,
-      .sys_clk_freq = SYSTEM_CLOCK_FREQUENCY,
+      .sys_clk_freq = PL011_CLOCK_FREQUENCY,
     },
 
   .uart =
@@ -323,7 +328,7 @@ static struct pl011_uart_port_s g_uart4 =
       .baud_rate = CONFIG_UART4_BAUD,
       .irq_num = UART4_IRQ,
       .sbsa = false,
-      .sys_clk_freq = SYSTEM_CLOCK_FREQUENCY,
+      .sys_clk_freq = PL011_CLOCK_FREQUENCY,
     },
 
   .uart =
@@ -354,7 +359,7 @@ static struct pl011_uart_port_s g_uart5 =
       .baud_rate = CONFIG_UART5_BAUD,
       .irq_num = BCM_IRQ_VC_PL011UART,
       .sbsa = false,
-      .sys_clk_freq = SYSTEM_CLOCK_FREQUENCY,
+      .sys_clk_freq = PL011_CLOCK_FREQUENCY,
     },
 
   .uart =
@@ -968,6 +973,21 @@ void arm64_serialinit(void)
 {
   int ret;
 
+#if defined(TTYS1_DEV) || defined(TTYS2_DEV) || defined(TTYS3_DEV) ||        \
+    defined(TTYS4_DEV) || defined(TTYS5_DEV)
+  uint32_t uart_clkfreq;
+
+  /* Get the UART clock frequency */
+
+  ret = bcm2711_mbox_getclkrate(MBOX_CLK_UART, &uart_clkfreq, false);
+  if (ret < 0) {
+    _err("Could not get clock frequency for PL011 UART system: %d\n", ret);
+    _warn("Falling back to default value of %u Hz\n", uart_clkfreq);
+    uart_clkfreq = PL011_CLOCK_FREQUENCY;
+  }
+  _info("PL011 clock frequency: %u Hz\n", uart_clkfreq);
+#endif
+
 #if defined(CONSOLE_DEV)
 
   /* Mark the console. */
@@ -987,6 +1007,7 @@ void arm64_serialinit(void)
 #endif /* CONSOLE_DEV */
 
 #ifdef TTYS0_DEV
+  TTYS0_DEV.config.sys_clk_freq = uart_clkfreq;
   pl011_dev_init(&TTYS0_DEV);
   ret = uart_register("/dev/ttyS0", &TTYS0_DEV.uart);
   if (ret < 0)
@@ -1004,6 +1025,7 @@ void arm64_serialinit(void)
 #endif
 
 #ifdef TTYS2_DEV
+  TTYS2_DEV.config.sys_clk_freq = uart_clkfreq;
   pl011_dev_init(&TTYS2_DEV);
   ret = uart_register("/dev/ttyS2", &TTYS2_DEV.uart);
   if (ret < 0)
@@ -1013,6 +1035,7 @@ void arm64_serialinit(void)
 #endif
 
 #ifdef TTYS3_DEV
+  TTYS3_DEV.config.sys_clk_freq = uart_clkfreq;
   pl011_dev_init(&TTYS3_DEV);
   ret = uart_register("/dev/ttyS3", &TTYS3_DEV.uart);
   if (ret < 0)
@@ -1022,6 +1045,7 @@ void arm64_serialinit(void)
 #endif
 
 #ifdef TTYS4_DEV
+  TTYS4_DEV.config.sys_clk_freq = uart_clkfreq;
   pl011_dev_init(&TTYS4_DEV);
   ret = uart_register("/dev/ttyS4", &TTYS4_DEV.uart);
   if (ret < 0)
@@ -1032,6 +1056,7 @@ void arm64_serialinit(void)
 
 #ifdef TTYS5_DEV
 
+  TTYS5_DEV.config.sys_clk_freq = uart_clkfreq;
   pl011_dev_init(&TTYS5_DEV);
 
   /* Turn off pull-up/pull-down resistors. */
