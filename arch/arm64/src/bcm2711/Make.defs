@@ -60,3 +60,11 @@ endif
 ifeq ($(CONFIG_BCM2711_FRAMEBUFFER),y)
 CHIP_CSRCS += bcm2711_fb.c
 endif
+
+# Ethernet
+
+ifeq ($(CONFIG_BCM2711_ENET),y)
+ifeq ($(CONFIG_NET),y)
+CHIP_CSRCS += bcm2711_enet.c
+endif
+endif

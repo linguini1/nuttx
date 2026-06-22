@@ -56,4 +56,10 @@ if(CONFIG_BCM2711_FRAMEBUFFER)
   list(APPEND SRCS bcm2711_fb.c)
 endif()
 
+# Ethernet
+
+if(CONFIG_BCM2711_ENET AND CONFIG_NET)
+  list(APPEND SRCS bcm2711_enet.c)
+endif()
+
 target_sources(arch PRIVATE ${SRCS})

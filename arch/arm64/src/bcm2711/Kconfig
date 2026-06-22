@@ -362,4 +362,15 @@ config BCM2711_FB_FORCE_RESOLUTION
 
 endmenu # Broadcom BCM2711 Peripheral Selection
 
+#####################################################################
+# Ethernet
+#####################################################################
+
+config BCM2711_ENET
+	bool "Ethernet"
+	default n
+	select ARCH_HAVE_PHY
+	---help---
+		Enables the BCM2711 Ethernet interface at eth0.
+
 endif # ARCH_CHIP_BCM2711
