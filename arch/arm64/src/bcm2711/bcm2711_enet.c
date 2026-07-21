@@ -57,6 +57,16 @@ static int bcm2711_ifup(struct net_driver_s *dev);
 static int bcm2711_ifdown(struct net_driver_s *dev);
 static int bcm2711_txavail(struct net_driver_s *dev);
 
+#ifdef CONFIG_NETDEV_IOCTL
+static int bcm2711_ioctl(struct net_driver_s *dev, int cmd,
+                         unsigned long arg);
+#endif
+
+#ifdef CONFIG_NET_MCASTGROUP
+static int bcm2711_addmac(struct net_driver_s *dev, const uint8_t *mac);
+static int bcm2711_rmmac(struct net_driver_s *dev, const uint8_t *mac);
+#endif
+
 /****************************************************************************
  * Private Data
  ****************************************************************************/
@@ -73,6 +83,14 @@ static struct bcm2711_enet_s g_enet =
     .d_ifup = bcm2711_ifup,
     .d_ifdown = bcm2711_ifup,
     .d_txavail = bcm2711_txavail,
+#ifdef CONFIG_NETDEV_IOCTL
+    .d_ioctl = bcm2711_ioctl,
+#endif
+#ifdef CONFIG_NET_MCASTGROUP
+    .d_addmac = bcm2711_addmac,
+    .d_rmmac = bcm2711_rmmac,
+#endif
+    .d_private = &g_enet,
   },
 
   /* TODO */
@@ -104,6 +122,33 @@ static int bcm2711_txavail(struct net_driver_s *dev)
   return 0;
 }
 
+#ifdef CONFIG_NETDEV_IOCTL
+static int bcm2711_ioctl(struct net_driver_s *dev, int cmd, unsigned long arg)
+{
+  switch (cmd)
+    {
+    default:
+      return -ENOTTY;
+    }
+}
+#endif
+
+#ifdef CONFIG_NET_MCASTGROUP
+static int bcm2711_addmac(struct net_driver_s *dev, const uint8_t *mac)
+{
+  /* TODO */
+
+  return 0;
+}
+
+static int bcm2711_rmmac(struct net_driver_s *dev, const uint8_t *mac)
+{
+  /* TODO */
+
+  return 0;
+}
+#endif
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -127,6 +172,11 @@ int bcm2711_enet_initialize(void)
   int ret;
 
   /* TODO: All the IRQ stuff n junk */
+
+  /* Put the interface in the down state. */
+
+  bcm2711_ifdown(&g_enet.dev)
+    ;
 
   /* Register the device with the OS so that socket IOCTLs can be performed */
 
