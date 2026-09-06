@@ -604,6 +604,28 @@ config BMP280_I2C_FREQUENCY
 
 endif # SENSORS_BMP280
 
+config SENSORS_BMP581
+	bool "Bosch BMP581 Barometric Pressure Sensor"
+	default n
+	select I2C
+	---help---
+		Enable driver for the Bosch BMP581 barometric pressure sensor.
+
+if SENSORS_BMP581
+
+config BMP581_I2C_FREQUENCY
+	int "BMP581 I2C frequency"
+	default 400000
+
+config SENSORS_BMP581_ORB_BUFSIZE
+	int "BMP581 uORB measurement buffer size"
+	default 3
+	---help---
+		The buffer size of the uORB lower-half for the BMP581 (i.e. how many
+		barometer measurements can be buffered at once).
+
+endif # SENSORS_BMP581
+
 config SENSORS_BME680
 	bool "Bosch BME680 Temperature, Gas, Humidity and Pressure Sensor"
 	default n

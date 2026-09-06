@@ -218,6 +218,10 @@ ifeq ($(CONFIG_SENSORS_BMP280),y)
   CSRCS += bmp280_uorb.c
 endif
 
+ifeq ($(CONFIG_SENSORS_BMP581),y)
+  CSRCS += bmp581_uorb.c
+endif
+
 ifeq ($(CONFIG_SENSORS_BME680),y)
   CSRCS += bme680_uorb.c
 endif
